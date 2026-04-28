@@ -5,6 +5,10 @@
     [string]$Channel = "",
     [switch]$PromptUpdate,
     [switch]$ForceUpdatePrompt,
+    [ValidateSet("", "normal", "notice", "disabled")]
+    [string]$AppStatus = "",
+    [string]$AppStatusMessage = "",
+    [switch]$AppNoticeForcePrompt,
     [string]$BaseUrl = "",
     [string]$CommitMessage = "",
     [switch]$SkipBuild,
@@ -93,6 +97,19 @@ function Read-ReleaseChannel {
     }
 }
 
+function Read-AppStatus {
+    while ($true) {
+        $value = (Read-Host "启动公告状态？[normal/notice/disabled，默认 normal]").Trim().ToLowerInvariant()
+        if (-not $value) {
+            return "normal"
+        }
+        if ($value -in @("normal", "notice", "disabled")) {
+            return $value
+        }
+        Write-Host "请输入 normal、notice 或 disabled。"
+    }
+}
+
 function Show-GitPreview {
     param(
         [string]$Pathspec = "docs/update",
@@ -166,6 +183,32 @@ if ($UseForceUpdatePrompt) {
     $UsePromptUpdate = $true
 }
 
+if (-not $AppStatus.Trim()) {
+    $AppStatus = Read-AppStatus
+} else {
+    $AppStatus = $AppStatus.Trim().ToLowerInvariant()
+}
+
+if (-not $AppStatusMessage.Trim()) {
+    if ($AppStatus -in @("notice", "disabled")) {
+        $AppStatusMessage = Read-RequiredText "请输入公告/禁用说明"
+    } else {
+        $AppStatusMessage = ""
+    }
+} else {
+    $AppStatusMessage = $AppStatusMessage.Trim()
+}
+
+$UseAppNoticeForcePrompt = $false
+if ($PSBoundParameters.ContainsKey("AppNoticeForcePrompt")) {
+    $UseAppNoticeForcePrompt = [bool]$AppNoticeForcePrompt
+} elseif ($AppStatus -eq "notice") {
+    $UseAppNoticeForcePrompt = Read-YesNo "是否每次启动都弹出公告？" $false
+}
+if ($AppStatus -ne "notice") {
+    $UseAppNoticeForcePrompt = $false
+}
+
 $ShouldBuild = $true
 if ($PSBoundParameters.ContainsKey("SkipBuild")) {
     $ShouldBuild = -not [bool]$SkipBuild
@@ -198,6 +241,11 @@ Write-Host "  版本号：$Version"
 Write-Host "  更新说明：$Notes"
 Write-Host "  启动弹窗：$UsePromptUpdate"
 Write-Host "  强制弹窗：$UseForceUpdatePrompt"
+Write-Host "  应用状态：$AppStatus"
+if ($AppStatusMessage) {
+    Write-Host "  状态说明：$AppStatusMessage"
+}
+Write-Host "  公告每次弹出：$UseAppNoticeForcePrompt"
 Write-Host "  重新打包：$ShouldBuild"
 Write-Host "  提交推送：$ShouldCommitAndPush"
 Write-Host "  发布通道：$Channel"
@@ -234,8 +282,15 @@ $manifestArgs = @(
     "--version", $Version,
     "--base-url", $BaseUrl,
     "--notes", $Notes,
+    "--app-status", $AppStatus,
     "-o", $ManifestPath
 )
+if ($AppStatusMessage) {
+    $manifestArgs += @("--app-status-message", $AppStatusMessage)
+}
+if ($UseAppNoticeForcePrompt) {
+    $manifestArgs += "--app-notice-force-prompt"
+}
 if ($UsePromptUpdate) {
     $manifestArgs += "--prompt-update"
 }

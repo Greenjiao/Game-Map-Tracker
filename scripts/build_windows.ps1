@@ -50,11 +50,13 @@ if (-not (Test-Path $UpdaterExe)) {
 }
 Copy-Item $UpdaterExe -Destination (Join-Path $Dist "updater.exe") -Force
 
-foreach ($file in @("big_map.png", "config.json", "README.md")) {
+foreach ($file in @("big_map.png", "README.md")) {
     if (Test-Path $file) {
         Copy-Item $file -Destination $Dist -Force
     }
 }
+
+Invoke-Python "scripts/write_default_config.py" (Join-Path $Dist "config.json")
 
 if (Test-Path "routes") {
     Copy-DirectoryFresh "routes" (Join-Path $Dist "routes")

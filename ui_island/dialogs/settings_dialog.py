@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 import config
 
 from . import StyledConfirm, StyledDialogBase, StyledMessage, Toast, center_dialog, place_left_of, toast, toast_persistent
+from ..app.app_info import APP_VERSION
 from ..design import qss, strings, tokens
 from ..services.app_updater import (
     AppUpdateCheckResult,
@@ -64,6 +65,24 @@ _ROUTE_COLOR_TOOLTIPS = {
     "ROUTE_GUIDE_LINE_COLOR": "代表引路点的指引路径",
     "ROUTE_POINTER_ARROW_COLOR": "玩家点位到追踪目标节点的指向箭头",
 }
+_SETTINGS_DISCLAIMER = "本工具免费分享，地图与标注数据来源于17173，感谢地图维护者"
+
+
+class _ElidedLabel(QLabel):
+    def __init__(self, text: str, parent=None) -> None:
+        super().__init__(parent)
+        self._full_text = str(text or "")
+        self.setText(self._full_text)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._refresh_elided_text()
+
+    def _refresh_elided_text(self) -> None:
+        available_width = max(0, self.width())
+        text = self.fontMetrics().elidedText(self._full_text, Qt.ElideRight, available_width)
+        if text != self.text():
+            self.setText(text)
 
 
 def styled_info(parent, title: str, message: str, *, allow_links: bool = False) -> None:
@@ -211,6 +230,12 @@ class SettingsDialog(QDialog):
         subtitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         title_row.addWidget(subtitle, stretch=1)
 
+        version_label = QLabel(f"当前版本：{APP_VERSION}")
+        version_label.setObjectName("StatLabel")
+        version_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        version_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        title_row.addWidget(version_label)
+
         close_btn = QPushButton("×")
         close_btn.setObjectName("WindowControl")
         close_btn.clicked.connect(self.close)
@@ -228,7 +253,13 @@ class SettingsDialog(QDialog):
         btn_row = QHBoxLayout(buttons_bar)
         btn_row.setContentsMargins(0, 0, 0, 0)
         btn_row.setSpacing(8)
-        btn_row.addStretch()
+
+        disclaimer_label = _ElidedLabel(_SETTINGS_DISCLAIMER)
+        disclaimer_label.setObjectName("StatLabel")
+        disclaimer_label.setMinimumWidth(0)
+        disclaimer_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        disclaimer_label.setToolTip(_SETTINGS_DISCLAIMER)
+        btn_row.addWidget(disclaimer_label, stretch=1)
 
         reset_btn = QPushButton("恢复默认")
         reset_btn.clicked.connect(self._on_reset_defaults)
@@ -1201,7 +1232,7 @@ class SettingsDialog(QDialog):
         if annotation_panel is not None:
             try:
                 annotation_panel.load_index(config.app_path("tools", "points_all", "points.json"))
-                annotation_panel.set_preferences(parent.annotation_type_ids, parent.annotation_recent_type_ids)
+                annotation_panel.set_preferences(parent.annotation_type_ids)
             except Exception:
                 pass
         map_view = getattr(parent, "map_view", None)

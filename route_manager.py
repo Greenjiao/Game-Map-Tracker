@@ -33,7 +33,6 @@ _GUIDE_HINT_PADDING_Y = 5
 _GUIDE_HINT_FONT_SIZE = 15
 _PROGRESS_FILE = "progress.json"
 _VISIBILITY_FILE = "selected_routes.json"
-_RECENT_FILE = "recent_routes.json"
 _ALGORITHM_CATEGORY = "算法生成"
 _ALGORITHM_ROUTE_SUFFIX = "_路线(算法生成)"
 _INVALID_FILE_NAME_CHARS = set('<>:"/\\|?*')
@@ -2049,11 +2048,6 @@ class RouteManager:
             if os.path.isdir(full_path):
                 found.append(entry)
 
-        for known in ("植物", "矿物", "地区路线", "其他"):
-            if known not in found:
-                os.makedirs(os.path.join(self.base_folder, known), exist_ok=True)
-                found.append(known)
-
         self.categories = found
         self.route_groups = {category: [] for category in self.categories}
 
@@ -2101,7 +2095,7 @@ class RouteManager:
             for path in glob.glob(os.path.join(category_path, "*.json")):
                 try:
                     file_name = os.path.basename(path)
-                    if file_name in {_PROGRESS_FILE, _RECENT_FILE, _VISIBILITY_FILE}:
+                    if file_name in {_PROGRESS_FILE, _VISIBILITY_FILE}:
                         continue
 
                     route_name = os.path.splitext(file_name)[0]
@@ -2275,7 +2269,7 @@ class RouteManager:
         for category in self.categories:
             category_path = self._category_path(category)
             for path in glob.glob(os.path.join(category_path, "*.json")):
-                if os.path.basename(path) in {_PROGRESS_FILE, _RECENT_FILE, _VISIBILITY_FILE}:
+                if os.path.basename(path) in {_PROGRESS_FILE, _VISIBILITY_FILE}:
                     continue
                 items.append((category, path, self._route_file_timestamp(path)))
         return items
@@ -2325,7 +2319,7 @@ class RouteManager:
     def _is_valid_route_name(self, name: str) -> bool:
         if not self._is_valid_fs_name(name):
             return False
-        return f"{name}.json" not in {_PROGRESS_FILE, _RECENT_FILE, _VISIBILITY_FILE}
+        return f"{name}.json" not in {_PROGRESS_FILE, _VISIBILITY_FILE}
 
     @staticmethod
     def _is_valid_route_id(value: object) -> bool:

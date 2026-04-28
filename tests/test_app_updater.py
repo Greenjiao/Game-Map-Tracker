@@ -9,8 +9,9 @@ from unittest.mock import patch
 import requests
 
 import config
+import config_defaults
 import updater_main
-from scripts import generate_update_manifest
+from scripts import generate_update_manifest, write_default_config
 from ui_island.services import app_updater
 
 
@@ -107,6 +108,90 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertTrue(manifest.force_update_prompt)
         self.assertTrue(result.force_update_prompt)
 
+    def test_parse_manifest_app_status_defaults_to_normal(self) -> None:
+        manifest = app_updater.parse_app_manifest({"version": "0.2.0", "files": []})
+        result = app_updater.build_update_plan(manifest, current_version="0.1.0")
+
+        self.assertEqual(manifest.app_status, app_updater.APP_STATUS_NORMAL)
+        self.assertEqual(manifest.app_status_message, "")
+        self.assertFalse(manifest.app_notice_force_prompt)
+        self.assertEqual(result.app_status, app_updater.APP_STATUS_NORMAL)
+        self.assertEqual(result.app_status_message, "")
+        self.assertFalse(result.app_notice_force_prompt)
+
+    def test_parse_manifest_app_status_flows_to_check_result(self) -> None:
+        manifest = app_updater.parse_app_manifest(
+            {
+                "version": "0.2.0",
+                "app_status": "notice",
+                "app_notice_force_prompt": True,
+                "app_status_message": "公告内容",
+                "files": [],
+            }
+        )
+        result = app_updater.build_update_plan(manifest, current_version="0.1.0")
+
+        self.assertEqual(manifest.app_status, app_updater.APP_STATUS_NOTICE)
+        self.assertEqual(manifest.app_status_message, "公告内容")
+        self.assertTrue(manifest.app_notice_force_prompt)
+        self.assertEqual(result.app_status, app_updater.APP_STATUS_NOTICE)
+        self.assertEqual(result.app_status_message, "公告内容")
+        self.assertTrue(result.app_notice_force_prompt)
+
+    def test_parse_manifest_app_notice_force_prompt_requires_boolean_true(self) -> None:
+        manifest = app_updater.parse_app_manifest(
+            {
+                "version": "0.2.0",
+                "app_status": "notice",
+                "app_status_message": "notice",
+                "app_notice_force_prompt": "false",
+                "files": [],
+            }
+        )
+
+        self.assertFalse(manifest.app_notice_force_prompt)
+
+    def test_parse_manifest_app_status_sanitizes_unknown_and_empty_message(self) -> None:
+        unknown = app_updater.parse_app_manifest(
+            {
+                "version": "0.2.0",
+                "app_status": "paused",
+                "app_status_message": "ignored",
+                "files": [],
+            }
+        )
+        disabled = app_updater.parse_app_manifest(
+            {
+                "version": "0.2.0",
+                "app_status": "disabled",
+                "app_status_message": "",
+                "files": [],
+            }
+        )
+
+        self.assertEqual(unknown.app_status, app_updater.APP_STATUS_NORMAL)
+        self.assertEqual(unknown.app_status_message, "")
+        self.assertEqual(disabled.app_status, app_updater.APP_STATUS_DISABLED)
+        self.assertEqual(disabled.app_status_message, app_updater.DEFAULT_APP_STATUS_MESSAGE)
+
+    def test_parse_manifest_preserves_obsolete_config_keys(self) -> None:
+        payload = {
+            "version": "0.2.0",
+            "obsolete_config_keys": [
+                "ROUTE_RECENT_LIMIT",
+                "ROUTE_RECENT_LIMIT",
+                "bad-key",
+                "1_BAD",
+                "",
+                "LEGACY_FLAG",
+            ],
+            "files": [],
+        }
+
+        manifest = app_updater.parse_app_manifest(payload)
+
+        self.assertEqual(manifest.obsolete_config_keys, ("ROUTE_RECENT_LIMIT", "LEGACY_FLAG"))
+
     def test_normalize_and_compare_versions(self) -> None:
         self.assertEqual(app_updater.normalize_version("v1.2.3"), "1.2.3")
         self.assertEqual(app_updater.normalize_version("1.2.3-beta"), "1.2.3-beta")
@@ -164,7 +249,9 @@ class AppUpdaterTests(unittest.TestCase):
             }
         )
 
-        with patch.object(config, "APP_UPDATE_MANIFEST_URLS", []):
+        with patch.object(config, "APP_UPDATE_MANIFEST_URLS", []), patch.object(
+            app_updater, "APP_UPDATE_MANIFEST_URLS", (gitee_url, github_url)
+        ):
             result = app_updater.check_app_update(current_version="0.1.0", session=session)
 
         self.assertTrue(result.ok)
@@ -268,6 +355,41 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertTrue(app_updater.should_show_startup_update_prompt(forced, "0.1.0"))
         self.assertFalse(app_updater.should_show_startup_update_prompt(no_update, "0.1.0"))
 
+    def test_should_show_app_notice_uses_message_ack_key(self) -> None:
+        ack_key = app_updater.app_notice_ack_key("  first notice  ")
+
+        self.assertEqual(ack_key, app_updater.app_notice_ack_key("first notice"))
+        self.assertFalse(
+            app_updater.should_show_app_notice(
+                app_updater.APP_STATUS_NOTICE,
+                "first notice",
+                last_ack_key=ack_key,
+            )
+        )
+        self.assertTrue(
+            app_updater.should_show_app_notice(
+                app_updater.APP_STATUS_NOTICE,
+                "changed notice",
+                last_ack_key=ack_key,
+            )
+        )
+        self.assertTrue(
+            app_updater.should_show_app_notice(
+                app_updater.APP_STATUS_NOTICE,
+                "first notice",
+                force_prompt=True,
+                last_ack_key=ack_key,
+            )
+        )
+        self.assertFalse(
+            app_updater.should_show_app_notice(
+                app_updater.APP_STATUS_DISABLED,
+                "first notice",
+                force_prompt=True,
+                last_ack_key=ack_key,
+            )
+        )
+
     def test_generate_manifest_writes_prompt_update_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -296,6 +418,89 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertFalse(quiet["force_update_prompt"])
         self.assertTrue(prompted["prompt_update"])
         self.assertTrue(prompted["force_update_prompt"])
+
+    def test_generate_manifest_writes_app_status(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            Path(root, "demo.txt").write_bytes(b"demo")
+
+            manifest = generate_update_manifest.build_manifest(
+                root,
+                version="0.2.0",
+                base_url="https://example.test/update/",
+                notes="",
+                requires_launcher_update=False,
+                prompt_update=False,
+                force_update_prompt=False,
+                app_status="disabled",
+                app_status_message="停止使用说明",
+            )
+            notice = generate_update_manifest.build_manifest(
+                root,
+                version="0.2.0",
+                base_url="https://example.test/update/",
+                notes="",
+                requires_launcher_update=False,
+                prompt_update=False,
+                force_update_prompt=False,
+                app_status="notice",
+                app_status_message="notice",
+                app_notice_force_prompt=True,
+            )
+            unknown = generate_update_manifest.build_manifest(
+                root,
+                version="0.2.0",
+                base_url="https://example.test/update/",
+                notes="",
+                requires_launcher_update=False,
+                prompt_update=False,
+                force_update_prompt=False,
+                app_status="paused",
+                app_status_message="ignored",
+            )
+
+        self.assertEqual(manifest["app_status"], "disabled")
+        self.assertEqual(manifest["app_status_message"], "停止使用说明")
+        self.assertFalse(manifest["app_notice_force_prompt"])
+        self.assertTrue(notice["app_notice_force_prompt"])
+        self.assertEqual(unknown["app_status"], "normal")
+        self.assertEqual(unknown["app_status_message"], "")
+        self.assertFalse(unknown["app_notice_force_prompt"])
+
+    def test_generate_manifest_writes_obsolete_config_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            Path(root, "demo.txt").write_bytes(b"demo")
+
+            manifest = generate_update_manifest.build_manifest(
+                root,
+                version="0.2.0",
+                base_url="https://example.test/update/",
+                notes="",
+                requires_launcher_update=False,
+                prompt_update=False,
+                force_update_prompt=False,
+                obsolete_config_keys=[
+                    "ROUTE_RECENT_LIMIT",
+                    "ROUTE_RECENT_LIMIT",
+                    "bad-key",
+                    "1_BAD",
+                    "LEGACY_FLAG",
+                ],
+            )
+
+        self.assertEqual(manifest["obsolete_config_keys"], ["ROUTE_RECENT_LIMIT", "LEGACY_FLAG"])
+
+    def test_write_default_config_uses_clean_defaults(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp, "config.json")
+            write_default_config.write_default_config(target)
+            payload = json.loads(target.read_text(encoding="utf-8"))
+
+        self.assertEqual(payload, config_defaults.DEFAULT_CONFIG)
+        self.assertEqual(payload["MINIMAP"], {})
+        self.assertEqual(payload["APP_UPDATE_LAST_PROMPTED_VERSION"], "")
+        self.assertEqual(payload["APP_NOTICE_LAST_ACK_KEY"], "")
 
     def test_generate_manifest_writes_runtime_config_from_explicit_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -416,6 +621,8 @@ class AppUpdaterTests(unittest.TestCase):
             route = Path(root, "routes", "地区路线", "雪山__来自用户道临沂.json")
             route.parent.mkdir(parents=True)
             route.write_text("{}", encoding="utf-8")
+            recent_routes = Path(root, "routes", "recent_routes.json")
+            recent_routes.write_text("[]", encoding="utf-8")
             points = Path(root, "tools", "points_all", "points.json")
             points.parent.mkdir(parents=True)
             points.write_text("{}", encoding="utf-8")
@@ -439,6 +646,7 @@ class AppUpdaterTests(unittest.TestCase):
         paths = {item["path"] for item in manifest["files"]}
         self.assertIn("demo.txt", paths)
         self.assertNotIn("routes/地区路线/雪山__来自用户道临沂.json", paths)
+        self.assertNotIn("routes/recent_routes.json", paths)
         self.assertNotIn("tools/points_all/points.json", paths)
         self.assertNotIn("tools/points_get/.cache_17173_locations.json", paths)
         self.assertNotIn("tools/points_icon/icons.json", paths)
@@ -457,6 +665,12 @@ class AppUpdaterTests(unittest.TestCase):
                     "path": "tools/points_all/points.json",
                     "url": "https://example.test/points.json",
                     "sha256": "1" * 64,
+                    "size": 1,
+                },
+                {
+                    "path": "routes/recent_routes.json",
+                    "url": "https://example.test/recent_routes.json",
+                    "sha256": "5" * 64,
                     "size": 1,
                 },
                 {
@@ -480,6 +694,7 @@ class AppUpdaterTests(unittest.TestCase):
             ],
             "delete": [
                 "routes/demo.json",
+                "routes/recent_routes.json",
                 "tools/points_all/points.json",
                 "tools/points_get/.cache_17173_locations.json",
                 "tools/points_icon/icons.json",
@@ -680,6 +895,7 @@ class AppUpdaterTests(unittest.TestCase):
         manifest = app_updater.parse_app_manifest(
             {
                 "version": "0.2.0",
+                "obsolete_config_keys": ["OLD_ROUTE_LIMIT"],
                 "files": [
                     {
                         "path": "config.json",
@@ -697,7 +913,14 @@ class AppUpdaterTests(unittest.TestCase):
             config.BASE_DIR = tmp
             config.CONFIG_FILE = str(Path(tmp, "config.json"))
             Path(config.CONFIG_FILE).write_text(
-                json.dumps({"SIDEBAR_WIDTH": 333, "WINDOW_GEOMETRY": {"x": 9, "y": 8}}, ensure_ascii=False),
+                json.dumps(
+                    {
+                        "SIDEBAR_WIDTH": 333,
+                        "WINDOW_GEOMETRY": {"x": 9, "y": 8},
+                        "OLD_ROUTE_LIMIT": 3,
+                    },
+                    ensure_ascii=False,
+                ),
                 encoding="utf-8",
             )
             staging = Path(tmp, "staging")
@@ -712,6 +935,7 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertEqual(merged["SIDEBAR_WIDTH"], 333)
         self.assertEqual(merged["VIEW_SIZE"], 500)
         self.assertEqual(merged["WINDOW_GEOMETRY"], {"x": 9, "y": 8, "width": 420, "height": 360})
+        self.assertNotIn("OLD_ROUTE_LIMIT", merged)
 
     def test_config_local_change_does_not_trigger_update_when_defaults_installed(self) -> None:
         defaults = {"CONFIG_VERSION": 2, "SIDEBAR_WIDTH": 270}
@@ -824,6 +1048,7 @@ class AppUpdaterTests(unittest.TestCase):
         manifest = app_updater.parse_app_manifest(
             {
                 "version": "0.2.0",
+                "obsolete_config_keys": ["ROUTE_RECENT_LIMIT"],
                 "files": [
                     {
                         "path": "GMT-N.exe",
@@ -849,6 +1074,7 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertEqual(job["files"][0]["path"], "GMT-N.exe")
         self.assertEqual(job["manifest"]["files"][0]["sha256"], _sha256_bytes(payload))
         self.assertEqual(job["delete"], [])
+        self.assertEqual(job["obsolete_config_keys"], ["ROUTE_RECENT_LIMIT"])
 
     def test_start_restart_update_reports_missing_updater(self) -> None:
         payload = b"new exe"
@@ -936,7 +1162,10 @@ class AppUpdaterTests(unittest.TestCase):
             staging = Path(tmp, "staging")
             app_dir.mkdir()
             staging.mkdir()
-            Path(app_dir, "config.json").write_text(json.dumps({"SIDEBAR_WIDTH": 333}), encoding="utf-8")
+            Path(app_dir, "config.json").write_text(
+                json.dumps({"SIDEBAR_WIDTH": 333, "OLD_ROUTE_LIMIT": 3}),
+                encoding="utf-8",
+            )
             Path(staging, "config.json").write_text(json.dumps(defaults, ensure_ascii=False), encoding="utf-8")
             job_path = Path(tmp, "job.json")
             job_path.write_text(
@@ -954,6 +1183,7 @@ class AppUpdaterTests(unittest.TestCase):
                             }
                         ],
                         "delete": [],
+                        "obsolete_config_keys": ["OLD_ROUTE_LIMIT"],
                         "manifest": {"version": "0.2.0", "files": []},
                     }
                 ),
@@ -966,6 +1196,7 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertEqual(merged["CONFIG_VERSION"], 5)
         self.assertEqual(merged["SIDEBAR_WIDTH"], 333)
         self.assertEqual(merged["VIEW_SIZE"], 600)
+        self.assertNotIn("OLD_ROUTE_LIMIT", merged)
 
     def test_updater_rolls_back_when_replace_fails(self) -> None:
         new_payload = b"new file"

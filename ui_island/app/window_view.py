@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -20,7 +19,7 @@ from PySide6.QtWidgets import (
 from ..design import strings, theme
 from ..views.map_view import MapView
 from ..widgets import AnnotationPanel, StatusDot
-from ..widgets.factory import make_scroll_area
+from ..widgets.factory import make_route_panel_line_edit, make_scroll_area
 
 
 def build_window_ui(window) -> None:
@@ -234,6 +233,16 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.tracked_routes_title.setObjectName("TitleLabel")
     window.tracked_routes_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
     window.tracked_routes_header_layout.addWidget(window.tracked_routes_title, stretch=0)
+
+    window.tracked_routes_collapsed = False
+    window.tracked_routes_toggle_btn = QPushButton("▾")
+    window.tracked_routes_toggle_btn.setObjectName("SectionHeader")
+    window.tracked_routes_toggle_btn.setProperty("compact", True)
+    window.tracked_routes_toggle_btn.setProperty("sectionToggleOnly", True)
+    window.tracked_routes_toggle_btn.setToolTip("收起当前追踪路线")
+    window.tracked_routes_toggle_btn.setFixedWidth(26)
+    window.tracked_routes_toggle_btn.clicked.connect(window.route_panel_controller.toggle_tracked_routes_collapsed)
+    window.tracked_routes_header_layout.addWidget(window.tracked_routes_toggle_btn, stretch=0)
     window.tracked_routes_header_layout.addStretch(1)
 
     window.tracked_guide_hint_label = QLabel("")
@@ -300,35 +309,9 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.annotation_panel = AnnotationPanel(window)
     window.annotation_panel.hide()
 
-    window.search_input = QLineEdit()
-    window.search_input.setPlaceholderText("搜索路线...")
+    window.search_input = make_route_panel_line_edit(placeholder="搜索路线...")
     window.search_input.textChanged.connect(window.route_panel_controller.apply_route_filter)
     side_layout.addWidget(window.search_input)
-
-    recent_title = QLabel("最近常用")
-    recent_title.setObjectName("TitleLabel")
-    side_layout.addWidget(recent_title)
-
-    window.recent_card = QFrame()
-    window.recent_card.setObjectName("PanelCard")
-    recent_card_layout = QVBoxLayout(window.recent_card)
-    recent_card_layout.setContentsMargins(10, 10, 10, 10)
-    recent_card_layout.setSpacing(4)
-
-    window.recent_scroll = make_scroll_area(
-        max_height=theme.RECENT_ROUTES_MAX_HEIGHT,
-        vertical_policy=Qt.ScrollBarAsNeeded,
-    )
-
-    window.recent_scroll_inner = QWidget()
-    window.recent_scroll_inner.setAttribute(Qt.WA_StyledBackground, True)
-    window.recent_routes_layout = QVBoxLayout(window.recent_scroll_inner)
-    window.recent_routes_layout.setContentsMargins(0, 0, 0, 0)
-    window.recent_routes_layout.setSpacing(4)
-    window.recent_routes_layout.setSizeConstraint(QVBoxLayout.SetMinAndMaxSize)
-    window.recent_scroll.setWidget(window.recent_scroll_inner)
-    recent_card_layout.addWidget(window.recent_scroll)
-    side_layout.addWidget(window.recent_card)
 
     routes_header = QHBoxLayout()
     routes_header.setContentsMargins(0, 0, 0, 0)
@@ -342,6 +325,7 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.refresh_routes_btn = QPushButton("刷新列表")
     window.refresh_routes_btn.setProperty("headerButton", True)
     window.refresh_routes_btn.setProperty("compact", True)
+    window.refresh_routes_btn.setProperty("routePanelHeaderButton", "true")
     window.refresh_routes_btn.setToolTip("重新读取 routes 文件夹下的所有路径")
     window.refresh_routes_btn.clicked.connect(window.route_panel_controller.reload_route_list)
     routes_header.addWidget(window.refresh_routes_btn)
@@ -349,6 +333,7 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.add_category_btn = QPushButton("新增类别")
     window.add_category_btn.setProperty("headerButton", True)
     window.add_category_btn.setProperty("compact", True)
+    window.add_category_btn.setProperty("routePanelHeaderButton", "true")
     window.add_category_btn.setToolTip("新增一个路线类别文件夹")
     window.add_category_btn.clicked.connect(window.route_panel_controller.show_add_category_row)
     routes_header.addWidget(window.add_category_btn)
@@ -377,6 +362,5 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.map_view.set_center_locked(True)
     window.route_panel_controller.refresh_tracked_routes()
     window.window_mode_controller.apply_sidebar_state()
-    window.route_panel_controller.refresh_recent_routes()
     window.route_panel_controller.apply_route_filter()
     window._update_window_controls()

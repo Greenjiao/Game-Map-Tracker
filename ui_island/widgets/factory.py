@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QPushButton, QFrame, QScrollArea, QSizePolicy
+from PySide6.QtWidgets import QLabel, QLineEdit, QPushButton, QFrame, QScrollArea, QSizePolicy
+
+from ..design import tokens
 
 
 def make_scroll_area(
@@ -56,6 +58,41 @@ def make_header_icon_button(
         button.setToolTip(tooltip)
     button.setFixedWidth(width)
     return button
+
+
+def make_route_panel_icon_button(
+    text: str,
+    *,
+    role: str,
+    tooltip: str = "",
+    parent=None,
+) -> QPushButton:
+    button = make_header_icon_button(
+        text,
+        role=role,
+        tooltip=tooltip,
+        width=tokens.RECENT_ROUTE_ITEM_HEIGHT,
+        parent=parent,
+    )
+    button.setProperty("routePanelIconButton", "true")
+    button.setFixedSize(tokens.RECENT_ROUTE_ITEM_HEIGHT, tokens.RECENT_ROUTE_ITEM_HEIGHT)
+    return button
+
+
+def make_route_panel_line_edit(
+    *,
+    placeholder: str = "",
+    parent=None,
+    size_policy: tuple[QSizePolicy.Policy, QSizePolicy.Policy] | None = None,
+) -> QLineEdit:
+    editor = QLineEdit(parent)
+    editor.setProperty("routePanelInput", "true")
+    editor.setFixedHeight(tokens.RECENT_ROUTE_ITEM_HEIGHT)
+    if placeholder:
+        editor.setPlaceholderText(placeholder)
+    if size_policy is not None:
+        editor.setSizePolicy(*size_policy)
+    return editor
 
 
 def make_label(

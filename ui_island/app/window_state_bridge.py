@@ -133,14 +133,6 @@ class WindowStateBridgeMixin:
         self.window_layout_prefs.size_prefs = value
 
     @property
-    def _recent_route_names(self):
-        return self.route_panel_state.recent_route_names
-
-    @_recent_route_names.setter
-    def _recent_route_names(self, value) -> None:
-        self.route_panel_state.recent_route_names = value
-
-    @property
     def _route_checkboxes(self):
         return self.route_panel_state.route_checkboxes
 

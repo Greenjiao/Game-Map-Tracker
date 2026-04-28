@@ -1,0 +1,66 @@
+"""Side-effect-free default configuration for GMT-N."""
+
+from __future__ import annotations
+
+
+CONFIG_VERSION = 2
+
+DEFAULT_CONFIG = {
+    "CONFIG_VERSION": CONFIG_VERSION,
+    "MINIMAP": {},
+    "WINDOW_GEOMETRY": {"x": 1418, "y": 0, "width": 420, "height": 360},
+    "LOCKED_VIEW_SIZE": {"width": 420, "height": 360},
+    "PAUSED_VIEW_SIZE": {"width": 820, "height": 500},
+    "SIDEBAR_COLLAPSED": True,
+    "SIDEBAR_WIDTH": 270,
+    "PAUSED_SIDEBAR_WIDTH": 270,
+    "VIEW_SIZE": 400,
+    "LOGIC_MAP_PATH": "big_map.png",
+    "MAX_LOST_FRAMES": 30,
+    "SIFT_REFRESH_RATE": 30,
+    "SIFT_CLAHE_LIMIT": 3.0,
+    "SIFT_MATCH_RATIO": 0.9,
+    "SIFT_MIN_MATCH_COUNT": 5,
+    "SIFT_RANSAC_THRESHOLD": 8.0,
+    "SIFT_LOCAL_SEARCH_RADIUS": 400,
+    "ROUTE_GUIDE_NODE_DISTANCE": 80,
+    "ROUTE_GUIDE_SEGMENT_DISTANCE": 35,
+    "ROUTE_GUIDE_POINTER_SPACING": 28,
+    "ROUTE_GUIDE_POINTER_SIZE": 10,
+    "ROUTE_MULTI_COLOR_ENABLED": True,
+    "ROUTE_DEFAULT_COLOR": "#1ad1ff",
+    "ROUTE_TELEPORT_LINE_COLOR": "#ffffff",
+    "ROUTE_GUIDE_LINE_COLOR": "#ffffff",
+    "ROUTE_POINTER_ARROW_COLOR": "#000000",
+    "ROUTE_POINTER_ARROW_VISIBLE": True,
+    "ROUTE_SPECIAL_LINES_FOLLOW_ROUTE_COLOR": False,
+    "ROUTE_STRICT_GUIDE_MODE": False,
+    "TOGGLE_LOCK_HOTKEY": {
+        "sequence": "Alt+`",
+        "label": "Alt+`",
+        "modifiers": ["Alt"],
+        "key": "QuoteLeft",
+        "vk": 0xC0,
+    },
+    "ROUTE_VISITED_POINT_OPACITY": 1.0,
+    "ROUTE_VISITED_ICON_OPACITY": 0.35,
+    "WINDOW_LOCKED_OPACITY": 0.78,
+    "WINDOW_NORMAL_OPACITY": 1.0,
+    "ROUTE_SECTION_EXPANDED": {},
+    "ANNOTATION_TYPE_IDS": [],
+    "ANNOTATION_GROUP_EXPANDED": {},
+    "APP_UPDATE_LAST_PROMPTED_VERSION": "",
+    "APP_NOTICE_LAST_ACK_KEY": "",
+}
+
+OBSOLETE_CONFIG_KEYS = {
+    "QUARK_DOWNLOAD_URL",
+    "ROUTE_RESOURCE_URL",
+    "DOCUMENTATION_URL",
+    "FEEDBACK_BILIBILI_URL",
+    "FEEDBACK_QQ_GROUP",
+    "APP_UPDATE_MANIFEST_URL",
+    "APP_UPDATE_MANIFEST_URLS",
+    "ROUTE_RECENT_LIMIT",
+    "ANNOTATION_RECENT_TYPE_IDS",
+}

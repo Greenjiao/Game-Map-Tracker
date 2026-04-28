@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QGridLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from ..design import strings
-from ..widgets.annotation_type_widgets import build_annotation_type_button, group_annotation_types
+from ..widgets.annotation_type_widgets import AnnotationGroupSection, build_annotation_type_button, group_annotation_types
 from ..widgets.factory import make_scroll_area
 from . import StyledDialogBase, center_dialog
 
@@ -19,6 +19,10 @@ class AnnotationTypePickerDialog(StyledDialogBase):
         self._items = list(items)
         self._current_type_id = str(current_type_id or "")
         self._selected: dict | None = None
+        self._group_expanded = getattr(parent, "annotation_group_expanded", {})
+        if not isinstance(self._group_expanded, dict):
+            self._group_expanded = {}
+        self._group_expanded_changed = getattr(parent, "_on_annotation_group_expanded_changed", None)
 
         if not self._items:
             empty = QLabel(strings.ANNOTATION_TYPE_PICKER_EMPTY)
@@ -33,7 +37,7 @@ class AnnotationTypePickerDialog(StyledDialogBase):
             object_name="AnnotationPanelScroll",
             horizontal_policy=Qt.ScrollBarAlwaysOff,
             min_height=180,
-            max_height=360,
+            max_height=330,
         )
 
         host = QWidget()
@@ -43,21 +47,17 @@ class AnnotationTypePickerDialog(StyledDialogBase):
         groups_layout.setSpacing(8)
 
         for group_name, group_items in self._grouped_items():
-            title = QLabel(group_name)
-            title.setObjectName("AnnotationGroupTitle")
-            groups_layout.addWidget(title)
-
-            grid_holder = QWidget()
-            grid = QGridLayout(grid_holder)
-            grid.setContentsMargins(0, 0, 0, 0)
-            grid.setHorizontalSpacing(6)
-            grid.setVerticalSpacing(6)
+            section = AnnotationGroupSection(
+                group_name,
+                self._group_expanded.get(group_name, True),
+                columns=self._COLUMNS,
+                parent=host,
+            )
+            section.expanded_changed.connect(self._set_group_expanded)
             for index, item in enumerate(group_items):
                 button = self._build_type_button(item)
-                grid.addWidget(button, index // self._COLUMNS, index % self._COLUMNS)
-            for column in range(self._COLUMNS):
-                grid.setColumnStretch(column, 1)
-            groups_layout.addWidget(grid_holder)
+                section.add_row(button, index)
+            groups_layout.addWidget(section)
 
         groups_layout.addStretch(1)
 
@@ -74,10 +74,15 @@ class AnnotationTypePickerDialog(StyledDialogBase):
         button = build_annotation_type_button(
             item,
             selected=bool(type_id and type_id == self._current_type_id),
-            min_height=30,
+            icon_size=None,
         )
         button.clicked.connect(lambda _checked=False, known_item=dict(item): self._select(known_item))
         return button
+
+    def _set_group_expanded(self, group_name: str, expanded: bool) -> None:
+        self._group_expanded[group_name] = bool(expanded)
+        if callable(self._group_expanded_changed):
+            self._group_expanded_changed(self._group_expanded)
 
     def _add_cancel_row(self) -> None:
         self.add_action_row(cancel_text=strings.ANNOTATION_TYPE_PICKER_CANCEL)

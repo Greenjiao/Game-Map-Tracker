@@ -4,6 +4,8 @@ import os
 import shutil
 import sys
 
+from config_defaults import CONFIG_VERSION, DEFAULT_CONFIG, OBSOLETE_CONFIG_KEYS
+
 # ==========================================
 # 核心黑科技：兼容 PyInstaller 打包后的路径寻找
 # ==========================================
@@ -15,7 +17,6 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
-CONFIG_VERSION = 2
 
 
 def app_path(*parts: str) -> str:
@@ -31,70 +32,6 @@ def resolve_app_path(path: str | os.PathLike[str] | None) -> str | None:
     if os.path.isabs(raw_path):
         return raw_path
     return app_path(raw_path)
-
-# ==========================================
-# 默认配置字典 (如果 JSON 文件丢失，用来兜底并重新生成)
-# ==========================================
-DEFAULT_CONFIG = {
-    "CONFIG_VERSION": CONFIG_VERSION,
-    # 首次启动时保持为空，强制弹出小地图校准器；保存后再写入真实坐标
-    "MINIMAP": {},
-    "WINDOW_GEOMETRY": {"x": 1418, "y": 0, "width": 420, "height": 360},
-    "LOCKED_VIEW_SIZE": {"width": 420, "height": 360},
-    "PAUSED_VIEW_SIZE": {"width": 820, "height": 500},
-    "SIDEBAR_COLLAPSED": True,
-    "SIDEBAR_WIDTH": 270,
-    "PAUSED_SIDEBAR_WIDTH": 270,
-    "VIEW_SIZE": 400,
-    "LOGIC_MAP_PATH": "big_map.png",
-    "MAX_LOST_FRAMES": 30,
-
-    "SIFT_REFRESH_RATE": 30,
-    "SIFT_CLAHE_LIMIT": 3.0,
-    "SIFT_MATCH_RATIO": 0.9,
-    "SIFT_MIN_MATCH_COUNT": 5,
-    "SIFT_RANSAC_THRESHOLD": 8.0,
-    "SIFT_LOCAL_SEARCH_RADIUS": 400,
-
-    "ROUTE_RECENT_LIMIT": 3,
-    "ROUTE_GUIDE_NODE_DISTANCE": 80,
-    "ROUTE_GUIDE_SEGMENT_DISTANCE": 35,
-    "ROUTE_GUIDE_POINTER_SPACING": 28,
-    "ROUTE_GUIDE_POINTER_SIZE": 10,
-    "ROUTE_MULTI_COLOR_ENABLED": True,
-    "ROUTE_DEFAULT_COLOR": "#1ad1ff",
-    "ROUTE_TELEPORT_LINE_COLOR": "#ffffff",
-    "ROUTE_GUIDE_LINE_COLOR": "#ffffff",
-    "ROUTE_POINTER_ARROW_COLOR": "#000000",
-    "ROUTE_POINTER_ARROW_VISIBLE": True,
-    "ROUTE_SPECIAL_LINES_FOLLOW_ROUTE_COLOR": False,
-    "ROUTE_STRICT_GUIDE_MODE": False,
-    "TOGGLE_LOCK_HOTKEY": {
-        "sequence": "Alt+`",
-        "label": "Alt+`",
-        "modifiers": ["Alt"],
-        "key": "QuoteLeft",
-        "vk": 0xC0,
-    },
-    "ROUTE_VISITED_POINT_OPACITY": 1.0,
-    "ROUTE_VISITED_ICON_OPACITY": 0.35,
-    "WINDOW_LOCKED_OPACITY": 0.78,
-    "WINDOW_NORMAL_OPACITY": 1.0,
-    "ROUTE_SECTION_EXPANDED": {},
-    "ANNOTATION_TYPE_IDS": [],
-    "ANNOTATION_RECENT_TYPE_IDS": [],
-    "APP_UPDATE_LAST_PROMPTED_VERSION": "",
-}
-OBSOLETE_CONFIG_KEYS = {
-    "QUARK_DOWNLOAD_URL",
-    "ROUTE_RESOURCE_URL",
-    "DOCUMENTATION_URL",
-    "FEEDBACK_BILIBILI_URL",
-    "FEEDBACK_QQ_GROUP",
-    "APP_UPDATE_MANIFEST_URL",
-    "APP_UPDATE_MANIFEST_URLS",
-}
-
 
 def _clone(value):
     return copy.deepcopy(value)
@@ -160,7 +97,12 @@ def _is_compatible_value(default_value, user_value) -> bool:
     return isinstance(user_value, type(default_value))
 
 
-def _merge_dict(defaults: dict, user_values: dict, prefix: str = "") -> tuple[dict, list[str]]:
+def _merge_dict(
+    defaults: dict,
+    user_values: dict,
+    prefix: str = "",
+    obsolete_config_keys: set[str] | None = None,
+) -> tuple[dict, list[str]]:
     """递归合并配置：新增字段用默认值，已有有效字段保留用户值。"""
     merged: dict = {}
     repaired: list[str] = []
@@ -174,7 +116,7 @@ def _merge_dict(defaults: dict, user_values: dict, prefix: str = "") -> tuple[di
         user_value = user_values[key]
         if isinstance(default_value, dict):
             if isinstance(user_value, dict):
-                child, child_repaired = _merge_dict(default_value, user_value, key_path)
+                child, child_repaired = _merge_dict(default_value, user_value, key_path, obsolete_config_keys)
                 merged[key] = child
                 repaired.extend(child_repaired)
             else:
@@ -191,7 +133,7 @@ def _merge_dict(defaults: dict, user_values: dict, prefix: str = "") -> tuple[di
     # 未知字段继续保留，列入废弃清单的旧字段会在合并时清理。
     for key, user_value in user_values.items():
         if key not in defaults:
-            if not prefix and key in OBSOLETE_CONFIG_KEYS:
+            if not prefix and obsolete_config_keys is not None and key in obsolete_config_keys:
                 repaired.append(str(key))
                 continue
             merged[key] = _clone(user_value)
@@ -199,7 +141,11 @@ def _merge_dict(defaults: dict, user_values: dict, prefix: str = "") -> tuple[di
     return merged, repaired
 
 
-def merge_config_payload(default_config: dict, user_config: dict | None) -> tuple[dict, list[str]]:
+def merge_config_payload(
+    default_config: dict,
+    user_config: dict | None,
+    obsolete_config_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+) -> tuple[dict, list[str]]:
     """合并默认配置和用户配置，返回 (合并后配置, 被修复字段列表)。"""
     if not isinstance(user_config, dict):
         merged = _clone(default_config)
@@ -207,12 +153,19 @@ def merge_config_payload(default_config: dict, user_config: dict | None) -> tupl
         return merged, ["<root>"]
 
     migrated = migrate_user_config(user_config)
-    merged, repaired = _merge_dict(default_config, migrated)
+    obsolete_keys = set(OBSOLETE_CONFIG_KEYS)
+    if obsolete_config_keys is not None:
+        obsolete_keys.update(str(key) for key in obsolete_config_keys)
+    merged, repaired = _merge_dict(default_config, migrated, obsolete_config_keys=obsolete_keys)
     merged["CONFIG_VERSION"] = int(default_config.get("CONFIG_VERSION", CONFIG_VERSION))
     return merged, repaired
 
 
-def merge_config_file(path: str = CONFIG_FILE, default_config: dict | None = None) -> dict:
+def merge_config_file(
+    path: str = CONFIG_FILE,
+    default_config: dict | None = None,
+    obsolete_config_keys: set[str] | list[str] | tuple[str, ...] | None = None,
+) -> dict:
     """读取、迁移、合并并写回 config.json。"""
     defaults = default_config or DEFAULT_CONFIG
     if not os.path.exists(path):
@@ -236,7 +189,7 @@ def merge_config_file(path: str = CONFIG_FILE, default_config: dict | None = Non
             print(f"重新生成配置文件失败: {write_error}")
         return merged
 
-    merged_config, repaired = merge_config_payload(defaults, user_config)
+    merged_config, repaired = merge_config_payload(defaults, user_config, obsolete_config_keys)
     if merged_config != user_config:
         _backup_config_file(path)
         try:
@@ -288,7 +241,7 @@ LOCKED_VIEW_SIZE = settings.get("LOCKED_VIEW_SIZE")
 PAUSED_VIEW_SIZE = settings.get("PAUSED_VIEW_SIZE")
 ROUTE_SECTION_EXPANDED = settings.get("ROUTE_SECTION_EXPANDED") or {}
 ANNOTATION_TYPE_IDS = settings.get("ANNOTATION_TYPE_IDS") or []
-ANNOTATION_RECENT_TYPE_IDS = settings.get("ANNOTATION_RECENT_TYPE_IDS") or []
+ANNOTATION_GROUP_EXPANDED = settings.get("ANNOTATION_GROUP_EXPANDED") or {}
 QUARK_DOWNLOAD_URL = ""
 ROUTE_RESOURCE_URL = ""
 DOCUMENTATION_URL = ""
@@ -296,6 +249,7 @@ FEEDBACK_BILIBILI_URL = ""
 FEEDBACK_QQ_GROUP = ""
 APP_UPDATE_MANIFEST_URLS = []
 APP_UPDATE_LAST_PROMPTED_VERSION = settings.get("APP_UPDATE_LAST_PROMPTED_VERSION") or ""
+APP_NOTICE_LAST_ACK_KEY = settings.get("APP_NOTICE_LAST_ACK_KEY") or ""
 
 
 def parse_window_geometry(raw) -> dict | None:
@@ -338,7 +292,6 @@ SIFT_MIN_MATCH_COUNT = settings.get("SIFT_MIN_MATCH_COUNT")
 SIFT_RANSAC_THRESHOLD = settings.get("SIFT_RANSAC_THRESHOLD")
 SIFT_LOCAL_SEARCH_RADIUS = settings.get("SIFT_LOCAL_SEARCH_RADIUS")
 
-ROUTE_RECENT_LIMIT = settings.get("ROUTE_RECENT_LIMIT")
 ROUTE_GUIDE_NODE_DISTANCE = settings.get("ROUTE_GUIDE_NODE_DISTANCE")
 ROUTE_GUIDE_SEGMENT_DISTANCE = settings.get("ROUTE_GUIDE_SEGMENT_DISTANCE")
 ROUTE_GUIDE_POINTER_SPACING = settings.get("ROUTE_GUIDE_POINTER_SPACING")

@@ -9,6 +9,7 @@ ANIMATION_MS = 220
 RECENT_ROUTES_MAX_HEIGHT = 100
 TRACKED_ROUTES_MAX_HEIGHT = 96
 ROUTES_LIST_MIN_HEIGHT = 160
+ANNOTATION_PANEL_SCROLL_HEIGHT = 330
 SIDEBAR_RAIL_WIDTH = 34
 MAXIMIZED_SIDEBAR_WIDTH = 360  # 最大化时侧边栏的默认固定宽度
 WINDOW_MIN_W = 420
@@ -260,6 +261,12 @@ QPushButton[headerButton="true"][compact="true"] {{
     font-size: 10px;
     border-radius: 7px;
 }}
+QPushButton[headerButton="true"][routePanelHeaderButton="true"] {{
+    min-height: {RECENT_ROUTE_ITEM_HEIGHT - 6}px;
+    max-height: {RECENT_ROUTE_ITEM_HEIGHT - 6}px;
+    padding: 2px 8px;
+    border-radius: 7px;
+}}
 QPushButton[headerButton="true"]:hover {{
     background: rgba(255, 255, 255, 0.18);
 }}
@@ -310,10 +317,27 @@ QPushButton#HeaderWindowButton {{
     padding: 0px;
     font-weight: 700;
 }}
+QPushButton#HeaderWindowButton[routePanelIconButton="true"] {{
+    min-width: {RECENT_ROUTE_ITEM_HEIGHT}px;
+    max-width: {RECENT_ROUTE_ITEM_HEIGHT}px;
+    min-height: {RECENT_ROUTE_ITEM_HEIGHT}px;
+    max-height: {RECENT_ROUTE_ITEM_HEIGHT}px;
+    padding: 0px;
+    border-radius: 7px;
+    font-size: 12px;
+}}
 QPushButton#HeaderActionButton,
 QPushButton#TopSidebarToggle {{
     padding: 0px 10px;
     font-size: 11px;
+    font-weight: 600;
+}}
+QPushButton#TrackedRoutesToggleButton {{
+    min-height: 18px;
+    max-height: 18px;
+    border-radius: 6px;
+    padding: 0px 5px;
+    font-size: 10px;
     font-weight: 600;
 }}
 QPushButton#HeaderWindowButton[iconRole="settings"] {{
@@ -386,26 +410,89 @@ QPushButton#SectionHeader[compact="true"] {{
     font-size: 10px;
     padding: 3px 8px;
 }}
+QPushButton#SectionHeader[sectionToggleOnly="true"] {{
+    min-width: 26px;
+    max-width: 26px;
+    padding: 0px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+}}
 QToolButton#SectionHeader:hover,
 QPushButton#SectionHeader:hover {{
     background: rgba(255, 255, 255, 0.14);
 }}
+QWidget#AnnotationGroupSection[annotationLayer="pulled"] {{
+    background: rgba(10, 132, 255, 0.075);
+    border: 1px solid rgba(80, 170, 255, 0.28);
+    border-radius: 10px;
+}}
+QWidget#AnnotationGroupSection[annotationLayer="custom"] {{
+    background: rgba(255, 214, 10, 0.065);
+    border: 1px solid rgba(255, 214, 10, 0.26);
+    border-radius: 10px;
+}}
+QWidget#AnnotationGroupBody[annotationLayer="pulled"] {{
+    background: rgba(10, 132, 255, 0.025);
+    border: none;
+}}
+QWidget#AnnotationGroupBody[annotationLayer="custom"] {{
+    background: rgba(255, 214, 10, 0.022);
+    border: none;
+}}
+QPushButton#SectionHeader[annotationLayer="pulled"] {{
+    background: rgba(10, 132, 255, 0.18);
+    border-color: rgba(80, 170, 255, 0.42);
+    border-left: 3px solid rgba(80, 170, 255, 0.88);
+    color: #d9ecff;
+    font-size: 11px;
+    font-weight: 700;
+    padding-left: 9px;
+}}
+QPushButton#SectionHeader[annotationLayer="custom"] {{
+    background: rgba(255, 214, 10, 0.15);
+    border-color: rgba(255, 214, 10, 0.36);
+    border-left: 3px solid rgba(255, 214, 10, 0.82);
+    color: #fff5c2;
+    font-size: 11px;
+    font-weight: 700;
+    padding-left: 9px;
+}}
+QPushButton#SectionHeader[annotationLayer="pulled"]:hover {{
+    background: rgba(10, 132, 255, 0.25);
+    border-color: rgba(110, 190, 255, 0.54);
+}}
+QPushButton#SectionHeader[annotationLayer="custom"]:hover {{
+    background: rgba(255, 214, 10, 0.22);
+    border-color: rgba(255, 224, 80, 0.50);
+}}
+QPushButton#SectionHeaderBatchButton,
 QPushButton#SectionHeaderAddButton {{
     background: transparent;
     color: {FG};
     border: none;
     border-left: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0px;
-    min-width: 30px;
-    max-width: 30px;
     padding: 0px;
     margin: 0px;
+}}
+QPushButton#SectionHeaderBatchButton {{
+    min-width: 42px;
+    max-width: 42px;
+    font-size: 10px;
+    font-weight: 600;
+}}
+QPushButton#SectionHeaderAddButton {{
+    min-width: 30px;
+    max-width: 30px;
     font-size: 14px;
     font-weight: 700;
 }}
+QPushButton#SectionHeaderBatchButton:hover,
 QPushButton#SectionHeaderAddButton:hover {{
     background: rgba(255, 255, 255, 0.10);
 }}
+QPushButton#SectionHeaderBatchButton:pressed,
 QPushButton#SectionHeaderAddButton:pressed {{
     background: rgba(255, 255, 255, 0.16);
 }}
@@ -417,6 +504,12 @@ QLineEdit {{
     padding: 7px 10px;
     font-size: 11px;
     selection-background-color: {ACCENT};
+}}
+QLineEdit[routePanelInput="true"] {{
+    min-height: {RECENT_ROUTE_ITEM_HEIGHT - 8}px;
+    max-height: {RECENT_ROUTE_ITEM_HEIGHT - 8}px;
+    border-radius: 7px;
+    padding: 3px 8px;
 }}
 QLineEdit:focus {{
     border: 1px solid rgba(10, 132, 255, 0.65);
@@ -692,17 +785,9 @@ QLabel#AnnotationPanelMessage {{
     color: {FG_DIM};
     font-size: 11px;
 }}
-QPushButton#AnnotationPanelToggle {{
-    min-height: 22px;
-    padding: 2px 8px;
-    border-radius: 8px;
-    color: {FG};
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-}}
 QPushButton#AnnotationPanelBulkButton {{
-    min-height: 22px;
-    padding: 2px 7px;
+    min-height: 18px;
+    padding: 0px 6px;
     border-radius: 8px;
     color: {FG};
     background: rgba(255, 255, 255, 0.06);
@@ -714,10 +799,10 @@ QPushButton#AnnotationPanelBulkButton:hover {{
     border-color: rgba(120, 180, 255, 0.35);
 }}
 QPushButton#AnnotationPanelClose {{
-    min-width: 24px;
-    max-width: 24px;
-    min-height: 24px;
-    max-height: 24px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
     padding: 0px;
     border-radius: 8px;
     color: {FG};

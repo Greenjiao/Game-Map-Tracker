@@ -5,9 +5,88 @@ from __future__ import annotations
 from pathlib import Path
 
 import config
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon, QPainter, QPixmap
-from PySide6.QtWidgets import QPushButton
+from PySide6.QtWidgets import QGridLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+
+
+class AnnotationGroupSection(QWidget):
+    expanded_changed = Signal(str, bool)
+
+    def __init__(
+        self,
+        group_name: str,
+        expanded: bool = True,
+        *,
+        columns: int = 2,
+        annotation_layer: str = "",
+        parent=None,
+    ) -> None:
+        super().__init__(parent)
+        self.group_name = group_name
+        self._expanded = bool(expanded)
+        self._columns = max(1, int(columns or 1))
+        self._annotation_layer = str(annotation_layer or "")
+        self.setObjectName("AnnotationGroupSection")
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        if self._annotation_layer:
+            self.setProperty("annotationLayer", self._annotation_layer)
+
+        layout = QVBoxLayout(self)
+        if self._annotation_layer:
+            layout.setContentsMargins(6, 6, 6, 6)
+        else:
+            layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        self.header = QPushButton(self)
+        self.header.setObjectName("SectionHeader")
+        self.header.setProperty("compact", True)
+        if self._annotation_layer:
+            self.header.setProperty("annotationLayer", self._annotation_layer)
+        self.header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.header.clicked.connect(self.toggle_expanded)
+        layout.addWidget(self.header)
+
+        self.body = QWidget(self)
+        self.body.setObjectName("AnnotationGroupBody")
+        if self._annotation_layer:
+            self.body.setProperty("annotationLayer", self._annotation_layer)
+        self.grid = QGridLayout(self.body)
+        self.grid.setContentsMargins(0, 0, 0, 0)
+        self.grid.setHorizontalSpacing(6)
+        self.grid.setVerticalSpacing(6)
+        for column in range(self._columns):
+            self.grid.setColumnStretch(column, 1)
+        layout.addWidget(self.body)
+
+        self._sync_state()
+
+    def add_row(self, row: QWidget, index: int) -> None:
+        self.grid.addWidget(row, index // self._columns, index % self._columns)
+
+    def toggle_expanded(self) -> None:
+        self.set_expanded(not self._expanded)
+
+    def set_expanded(self, expanded: bool) -> None:
+        expanded = bool(expanded)
+        if expanded == self._expanded:
+            return
+        self._expanded = expanded
+        self._sync_state()
+        self.expanded_changed.emit(self.group_name, self._expanded)
+
+    def is_expanded(self) -> bool:
+        return self._expanded
+
+    def _sync_state(self) -> None:
+        self.header.setText(f"{'▾' if self._expanded else '▸'} {self.group_name}")
+        self.header.setToolTip("收起分类" if self._expanded else "展开分类")
+        self.body.setVisible(self._expanded)
+        layout = self.layout()
+        if layout is not None:
+            layout.invalidate()
+        self.updateGeometry()
 
 
 def group_annotation_types(items: list[dict]) -> list[tuple[str, list[dict]]]:

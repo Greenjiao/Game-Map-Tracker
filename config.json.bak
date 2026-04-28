@@ -1,18 +1,28 @@
 {
     "CONFIG_VERSION": 2,
-    "MINIMAP": {},
-    "WINDOW_GEOMETRY": {},
+    "MINIMAP": {
+        "top": 65,
+        "left": 2301,
+        "width": 212,
+        "height": 212
+    },
+    "WINDOW_GEOMETRY": {
+        "x": 619,
+        "y": 54,
+        "width": 766,
+        "height": 500
+    },
     "LOCKED_VIEW_SIZE": {
         "width": 420,
-        "height": 360
+        "height": 380
     },
     "PAUSED_VIEW_SIZE": {
-        "width": 783,
-        "height": 510
+        "width": 766,
+        "height": 500
     },
     "SIDEBAR_COLLAPSED": false,
-    "SIDEBAR_WIDTH": 237,
-    "PAUSED_SIDEBAR_WIDTH": 237,
+    "SIDEBAR_WIDTH": 270,
+    "PAUSED_SIDEBAR_WIDTH": 230,
     "VIEW_SIZE": 400,
     "LOGIC_MAP_PATH": "big_map.png",
     "MAX_LOST_FRAMES": 30,
@@ -22,26 +32,39 @@
     "SIFT_MIN_MATCH_COUNT": 5,
     "SIFT_RANSAC_THRESHOLD": 8.0,
     "SIFT_LOCAL_SEARCH_RADIUS": 400,
-    "ROUTE_RECENT_LIMIT": 3,
-    "ROUTE_GUIDE_NODE_DISTANCE": 80,
-    "ROUTE_GUIDE_SEGMENT_DISTANCE": 35,
+    "ROUTE_GUIDE_NODE_DISTANCE": 40,
+    "ROUTE_GUIDE_SEGMENT_DISTANCE": 30,
     "ROUTE_GUIDE_POINTER_SPACING": 28,
     "ROUTE_GUIDE_POINTER_SIZE": 10,
     "ROUTE_MULTI_COLOR_ENABLED": true,
     "ROUTE_DEFAULT_COLOR": "#1ad1ff",
+    "ROUTE_TELEPORT_LINE_COLOR": "#ffffff",
+    "ROUTE_GUIDE_LINE_COLOR": "#ffffff",
+    "ROUTE_POINTER_ARROW_COLOR": "#000000",
+    "ROUTE_POINTER_ARROW_VISIBLE": true,
+    "ROUTE_SPECIAL_LINES_FOLLOW_ROUTE_COLOR": false,
+    "ROUTE_STRICT_GUIDE_MODE": false,
+    "TOGGLE_LOCK_HOTKEY": {
+        "sequence": "Alt+`",
+        "label": "Alt+`",
+        "modifiers": [
+            "Alt"
+        ],
+        "key": "QuoteLeft",
+        "vk": 192
+    },
     "ROUTE_VISITED_POINT_OPACITY": 1.0,
     "ROUTE_VISITED_ICON_OPACITY": 0.35,
     "WINDOW_LOCKED_OPACITY": 0.78,
     "WINDOW_NORMAL_OPACITY": 1.0,
     "ROUTE_SECTION_EXPANDED": {
-        "其他": true,
+        "其他": false,
         "地区路线": false,
         "植物": false,
         "矿物": false,
         "特定精灵球": false
     },
     "ANNOTATION_TYPE_IDS": [
-        "17310030001",
         "17310030002",
         "17310030004",
         "17310030005",
@@ -62,10 +85,8 @@
         "17310030021",
         "17310030022",
         "17310030023",
-        "17310030024",
         "17310030025",
         "17310030026",
-        "17310030027",
         "17310030028",
         "17310030029",
         "17310030030",
@@ -116,23 +137,24 @@
         "17310030077",
         "17310030078",
         "17310030079",
-        "17310030080",
-        "17310030081",
-        "17310030082"
-    ],
-    "ANNOTATION_RECENT_TYPE_IDS": [
-        "17310030005",
-        "17310030001",
-        "17310030031",
-        "17310030004",
-        "17310030072",
-        "17310030045",
-        "17310030044",
-        "17310030043",
-        "17310030046",
-        "17310030028",
+        "17310030082",
         "17310030027",
-        "17310030030"
+        "17310030001",
+        "17310030024",
+        "17310030081",
+        "17310030080"
     ],
-    "APP_UPDATE_LAST_PROMPTED_VERSION": "0.1.0"
+    "ANNOTATION_GROUP_EXPANDED": {
+        "地点": false,
+        "花草": false,
+        "精灵": false,
+        "果树": false,
+        "收集": false,
+        "其他": false,
+        "任务": false,
+        "矿石": false,
+        "标注": false,
+        "标注方案预设": false
+    },
+    "APP_UPDATE_LAST_PROMPTED_VERSION": "0.1.1"
 }

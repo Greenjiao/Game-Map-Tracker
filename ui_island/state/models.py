@@ -39,7 +39,6 @@ class WindowLayoutPrefs:
 
 @dataclass
 class RoutePanelState:
-    recent_route_names: list[str] = field(default_factory=list)
     route_checkboxes: dict[str, list[QCheckBox]] = field(default_factory=dict)
     route_widgets_by_category: dict[str, list[tuple[str, object]]] = field(default_factory=dict)
     route_sections: dict[str, object] = field(default_factory=dict)

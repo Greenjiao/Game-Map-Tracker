@@ -20,7 +20,7 @@ class InteractionController:
 
     def nested_sidebar_scroll_area(self, widget: QWidget | None) -> QScrollArea | None:
         current = widget
-        targets = (self.window.recent_scroll, self.window.routes_scroll)
+        targets = (self.window.routes_scroll,)
         while current is not None:
             if current in targets:
                 return current

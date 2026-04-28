@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -31,7 +30,7 @@ from ..dialogs.settings_dialog import styled_confirm, styled_info
 from ..dialogs.text_input_dialog import prompt_text_input
 from ..widgets import ElidedCheckBox, RouteListItem, RouteSection, TrackedRouteItem
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
-from ..widgets.factory import make_header_icon_button
+from ..widgets.factory import make_route_panel_icon_button, make_route_panel_line_edit
 from ..widgets.node_type_popup import normalize_node_type, show_node_type_popup
 
 
@@ -50,25 +49,35 @@ class RoutePanelController:
         self.window = window
         self.state = window.route_panel_state
 
-    def save_recent_routes(self) -> None:
-        self.window.recent_routes_store.save(self.window._recent_route_names)
-
-    def remember_recent_route(self, route_id: str) -> None:
-        recent_route_names = self.window._recent_route_names
-        if route_id in recent_route_names:
-            recent_route_names.remove(route_id)
-        recent_route_names.insert(0, route_id)
-        self.save_recent_routes()
-
-    def remove_recent_route_name(self, route_id: str) -> None:
-        self.window._recent_route_names[:] = [
-            known_route_id for known_route_id in self.window._recent_route_names if known_route_id != route_id
-        ]
-        self.save_recent_routes()
-
     @staticmethod
     def matches_route(route_name: str, term: str) -> bool:
         return not term or term in route_name.casefold()
+
+    @staticmethod
+    def route_checkbox_stylesheet(route_color: tuple[int, int, int]) -> str:
+        b, g, r = [max(0, min(255, int(channel))) for channel in route_color]
+        return f"""
+QCheckBox::indicator:checked {{
+    background: rgb({r}, {g}, {b});
+    border: 1px solid rgb({r}, {g}, {b});
+}}
+QCheckBox::indicator:checked:hover {{
+    background: rgb({r}, {g}, {b});
+    border: 1px solid rgb({r}, {g}, {b});
+}}
+"""
+
+    def apply_route_checkbox_color(self, checkbox: QCheckBox, route_id: str) -> None:
+        if not route_id:
+            return
+        checkbox.setStyleSheet(self.route_checkbox_stylesheet(self.window.route_mgr.color_for(route_id)))
+
+    def refresh_route_checkbox_colors(self) -> None:
+        for route_id, checkboxes in list(self.window._route_checkboxes.items()):
+            if not route_id:
+                continue
+            for checkbox in list(checkboxes):
+                self.apply_route_checkbox_color(checkbox, route_id)
 
     def resolve_route_section_expanded(self, category: str) -> bool:
         return bool(self.window._route_section_expanded.get(category, False))
@@ -97,26 +106,23 @@ class RoutePanelController:
         row_layout.setContentsMargins(8, 8, 8, 8)
         row_layout.setSpacing(6)
 
-        add_category_input = QLineEdit()
-        add_category_input.setPlaceholderText(strings.ROUTE_ADD_CATEGORY_PLACEHOLDER)
+        add_category_input = make_route_panel_line_edit(placeholder=strings.ROUTE_ADD_CATEGORY_PLACEHOLDER)
         add_category_input.returnPressed.connect(self.confirm_add_category)
         add_category_input.editingFinished.connect(self.queue_cancel_add_category_if_needed)
         row_layout.addWidget(add_category_input, stretch=1)
 
-        add_category_confirm_btn = make_header_icon_button(
+        add_category_confirm_btn = make_route_panel_icon_button(
             "✓",
             role="confirm",
             tooltip=strings.ROUTE_ADD_CATEGORY_CONFIRM,
-            width=30,
         )
         add_category_confirm_btn.clicked.connect(self.confirm_add_category)
         row_layout.addWidget(add_category_confirm_btn)
 
-        add_category_cancel_btn = make_header_icon_button(
+        add_category_cancel_btn = make_route_panel_icon_button(
             "×",
             role="close",
             tooltip=strings.ROUTE_ADD_CATEGORY_CANCEL,
-            width=30,
         )
         add_category_cancel_btn.clicked.connect(self.cancel_add_category)
         row_layout.addWidget(add_category_cancel_btn)
@@ -139,6 +145,12 @@ class RoutePanelController:
                 lambda global_pos, cat=category: self.show_category_context_menu(cat, global_pos)
             )
 
+            section.select_all_btn.clicked.connect(
+                lambda _checked=False, cat=category: self.set_category_routes_visibility(cat, "select_all")
+            )
+            section.invert_select_btn.clicked.connect(
+                lambda _checked=False, cat=category: self.set_category_routes_visibility(cat, "invert")
+            )
             section.add_route_btn.clicked.connect(
                 lambda _checked=False, cat=category: self.show_add_route_row(cat)
             )
@@ -200,15 +212,6 @@ class RoutePanelController:
         self.remember_route_section_states_from_widgets()
         self.cancel_active_route_rename()
         self.window.route_mgr.reload()
-        known_routes = {
-            self.window.route_mgr.route_id(route)
-            for routes in self.window.route_mgr.route_groups.values()
-            for route in routes
-        }
-        self.window._recent_route_names[:] = [
-            route_id for route_id in self.window._recent_route_names if route_id in known_routes
-        ]
-        self.save_recent_routes()
         self.window._route_section_expanded = {
             category: expanded
             for category, expanded in self.window._route_section_expanded.items()
@@ -224,6 +227,7 @@ class RoutePanelController:
         route_id = self.window.route_mgr.route_id(route)
         name = route.get("display_name", "")
         route_item = RouteListItem(category, route_id, name, self.window.route_mgr.visibility.get(route_id, False))
+        self.apply_route_checkbox_color(route_item.checkbox, route_id)
         route_item.checkbox.toggled.connect(
             lambda enabled, known_route_id=route_id, source=route_item.checkbox: self.toggle_route(known_route_id, enabled, source)
         )
@@ -1005,6 +1009,7 @@ class RoutePanelController:
         checkbox.setMinimumHeight(theme.RECENT_ROUTE_ITEM_HEIGHT)
         checkbox.setProperty("routeId", route_id)
         checkbox.setChecked(self.window.route_mgr.visibility.get(route_id, False))
+        self.apply_route_checkbox_color(checkbox, route_id)
         checkbox.toggled.connect(
             lambda enabled, known_route_id=route_id, source=checkbox: self.toggle_route(known_route_id, enabled, source)
         )
@@ -1085,14 +1090,6 @@ class RoutePanelController:
     def delete_route(self, category: str, name: str) -> None:
         if not self.confirm_exit_route_drawing():
             return
-        route_id = next(
-            (
-                self.window.route_mgr.route_id(route)
-                for route in self.window.route_mgr.route_groups.get(category, [])
-                if route.get("display_name") == name
-            ),
-            None,
-        )
         confirmed = styled_confirm(
             self.window,
             strings.ROUTE_DELETE_TITLE,
@@ -1104,8 +1101,6 @@ class RoutePanelController:
             return
         if not self.window.route_mgr.delete_route(category, name):
             return
-        if route_id:
-            self.remove_recent_route_name(route_id)
         self.cancel_active_route_rename()
         self.reload_route_list()
 
@@ -1170,16 +1165,6 @@ class RoutePanelController:
                 strings.ROUTE_CATEGORY_OPEN_FILE_LOCATION_FAILED.format(name=category),
             )
 
-    def remove_recent_widgets(self) -> None:
-        while self.window.recent_routes_layout.count():
-            item = self.window.recent_routes_layout.takeAt(0)
-            widget = item.widget()
-            if widget is None:
-                continue
-            if isinstance(widget, QCheckBox):
-                self.unregister_route_checkbox(self.route_checkbox_name(widget), widget)
-            widget.deleteLater()
-
     def remove_tracked_route_widgets(self) -> None:
         while self.window.tracked_routes_grid.count():
             item = self.window.tracked_routes_grid.takeAt(0)
@@ -1190,48 +1175,6 @@ class RoutePanelController:
             if checkbox is not None:
                 self.unregister_route_checkbox(self.route_checkbox_name(checkbox), checkbox)
             widget.deleteLater()
-
-    def refresh_recent_routes(self) -> None:
-        self.remove_recent_widgets()
-
-        search_term = self.window.search_input.text().strip().casefold()
-        recent_routes = [
-            (route_id, self.window.route_mgr.route_name_for_id(route_id))
-            for route_id in self.window._recent_route_names
-            if self.window.route_mgr.route_name_for_id(route_id)
-        ]
-        recent_routes = [
-            (route_id, route_name)
-            for route_id, route_name in recent_routes
-            if self.matches_route(route_name, search_term)
-        ]
-        if self.window._recent_limit:
-            recent_routes = recent_routes[: self.window._recent_limit]
-        else:
-            recent_routes = []
-
-        if recent_routes:
-            for route_id, route_name in recent_routes:
-                self.window.recent_routes_layout.addWidget(self.create_route_checkbox(route_id, route_name))
-        else:
-            hint = QLabel(strings.ROUTE_EMPTY_RECENT)
-            hint.setObjectName("EmptyHint")
-            hint.setMinimumHeight(theme.RECENT_ROUTE_ITEM_HEIGHT)
-            hint.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
-            self.window.recent_routes_layout.addWidget(hint)
-        self.window.recent_routes_layout.addStretch()
-        self.window.recent_scroll_inner.adjustSize()
-        self.sync_recent_scroll_height(len(recent_routes) if recent_routes else 1)
-
-    def sync_recent_scroll_height(self, item_count: int) -> None:
-        rows = max(1, item_count)
-        spacing = self.window.recent_routes_layout.spacing()
-        content_height = rows * theme.RECENT_ROUTE_ITEM_HEIGHT + max(0, rows - 1) * spacing
-        target_height = min(theme.RECENT_ROUTES_MAX_HEIGHT, content_height)
-        self.window.recent_scroll.setFixedHeight(target_height)
-        card_height = target_height + theme.RECENT_ROUTE_CARD_PADDING
-        self.window.recent_card.setMinimumHeight(card_height)
-        self.window.recent_card.setMaximumHeight(card_height)
 
     def unregister_route_checkbox(self, route_id: str, checkbox: QCheckBox) -> None:
         widgets = self.window._route_checkboxes.get(route_id)
@@ -1244,18 +1187,50 @@ class RoutePanelController:
 
     def toggle_route(self, route_id: str, enabled: bool, source: QCheckBox) -> None:
         self.window.route_mgr.visibility[route_id] = enabled
-        if enabled:
-            self.remember_recent_route(route_id)
         self.window.route_mgr.save_visibility()
         self.sync_route_checkboxes(route_id, enabled, source)
         self.refresh_tracked_routes()
-        self.refresh_recent_routes()
         try:
             self.window.map_view._refresh_from_last_frame()
         except Exception:
             pass
 
-    def sync_route_checkboxes(self, route_id: str, enabled: bool, source: QCheckBox) -> None:
+    def set_category_routes_visibility(self, category: str, mode: str) -> None:
+        route_widgets = self.window._route_widgets_by_category.get(category, [])
+        changed_route_ids: list[str] = []
+
+        for route_id, _route_name, _route_item in route_widgets:
+            if not route_id:
+                continue
+            current = bool(self.window.route_mgr.visibility.get(route_id, False))
+            if mode == "select_all":
+                enabled = True
+            elif mode == "invert":
+                enabled = not current
+            else:
+                return
+            if enabled == current:
+                continue
+            self.window.route_mgr.visibility[route_id] = enabled
+            changed_route_ids.append(route_id)
+
+        if not changed_route_ids:
+            return
+
+        self.window.route_mgr.save_visibility()
+        for route_id in changed_route_ids:
+            self.sync_route_checkboxes(
+                route_id,
+                bool(self.window.route_mgr.visibility.get(route_id, False)),
+                None,
+            )
+        self.refresh_tracked_routes()
+        try:
+            self.window.map_view._refresh_from_last_frame()
+        except Exception:
+            pass
+
+    def sync_route_checkboxes(self, route_id: str, enabled: bool, source: QCheckBox | None) -> None:
         for checkbox in list(self.window._route_checkboxes.get(route_id, [])):
             if checkbox is source:
                 continue
@@ -1278,6 +1253,7 @@ class RoutePanelController:
                     self.window.route_mgr.visibility.get(route_id, False),
                     self.window.route_mgr.has_progress(route_id),
                 )
+                self.apply_route_checkbox_color(route_item.checkbox, route_id)
                 route_item.checkbox.toggled.connect(
                     lambda enabled, known_route_id=route_id, source=route_item.checkbox: self.toggle_route(known_route_id, enabled, source)
                 )
@@ -1427,20 +1403,43 @@ class RoutePanelController:
             show_dialog=False,
         )
 
+    def toggle_tracked_routes_collapsed(self, _checked: bool = False) -> None:
+        self.set_tracked_routes_collapsed(not bool(getattr(self.window, "tracked_routes_collapsed", False)))
+
+    def set_tracked_routes_collapsed(self, collapsed: bool) -> None:
+        self.window.tracked_routes_collapsed = bool(collapsed)
+        button = getattr(self.window, "tracked_routes_toggle_btn", None)
+        if button is not None:
+            if collapsed:
+                button.setText("▸")
+                button.setToolTip("展开当前追踪路线")
+            else:
+                button.setText("▾")
+                button.setToolTip("收起当前追踪路线")
+        self.sync_tracked_routes_height(len(self.window.route_mgr.visible_routes()))
+        self.window.window_mode_controller.schedule_layout_refresh()
+
     def sync_tracked_routes_height(self, item_count: int) -> None:
         fit_hint = getattr(self.window, "_fit_route_guide_hint_width", None)
         if callable(fit_hint):
             fit_hint()
-        rows = max(1, (max(1, item_count) + 1) // 2)
-        spacing = self.window.tracked_routes_grid.verticalSpacing()
-        content_height = rows * theme.RECENT_ROUTE_ITEM_HEIGHT + max(0, rows - 1) * spacing
-        target_height = min(theme.TRACKED_ROUTES_MAX_HEIGHT, content_height)
-        self.window.tracked_routes_scroll.setFixedHeight(target_height)
+        collapsed = bool(getattr(self.window, "tracked_routes_collapsed", False))
+        if collapsed:
+            self.window.tracked_routes_scroll.hide()
+            self.window.tracked_routes_scroll.setFixedHeight(0)
+            target_height = 0
+        else:
+            self.window.tracked_routes_scroll.show()
+            rows = max(1, (max(1, item_count) + 1) // 2)
+            spacing = self.window.tracked_routes_grid.verticalSpacing()
+            content_height = rows * theme.RECENT_ROUTE_ITEM_HEIGHT + max(0, rows - 1) * spacing
+            target_height = min(theme.TRACKED_ROUTES_MAX_HEIGHT, content_height)
+            self.window.tracked_routes_scroll.setFixedHeight(target_height)
         margins = self.window.tracked_routes_layout.contentsMargins()
         card_height = (
             margins.top()
             + self.window.tracked_routes_header.sizeHint().height()
-            + self.window.tracked_routes_layout.spacing()
+            + (0 if collapsed else self.window.tracked_routes_layout.spacing())
             + target_height
             + margins.bottom()
         )
@@ -1459,4 +1458,3 @@ class RoutePanelController:
                     visible_count += 1
             section.setVisible((not has_search) or visible_count > 0)
             section.set_force_open(has_search and visible_count > 0)
-        self.refresh_recent_routes()

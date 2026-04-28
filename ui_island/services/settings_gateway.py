@@ -35,9 +35,6 @@ class SettingsGateway:
     def get_paused_view_size(self):
         return getattr(config, "PAUSED_VIEW_SIZE", None)
 
-    def get_route_recent_limit(self) -> int:
-        return max(0, int(getattr(config, "ROUTE_RECENT_LIMIT", 5) or 0))
-
     def get_toggle_lock_hotkey(self):
         return getattr(config, "TOGGLE_LOCK_HOTKEY", None)
 
@@ -64,8 +61,11 @@ class SettingsGateway:
     def get_annotation_type_ids(self) -> list[str]:
         return normalize_type_ids(getattr(config, "ANNOTATION_TYPE_IDS", []))
 
-    def get_annotation_recent_type_ids(self) -> list[str]:
-        return normalize_type_ids(getattr(config, "ANNOTATION_RECENT_TYPE_IDS", []))
+    def get_annotation_group_expanded(self) -> dict[str, bool]:
+        raw = getattr(config, "ANNOTATION_GROUP_EXPANDED", None)
+        if not isinstance(raw, dict):
+            return {}
+        return {str(name): bool(expanded) for name, expanded in raw.items()}
 
     def get_tracker_refresh_rate(self, tracker) -> int:
         return int(config.SIFT_REFRESH_RATE)

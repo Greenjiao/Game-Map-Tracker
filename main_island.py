@@ -33,11 +33,6 @@ def _minimap_is_configured() -> bool:
     except (KeyError, TypeError, ValueError):
         return False
     return width > 0 and height > 0 and top >= 0 and left >= 0
-
-def temp_test_update():
-    """临时代码：测试重新打包后的更新进度条功能"""
-    def update():
-        print(">>> 更新了！")
         
 def main() -> int:
     os.chdir(config.BASE_DIR)

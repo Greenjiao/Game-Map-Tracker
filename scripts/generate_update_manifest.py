@@ -16,7 +16,6 @@ from urllib.parse import quote
 PROTECTED_USER_FILES = {
     "routes/progress.json",
     "routes/selected_routes.json",
-    "routes/recent_routes.json",
     "tools/points_get/.cache_17173_locations.json",
 }
 PROTECTED_USER_PREFIXES = (
@@ -37,6 +36,10 @@ RUNTIME_CONFIG_STRING_KEYS = (
     "FEEDBACK_QQ_GROUP",
 )
 RUNTIME_CONFIG_LIST_KEYS = ("APP_UPDATE_MANIFEST_URLS",)
+APP_STATUS_NORMAL = "normal"
+APP_STATUS_NOTICE = "notice"
+APP_STATUS_DISABLED = "disabled"
+APP_STATUS_VALUES = {APP_STATUS_NORMAL, APP_STATUS_NOTICE, APP_STATUS_DISABLED}
 
 
 def default_runtime_config_path() -> Path:
@@ -122,6 +125,11 @@ def load_runtime_config(path: Path | str | None) -> dict:
     return sanitize_runtime_config(payload)
 
 
+def sanitize_app_status(value: str) -> str:
+    status = str(value or APP_STATUS_NORMAL).strip().lower()
+    return status if status in APP_STATUS_VALUES else APP_STATUS_NORMAL
+
+
 def build_manifest(
     root: Path,
     *,
@@ -131,10 +139,16 @@ def build_manifest(
     requires_launcher_update: bool,
     prompt_update: bool,
     force_update_prompt: bool,
+    app_status: str = APP_STATUS_NORMAL,
+    app_status_message: str = "",
+    app_notice_force_prompt: bool = False,
     runtime_config_path: Path | str | None = None,
+    obsolete_config_keys: list[str] | tuple[str, ...] | None = None,
 ) -> dict:
     files = []
     normalized_base_url = normalize_base_url(base_url)
+    clean_app_status = sanitize_app_status(app_status)
+    clean_app_status_message = str(app_status_message or "").strip() if clean_app_status != APP_STATUS_NORMAL else ""
     for path, rel in iter_release_files(root):
         item = {
             "path": rel,
@@ -149,6 +163,9 @@ def build_manifest(
     manifest = {
         "version": version,
         "notes": notes,
+        "app_status": clean_app_status,
+        "app_status_message": clean_app_status_message,
+        "app_notice_force_prompt": app_notice_force_prompt is True,
         "requires_launcher_update": bool(requires_launcher_update),
         "prompt_update": bool(prompt_update),
         "force_update_prompt": bool(force_update_prompt),
@@ -158,6 +175,18 @@ def build_manifest(
     runtime_config = load_runtime_config(runtime_config_path)
     if runtime_config:
         manifest["runtime_config"] = runtime_config
+    clean_obsolete_keys: list[str] = []
+    seen_obsolete_keys: set[str] = set()
+    for item in obsolete_config_keys or []:
+        key = str(item or "").strip()
+        if not key or key in seen_obsolete_keys:
+            continue
+        if not key.replace("_", "").isalnum() or key[0].isdigit():
+            continue
+        seen_obsolete_keys.add(key)
+        clean_obsolete_keys.append(key)
+    if clean_obsolete_keys:
+        manifest["obsolete_config_keys"] = clean_obsolete_keys
     return manifest
 
 
@@ -184,6 +213,22 @@ def main(argv: list[str] | None = None) -> int:
         help="启动后检测到此更新时强制弹窗提示，绕过同版本已提示记录",
     )
     parser.add_argument(
+        "--app-status",
+        choices=sorted(APP_STATUS_VALUES),
+        default=APP_STATUS_NORMAL,
+        help="启动公告状态：normal/notice/disabled。",
+    )
+    parser.add_argument(
+        "--app-status-message",
+        default="",
+        help="notice 或 disabled 时显示给用户的说明文字。",
+    )
+    parser.add_argument(
+        "--app-notice-force-prompt",
+        action="store_true",
+        help="app_status=notice 时每次启动都弹窗显示公告。",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         default="app-manifest.json",
@@ -193,6 +238,12 @@ def main(argv: list[str] | None = None) -> int:
         "--runtime-config",
         default=str(default_runtime_config_path()),
         help="运行时配置 JSON 路径，默认读取当前用户桌面的 runtime_config.json。",
+    )
+    parser.add_argument(
+        "--obsolete-config-key",
+        action="append",
+        default=[],
+        help="可重复：声明更新安装时应从用户 config.json 清理的废弃配置键。",
     )
     args = parser.parse_args(argv)
 
@@ -208,7 +259,11 @@ def main(argv: list[str] | None = None) -> int:
         requires_launcher_update=args.requires_launcher_update,
         prompt_update=args.prompt_update,
         force_update_prompt=args.force_update_prompt,
+        app_status=args.app_status,
+        app_status_message=args.app_status_message,
+        app_notice_force_prompt=args.app_notice_force_prompt,
         runtime_config_path=args.runtime_config,
+        obsolete_config_keys=args.obsolete_config_key,
     )
     output = Path(args.output)
     output.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

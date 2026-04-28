@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -18,7 +17,7 @@ from PySide6.QtWidgets import (
 from base import TrackState
 
 from ..design import strings, tokens
-from .factory import make_header_icon_button
+from .factory import make_route_panel_icon_button, make_route_panel_line_edit
 
 
 class StatusDot(QWidget):
@@ -78,6 +77,22 @@ class RouteSection(QWidget):
         self.header_label.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         header_button_layout.addWidget(self.header_label, stretch=1)
 
+        self.select_all_btn = QPushButton("全选", self.header)
+        self.select_all_btn.setObjectName("SectionHeaderBatchButton")
+        self.select_all_btn.setProperty("compact", True)
+        self.select_all_btn.setToolTip("选中当前分类所有路线")
+        self.select_all_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.select_all_btn.setFixedWidth(42)
+        header_button_layout.addWidget(self.select_all_btn)
+
+        self.invert_select_btn = QPushButton("反选", self.header)
+        self.invert_select_btn.setObjectName("SectionHeaderBatchButton")
+        self.invert_select_btn.setProperty("compact", True)
+        self.invert_select_btn.setToolTip("反转当前分类路线选中状态")
+        self.invert_select_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.invert_select_btn.setFixedWidth(42)
+        header_button_layout.addWidget(self.invert_select_btn)
+
         self.add_route_btn = QPushButton("+", self.header)
         self.add_route_btn.setObjectName("SectionHeaderAddButton")
         self.add_route_btn.setProperty("compact", True)
@@ -104,11 +119,13 @@ class RouteSection(QWidget):
         add_row_layout.setContentsMargins(0, 0, 0, 0)
         add_row_layout.setSpacing(6)
 
-        self.add_route_input = QLineEdit(self.add_route_row)
-        self.add_route_input.setPlaceholderText("输入路线名称...")
+        self.add_route_input = make_route_panel_line_edit(
+            placeholder="输入路线名称...",
+            parent=self.add_route_row,
+        )
         add_row_layout.addWidget(self.add_route_input, stretch=1)
 
-        self.add_route_confirm_btn = make_header_icon_button(
+        self.add_route_confirm_btn = make_route_panel_icon_button(
             "✓",
             role="confirm",
             tooltip="确认创建路线",
@@ -116,7 +133,7 @@ class RouteSection(QWidget):
         )
         add_row_layout.addWidget(self.add_route_confirm_btn)
 
-        self.add_route_cancel_btn = make_header_icon_button(
+        self.add_route_cancel_btn = make_route_panel_icon_button(
             "×",
             role="close",
             tooltip="取消新建路线",
@@ -127,7 +144,7 @@ class RouteSection(QWidget):
         self.body_layout.addWidget(self.add_route_row)
 
         layout.addWidget(self.body)
-        for widget in (self.header, self.add_route_btn):
+        for widget in (self.header, self.select_all_btn, self.invert_select_btn, self.add_route_btn):
             widget.setContextMenuPolicy(Qt.CustomContextMenu)
             widget.customContextMenuRequested.connect(
                 lambda pos, source=widget: self.context_menu_requested.emit(source.mapToGlobal(pos))
@@ -258,13 +275,15 @@ class RouteListItem(QWidget):
         edit_layout.setContentsMargins(0, 0, 0, 0)
         edit_layout.setSpacing(6)
 
-        self.rename_input = QLineEdit(self.edit_row)
-        self.rename_input.setPlaceholderText(strings.ROUTE_RENAME_PLACEHOLDER)
-        self.rename_input.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+        self.rename_input = make_route_panel_line_edit(
+            placeholder=strings.ROUTE_RENAME_PLACEHOLDER,
+            parent=self.edit_row,
+            size_policy=(QSizePolicy.Ignored, QSizePolicy.Fixed),
+        )
         self.rename_input.setMinimumWidth(0)
         edit_layout.addWidget(self.rename_input, stretch=1)
 
-        self.rename_confirm_btn = make_header_icon_button(
+        self.rename_confirm_btn = make_route_panel_icon_button(
             "✓",
             role="confirm",
             tooltip=strings.ROUTE_RENAME_CONFIRM,
@@ -272,7 +291,7 @@ class RouteListItem(QWidget):
         )
         edit_layout.addWidget(self.rename_confirm_btn)
 
-        self.rename_cancel_btn = make_header_icon_button(
+        self.rename_cancel_btn = make_route_panel_icon_button(
             "×",
             role="close",
             tooltip=strings.ROUTE_RENAME_CANCEL,
@@ -361,8 +380,7 @@ class TrackedRouteItem(QWidget):
         layout.addWidget(self.checkbox, stretch=1)
 
         self.reset_btn = QPushButton("重置进度", self)
-        self.reset_btn.setProperty("headerButton", True)
-        self.reset_btn.setProperty("compact", True)
+        self.reset_btn.setObjectName("TrackedRoutesToggleButton")
         self.reset_btn.setToolTip("从第一个节点重新开始当前路线")
         self.reset_btn.setVisible(has_progress)
         layout.addWidget(self.reset_btn, alignment=Qt.AlignVCenter)

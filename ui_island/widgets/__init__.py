@@ -1,5 +1,6 @@
 from .annotation_panel import AnnotationPanel
 from .annotation_type_widgets import (
+    AnnotationGroupSection,
     annotation_icon_path,
     annotation_type_button_text,
     build_annotation_type_button,
@@ -12,6 +13,7 @@ from .route_widgets import ElidedCheckBox, RouteListItem, RouteSection, StatusDo
 
 __all__ = [
     "AnnotationPanel",
+    "AnnotationGroupSection",
     "ContextMenuItem",
     "ElidedCheckBox",
     "RestoreIcon",

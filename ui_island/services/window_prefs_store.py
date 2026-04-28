@@ -33,16 +33,18 @@ class WindowPrefsStore:
     def load_annotation_type_ids(self) -> list[str]:
         return self._gateway.get_annotation_type_ids()
 
-    def load_annotation_recent_type_ids(self) -> list[str]:
-        return self._gateway.get_annotation_recent_type_ids()
+    def load_annotation_group_expanded(self) -> dict[str, bool]:
+        return self._gateway.get_annotation_group_expanded()
 
-    def save_annotation_preferences(self, type_ids: list[str], recent_type_ids: list[str]) -> None:
+    def save_annotation_preferences(self, type_ids: list[str]) -> None:
         self._gateway.save(
             {
                 "ANNOTATION_TYPE_IDS": type_ids,
-                "ANNOTATION_RECENT_TYPE_IDS": recent_type_ids,
             }
         )
+
+    def save_annotation_group_expanded(self, expanded: dict[str, bool]) -> None:
+        self._gateway.save({"ANNOTATION_GROUP_EXPANDED": expanded})
 
     def save_route_section_expanded(self, expanded: dict[str, bool]) -> None:
         self._gateway.save({"ROUTE_SECTION_EXPANDED": expanded})

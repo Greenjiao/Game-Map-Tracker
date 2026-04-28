@@ -183,6 +183,27 @@ class ConfigMergeTests(unittest.TestCase):
         self.assertEqual(merged["TOGGLE_LOCK_HOTKEY"], config.DEFAULT_CONFIG["TOGGLE_LOCK_HOTKEY"])
         self.assertIn("TOGGLE_LOCK_HOTKEY", repaired)
 
+    def test_annotation_group_expanded_is_merged_and_repaired(self) -> None:
+        merged, _repaired = config.merge_config_payload(config.DEFAULT_CONFIG, {"CONFIG_VERSION": 2})
+
+        self.assertEqual(merged["ANNOTATION_GROUP_EXPANDED"], {})
+
+        merged, repaired = config.merge_config_payload(
+            config.DEFAULT_CONFIG,
+            {"CONFIG_VERSION": 2, "ANNOTATION_GROUP_EXPANDED": {"采集物": False}},
+        )
+
+        self.assertEqual(repaired, [])
+        self.assertEqual(merged["ANNOTATION_GROUP_EXPANDED"], {"采集物": False})
+
+        merged, repaired = config.merge_config_payload(
+            config.DEFAULT_CONFIG,
+            {"CONFIG_VERSION": 2, "ANNOTATION_GROUP_EXPANDED": []},
+        )
+
+        self.assertEqual(merged["ANNOTATION_GROUP_EXPANDED"], {})
+        self.assertIn("ANNOTATION_GROUP_EXPANDED", repaired)
+
     def test_runtime_remote_config_fields_are_removed_from_config_json(self) -> None:
         user = {
             "CONFIG_VERSION": 2,
@@ -210,6 +231,48 @@ class ConfigMergeTests(unittest.TestCase):
         self.assertIn("FEEDBACK_QQ_GROUP", repaired)
         self.assertIn("APP_UPDATE_MANIFEST_URL", repaired)
         self.assertIn("APP_UPDATE_MANIFEST_URLS", repaired)
+
+    def test_route_recent_limit_is_removed_as_obsolete_config(self) -> None:
+        self.assertNotIn("ROUTE_RECENT_LIMIT", config.DEFAULT_CONFIG)
+
+        merged, repaired = config.merge_config_payload(
+            config.DEFAULT_CONFIG,
+            {"CONFIG_VERSION": 2, "ROUTE_RECENT_LIMIT": 8},
+        )
+
+        self.assertNotIn("ROUTE_RECENT_LIMIT", merged)
+        self.assertIn("ROUTE_RECENT_LIMIT", repaired)
+
+    def test_annotation_recent_type_ids_is_removed_as_obsolete_config(self) -> None:
+        self.assertNotIn("ANNOTATION_RECENT_TYPE_IDS", config.DEFAULT_CONFIG)
+
+        merged, repaired = config.merge_config_payload(
+            config.DEFAULT_CONFIG,
+            {"CONFIG_VERSION": 2, "ANNOTATION_RECENT_TYPE_IDS": ["a-1"]},
+        )
+
+        self.assertNotIn("ANNOTATION_RECENT_TYPE_IDS", merged)
+        self.assertIn("ANNOTATION_RECENT_TYPE_IDS", repaired)
+
+    def test_merge_config_payload_accepts_extra_obsolete_keys(self) -> None:
+        defaults = {"CONFIG_VERSION": 2, "SIDEBAR_WIDTH": 270}
+        user = {
+            "CONFIG_VERSION": 2,
+            "SIDEBAR_WIDTH": 333,
+            "REMOVED_BY_MANIFEST": "old",
+            "UNKNOWN_BUT_ALLOWED": "keep",
+        }
+
+        merged, repaired = config.merge_config_payload(
+            defaults,
+            user,
+            obsolete_config_keys=("REMOVED_BY_MANIFEST",),
+        )
+
+        self.assertEqual(merged["SIDEBAR_WIDTH"], 333)
+        self.assertNotIn("REMOVED_BY_MANIFEST", merged)
+        self.assertEqual(merged["UNKNOWN_BUT_ALLOWED"], "keep")
+        self.assertIn("REMOVED_BY_MANIFEST", repaired)
 
     def test_merge_config_file_backs_up_and_rewrites_corrupt_json(self) -> None:
         defaults = {"CONFIG_VERSION": 2, "SIDEBAR_WIDTH": 270}

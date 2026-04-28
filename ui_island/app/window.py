@@ -24,14 +24,19 @@ from ..dialogs.settings_dialog import (
     styled_confirm,
     styled_info,
 )
-from ..services import RecentRoutesStore, SettingsGateway, WindowPrefsStore
+from ..services import SettingsGateway, WindowPrefsStore
 from ..services.app_updater import (
+    APP_STATUS_DISABLED,
+    APP_STATUS_NOTICE,
     AppUpdateCheckResult,
     AppUpdateInstallResult,
+    DEFAULT_APP_STATUS_MESSAGE,
+    app_notice_ack_key,
     check_app_update,
     cleanup_staging,
     download_changed_files,
     install_non_restart_update,
+    should_show_app_notice,
     should_show_startup_update_prompt,
     start_restart_update,
 )
@@ -79,7 +84,6 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.route_mgr = route_mgr
         self.settings_gateway = SettingsGateway()
         self.window_prefs_store = WindowPrefsStore(self.settings_gateway)
-        self.recent_routes_store = RecentRoutesStore(self.route_mgr)
         self.window_mode_state = WindowModeState()
         self.window_layout_prefs = WindowLayoutPrefs()
         self.route_panel_state = RoutePanelState()
@@ -104,8 +108,6 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self._window_margin = 0 if self._is_windows else 10
         self._shadow_enabled = not self._is_windows
 
-        self._recent_limit = self.settings_gateway.get_route_recent_limit()
-        self.route_panel_state.recent_route_names = self.recent_routes_store.load()
         self.route_panel_state.route_checkboxes = {}
         self._tracked_route_progress_signature: tuple[tuple[str, bool], ...] = ()
         self.route_panel_state.route_widgets_by_category = {}
@@ -118,7 +120,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.route_panel_state.add_category_confirm_btn = None
         self.route_panel_state.add_category_cancel_btn = None
         self.annotation_type_ids = self.window_prefs_store.load_annotation_type_ids()
-        self.annotation_recent_type_ids = self.window_prefs_store.load_annotation_recent_type_ids()
+        self.annotation_group_expanded = self.window_prefs_store.load_annotation_group_expanded()
         self.route_mgr.set_annotation_type_ids(self.annotation_type_ids)
 
         saved_collapsed = self.window_prefs_store.load_sidebar_collapsed()
@@ -245,8 +247,12 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.map_view.drawing_point_requested.connect(self.route_panel_controller.append_drawing_point)
         self.map_view.drawing_undo_requested.connect(self.route_panel_controller.undo_route_drawing)
         self.annotation_toggle_btn.clicked.connect(lambda _checked=False: self._toggle_annotation_panel())
+        self.annotation_panel.set_group_expanded_state(
+            self.annotation_group_expanded,
+            self._on_annotation_group_expanded_changed,
+        )
         self.annotation_panel.load_index(config.app_path("tools", "points_all", "points.json"))
-        self.annotation_panel.set_preferences(self.annotation_type_ids, self.annotation_recent_type_ids)
+        self.annotation_panel.set_preferences(self.annotation_type_ids)
         self.annotation_panel.selection_changed.connect(self._on_annotation_selection_changed)
         self.annotation_panel.plan_route_requested.connect(self._on_annotation_plan_route_requested)
         self.annotation_panel.panel_hidden.connect(lambda: self.annotation_toggle_btn.setChecked(False))
@@ -275,6 +281,8 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
     def _on_startup_update_check_finished(self, result: object) -> None:
         self._startup_update_check_running = False
         if not isinstance(result, AppUpdateCheckResult):
+            return
+        if self._handle_startup_app_status(result):
             return
         last_prompted = str(getattr(config, "APP_UPDATE_LAST_PROMPTED_VERSION", "") or "")
         if not should_show_startup_update_prompt(result, last_prompted):
@@ -307,12 +315,42 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             return
         self._remember_startup_update_prompt(result.latest_version)
 
+    def _handle_startup_app_status(self, result: AppUpdateCheckResult) -> bool:
+        status = str(getattr(result, "app_status", "") or "").strip().lower()
+        if status not in {APP_STATUS_NOTICE, APP_STATUS_DISABLED}:
+            return False
+        message = str(getattr(result, "app_status_message", "") or "").strip() or DEFAULT_APP_STATUS_MESSAGE
+        if status == APP_STATUS_NOTICE:
+            force_notice = bool(getattr(result, "app_notice_force_prompt", False))
+            last_ack_key = str(getattr(config, "APP_NOTICE_LAST_ACK_KEY", "") or "")
+            if not should_show_app_notice(
+                status,
+                message,
+                force_prompt=force_notice,
+                last_ack_key=last_ack_key,
+            ):
+                return False
+            styled_info(self, "公告", message)
+            self._remember_startup_notice_ack(message)
+            return False
+        if status == APP_STATUS_DISABLED:
+            styled_info(self, "程序已停用", message)
+            QApplication.quit()
+            return True
+
     @staticmethod
     def _remember_startup_update_prompt(version: str) -> None:
         if not version:
             return
         try:
             config.save_config({"APP_UPDATE_LAST_PROMPTED_VERSION": version})
+        except Exception:
+            pass
+
+    @staticmethod
+    def _remember_startup_notice_ack(message: str) -> None:
+        try:
+            config.save_config({"APP_NOTICE_LAST_ACK_KEY": app_notice_ack_key(message)})
         except Exception:
             pass
 
@@ -450,7 +488,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             pass
         try:
             self.annotation_panel.load_index(config.app_path("tools", "points_all", "points.json"))
-            self.annotation_panel.set_preferences(self.annotation_type_ids, self.annotation_recent_type_ids)
+            self.annotation_panel.set_preferences(self.annotation_type_ids)
         except Exception:
             pass
         try:
@@ -467,7 +505,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             self.annotation_toggle_btn.setChecked(False)
             return
         self.annotation_panel.load_index(config.app_path("tools", "points_all", "points.json"))
-        self.annotation_panel.set_preferences(self.annotation_type_ids, self.annotation_recent_type_ids)
+        self.annotation_panel.set_preferences(self.annotation_type_ids)
         self._position_annotation_panel()
         self.annotation_panel.show()
         self.annotation_toggle_btn.setChecked(True)
@@ -492,15 +530,28 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.annotation_panel.setFixedWidth(panel_width)
         self.annotation_panel.move(global_pos.x(), global_pos.y())
 
-    def _on_annotation_selection_changed(self, type_ids: list, recent_type_ids: list) -> None:
+    def _on_annotation_selection_changed(self, type_ids: list) -> None:
         self.annotation_type_ids = normalize_type_ids(type_ids)
-        self.annotation_recent_type_ids = normalize_type_ids(recent_type_ids)
         self.route_mgr.set_annotation_type_ids(self.annotation_type_ids)
-        self.window_prefs_store.save_annotation_preferences(self.annotation_type_ids, self.annotation_recent_type_ids)
+        self.window_prefs_store.save_annotation_preferences(self.annotation_type_ids)
         try:
             self.map_view._refresh_from_last_frame()
         except Exception:
             pass
+
+    def _on_annotation_group_expanded_changed(self, expanded: dict[str, bool]) -> None:
+        if expanded is not self.annotation_group_expanded:
+            self.annotation_group_expanded = {str(name): bool(value) for name, value in expanded.items()}
+            self.annotation_panel.sync_group_expanded_state(
+                self.annotation_group_expanded,
+                self._on_annotation_group_expanded_changed,
+            )
+        else:
+            self.annotation_panel.sync_group_expanded_state(
+                self.annotation_group_expanded,
+                self._on_annotation_group_expanded_changed,
+            )
+        self.window_prefs_store.save_annotation_group_expanded(dict(self.annotation_group_expanded))
 
     def _on_annotation_plan_route_requested(self, type_id: str, type_name: str) -> None:
         try:
@@ -586,7 +637,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         except Exception:
             pass
         self.annotation_panel.load_index(config.app_path("tools", "points_all", "points.json"))
-        self.annotation_panel.set_preferences(self.annotation_type_ids, self.annotation_recent_type_ids)
+        self.annotation_panel.set_preferences(self.annotation_type_ids)
         try:
             self.map_view._refresh_from_last_frame()
         except Exception:
@@ -610,6 +661,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         header = getattr(self, "tracked_routes_header", None)
         title = getattr(self, "tracked_routes_title", None)
         layout = getattr(self, "tracked_routes_header_layout", None)
+        toggle_btn = getattr(self, "tracked_routes_toggle_btn", None)
         if label is None or header is None or title is None or layout is None or not label.text():
             return
 
@@ -623,7 +675,17 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         card_content_width = card_width - layout_margins.left() - layout_margins.right()
         header_width = max(header_width, card_content_width, header.sizeHint().width())
 
-        available_width = header_width - title_width - layout.spacing() - margins.left() - margins.right()
+        toggle_width = 0
+        if toggle_btn is not None and toggle_btn.isVisible():
+            toggle_width = max(toggle_btn.sizeHint().width(), toggle_btn.width()) + layout.spacing()
+        available_width = (
+            header_width
+            - title_width
+            - toggle_width
+            - (layout.spacing() * 2)
+            - margins.left()
+            - margins.right()
+        )
         available_width = max(80, available_width)
         content_width = label.fontMetrics().horizontalAdvance(label.text()) + 20
         target_width = min(content_width, available_width)
@@ -682,9 +744,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
 
     def _on_settings_applied(self) -> None:
         self._minimap_region = self.settings_gateway.get_minimap()
-        self._recent_limit = self.settings_gateway.get_route_recent_limit()
-        self._recent_route_names = self.recent_routes_store.load()
-        self.route_panel_controller.refresh_recent_routes()
+        self.route_panel_controller.refresh_route_checkbox_colors()
         self._refresh_hotkey_hint()
         self.hotkey_controller.stop_listener()
         self.hotkey_controller.start_listener()

@@ -10,7 +10,7 @@ from ..dialogs import toast
 from ..dialogs.annotation_type_picker import open_annotation_type_picker
 from ..dialogs.insert_point_dialog import open_insert_point_dialog
 from ..dialogs.settings_dialog import styled_confirm, styled_info
-from ..services.annotation_preferences import normalize_type_ids, touch_recent_type
+from ..services.annotation_preferences import normalize_type_ids
 from ..widgets.node_type_popup import node_type_label, normalize_node_type, show_node_type_popup
 
 if TYPE_CHECKING:
@@ -23,10 +23,7 @@ class MapInteractionController:
 
     def _refresh_annotation_ui(self) -> None:
         self.window.annotation_panel.load_index(config.app_path("tools", "points_all", "points.json"))
-        self.window.annotation_panel.set_preferences(
-            self.window.annotation_type_ids,
-            self.window.annotation_recent_type_ids,
-        )
+        self.window.annotation_panel.set_preferences(self.window.annotation_type_ids)
         try:
             self.window.map_view._refresh_from_last_frame()
         except Exception:
@@ -65,11 +62,9 @@ class MapInteractionController:
             return
 
         selected_type_ids = normalize_type_ids([*self.window.annotation_type_ids, type_id])
-        recent_type_ids = touch_recent_type(self.window.annotation_recent_type_ids, type_id)
         self.window.annotation_type_ids = selected_type_ids
-        self.window.annotation_recent_type_ids = recent_type_ids
         route_mgr.set_annotation_type_ids(selected_type_ids)
-        self.window.window_prefs_store.save_annotation_preferences(selected_type_ids, recent_type_ids)
+        self.window.window_prefs_store.save_annotation_preferences(selected_type_ids)
         self._refresh_annotation_ui()
 
         toast(self.window, strings.MAP_ADD_ANNOTATION_SUCCESS_FMT.format(name=type_name))
@@ -100,11 +95,9 @@ class MapInteractionController:
             return
 
         selected_type_ids = normalize_type_ids([*self.window.annotation_type_ids, new_type_id])
-        recent_type_ids = touch_recent_type(self.window.annotation_recent_type_ids, new_type_id)
         self.window.annotation_type_ids = selected_type_ids
-        self.window.annotation_recent_type_ids = recent_type_ids
         route_mgr.set_annotation_type_ids(selected_type_ids)
-        self.window.window_prefs_store.save_annotation_preferences(selected_type_ids, recent_type_ids)
+        self.window.window_prefs_store.save_annotation_preferences(selected_type_ids)
         self._refresh_annotation_ui()
         toast(self.window, strings.MAP_ANNOTATION_CHANGE_SUCCESS_FMT.format(name=new_type_name))
 

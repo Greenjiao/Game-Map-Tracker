@@ -26,10 +26,14 @@ INSTALLED_MANIFEST = "installed-manifest.json"
 UPDATE_JOB_FILE = "update-job.json"
 CONFIG_INSTALL_MODE = "merge_config"
 COPY_INSTALL_MODE = "copy"
+APP_STATUS_NORMAL = "normal"
+APP_STATUS_NOTICE = "notice"
+APP_STATUS_DISABLED = "disabled"
+APP_STATUS_VALUES = {APP_STATUS_NORMAL, APP_STATUS_NOTICE, APP_STATUS_DISABLED}
+DEFAULT_APP_STATUS_MESSAGE = "请关注最新公告或维护说明。"
 PROTECTED_USER_FILES = {
     "routes/progress.json",
     "routes/selected_routes.json",
-    "routes/recent_routes.json",
     "tools/points_get/.cache_17173_locations.json",
 }
 PROTECTED_USER_PREFIXES = (
@@ -67,11 +71,15 @@ class AppUpdateManifest:
     notes: str
     files: tuple[ManifestFile, ...]
     delete: tuple[str, ...]
+    app_status: str = APP_STATUS_NORMAL
+    app_status_message: str = ""
+    app_notice_force_prompt: bool = False
     requires_launcher_update: bool = False
     prompt_update: bool = False
     force_update_prompt: bool = False
     source_base_url: str = ""
     runtime_config: dict[str, object] = field(default_factory=dict)
+    obsolete_config_keys: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -86,6 +94,9 @@ class AppUpdateCheckResult:
     current_version: str
     latest_version: str = ""
     has_update: bool = False
+    app_status: str = APP_STATUS_NORMAL
+    app_status_message: str = ""
+    app_notice_force_prompt: bool = False
     prompt_update: bool = False
     force_update_prompt: bool = False
     notes: str = ""
@@ -254,11 +265,51 @@ def apply_runtime_config(runtime_config: dict[str, object] | None) -> None:
         setattr(config, key, value)
 
 
+def sanitize_app_status(value: Any) -> str:
+    status = str(value or APP_STATUS_NORMAL).strip().lower()
+    return status if status in APP_STATUS_VALUES else APP_STATUS_NORMAL
+
+
+def sanitize_app_status_message(value: Any, status: str) -> str:
+    if status == APP_STATUS_NORMAL:
+        return ""
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return DEFAULT_APP_STATUS_MESSAGE
+
+
+def sanitize_app_notice_force_prompt(value: Any) -> bool:
+    return value is True
+
+
+def app_notice_ack_key(message: str) -> str:
+    clean_message = str(message or "").strip()
+    return hashlib.sha256(clean_message.encode("utf-8")).hexdigest()
+
+
+def should_show_app_notice(
+    status: str,
+    message: str,
+    *,
+    force_prompt: bool = False,
+    last_ack_key: str = "",
+) -> bool:
+    if sanitize_app_status(status) != APP_STATUS_NOTICE:
+        return False
+    if force_prompt:
+        return True
+    notice_key = app_notice_ack_key(message)
+    return notice_key != str(last_ack_key or "").strip()
+
+
 def parse_app_manifest(payload: dict[str, Any], *, source_base_url: str = "") -> AppUpdateManifest:
     if not isinstance(payload, dict) or not payload:
         raise ManifestError(strings.UPDATE_ERROR_MANIFEST_EMPTY)
 
     version = normalize_version(str(payload.get("version") or ""))
+    app_status = sanitize_app_status(payload.get("app_status"))
+    app_status_message = sanitize_app_status_message(payload.get("app_status_message"), app_status)
+    app_notice_force_prompt = sanitize_app_notice_force_prompt(payload.get("app_notice_force_prompt"))
     files: list[ManifestFile] = []
     for item in payload.get("files") or []:
         if not isinstance(item, dict):
@@ -292,16 +343,31 @@ def parse_app_manifest(payload: dict[str, Any], *, source_base_url: str = "") ->
             continue
         delete.append(path)
 
+    obsolete_config_keys: list[str] = []
+    seen_obsolete_keys: set[str] = set()
+    for item in payload.get("obsolete_config_keys") or []:
+        key = str(item or "").strip()
+        if not key or key in seen_obsolete_keys:
+            continue
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
+            continue
+        seen_obsolete_keys.add(key)
+        obsolete_config_keys.append(key)
+
     return AppUpdateManifest(
         version=version,
         notes=str(payload.get("notes") or "").strip(),
         files=tuple(files),
         delete=tuple(delete),
+        app_status=app_status,
+        app_status_message=app_status_message,
+        app_notice_force_prompt=app_notice_force_prompt,
         requires_launcher_update=bool(payload.get("requires_launcher_update", False)),
         prompt_update=bool(payload.get("prompt_update", False)),
         force_update_prompt=bool(payload.get("force_update_prompt", False)),
         source_base_url=source_base_url,
         runtime_config=sanitize_runtime_config(payload.get("runtime_config")),
+        obsolete_config_keys=tuple(obsolete_config_keys),
     )
 
 
@@ -419,6 +485,9 @@ def build_update_plan(
         current_version=current,
         latest_version=manifest.version,
         has_update=has_update,
+        app_status=manifest.app_status,
+        app_status_message=manifest.app_status_message,
+        app_notice_force_prompt=manifest.app_notice_force_prompt,
         prompt_update=manifest.prompt_update,
         force_update_prompt=manifest.force_update_prompt,
         notes=manifest.notes,
@@ -636,7 +705,7 @@ def install_non_restart_update(plan: AppUpdateCheckResult, staging: Path) -> App
             source = staging / change.file.path
             if change.file.install == CONFIG_INSTALL_MODE:
                 defaults = _read_json_file(str(source))
-                config.merge_config_file(config.CONFIG_FILE, defaults)
+                config.merge_config_file(config.CONFIG_FILE, defaults, plan.manifest.obsolete_config_keys)
                 installed_files.append(change.file.path)
                 continue
             target = _app_path(change.file.path)
@@ -723,6 +792,7 @@ def write_restart_update_job(
             for change in plan.changed_files
         ],
         "delete": list(plan.delete_files),
+        "obsolete_config_keys": list(plan.manifest.obsolete_config_keys),
         "skipped_conflicts": list(plan.skipped_conflicts),
         "manifest": {
             "version": plan.manifest.version,

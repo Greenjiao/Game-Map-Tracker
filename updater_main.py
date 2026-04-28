@@ -24,7 +24,6 @@ INSTALLED_MANIFEST = "installed-manifest.json"
 PROTECTED_USER_FILES = {
     "routes/progress.json",
     "routes/selected_routes.json",
-    "routes/recent_routes.json",
     "tools/points_get/.cache_17173_locations.json",
 }
 PROTECTED_USER_PREFIXES = (
@@ -116,7 +115,7 @@ def _is_compatible_value(default_value, user_value) -> bool:
     return isinstance(user_value, type(default_value))
 
 
-def merge_dict(defaults: dict, user_values: dict) -> dict:
+def merge_dict(defaults: dict, user_values: dict, obsolete_config_keys: set[str] | None = None) -> dict:
     merged: dict = {}
     for key, default_value in defaults.items():
         if key not in user_values:
@@ -124,20 +123,26 @@ def merge_dict(defaults: dict, user_values: dict) -> dict:
             continue
         user_value = user_values[key]
         if isinstance(default_value, dict):
-            merged[key] = merge_dict(default_value, user_value) if isinstance(user_value, dict) else default_value
+            merged[key] = (
+                merge_dict(default_value, user_value, obsolete_config_keys)
+                if isinstance(user_value, dict)
+                else default_value
+            )
         elif _is_compatible_value(default_value, user_value):
             merged[key] = user_value
         else:
             merged[key] = default_value
     for key, user_value in user_values.items():
         if key not in defaults:
+            if obsolete_config_keys is not None and key in obsolete_config_keys:
+                continue
             merged[key] = user_value
     if "CONFIG_VERSION" in defaults:
         merged["CONFIG_VERSION"] = defaults["CONFIG_VERSION"]
     return merged
 
 
-def merge_config_file(path: Path, defaults: dict) -> None:
+def merge_config_file(path: Path, defaults: dict, obsolete_config_keys: set[str] | None = None) -> None:
     if path.exists():
         try:
             user_config = read_json(path)
@@ -145,7 +150,7 @@ def merge_config_file(path: Path, defaults: dict) -> None:
             user_config = {}
     else:
         user_config = {}
-    write_json(path, merge_dict(defaults, user_config))
+    write_json(path, merge_dict(defaults, user_config, obsolete_config_keys))
 
 
 def wait_for_process_exit(pid: int, *, timeout: float = 30.0) -> bool:
@@ -222,7 +227,7 @@ def installed_manifest_payload(job: dict) -> dict:
     }
 
 
-def validate_job(job: dict) -> tuple[Path, Path, list[dict], list[str]]:
+def validate_job(job: dict) -> tuple[Path, Path, list[dict], list[str], set[str]]:
     app_dir = Path(str(job.get("app_dir") or "")).resolve()
     staging_dir = Path(str(job.get("staging_dir") or "")).resolve()
     if not app_dir.is_dir():
@@ -257,13 +262,19 @@ def validate_job(job: dict) -> tuple[Path, Path, list[dict], list[str]]:
             continue
         delete.append(path)
 
-    return app_dir, staging_dir, files, delete
+    obsolete_config_keys: set[str] = set()
+    for item in job.get("obsolete_config_keys") or []:
+        key = str(item or "").strip()
+        if key and key.replace("_", "").isalnum() and not key[0].isdigit():
+            obsolete_config_keys.add(key)
+
+    return app_dir, staging_dir, files, delete, obsolete_config_keys
 
 
 def install_update_job(job_path: str | os.PathLike[str]) -> bool:
     job_file = Path(job_path).resolve()
     job = read_json(job_file)
-    app_dir, staging_dir, files, delete = validate_job(job)
+    app_dir, staging_dir, files, delete, obsolete_config_keys = validate_job(job)
     version = str(job.get("version") or "unknown")
     backup_root = backup_root_for(version)
     backed_up: dict[str, bool] = {}
@@ -281,7 +292,7 @@ def install_update_job(job_path: str | os.PathLike[str]) -> bool:
             backup_target(app_dir, backup_root, relative_path, backed_up)
             if item["install"] == CONFIG_INSTALL_MODE:
                 defaults = read_json(source)
-                merge_config_file(app_dir / "config.json", defaults)
+                merge_config_file(app_dir / "config.json", defaults, obsolete_config_keys)
                 continue
             target = app_dir / relative_path
             target.parent.mkdir(parents=True, exist_ok=True)
