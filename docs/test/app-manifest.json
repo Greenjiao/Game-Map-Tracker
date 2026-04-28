@@ -1,8 +1,8 @@
 {
   "version": "0.1.2",
-  "notes": "小版本更新推送，建议更新（仅弹窗一次,可稍后在设置中检查更新）主要更新如下：由于更新较急，其中标注预设方案暂未实现路线管理方面：路线分类右侧增加全选、反选按钮;当前追踪路线增加收起/展开按钮;追踪路线的复选框颜色改为与路线保持一致；最近常用路线的面板整个移除，对于常用路线用户可以自己创建一个分类，直接全选追踪；标注面板增加分类展开/收起增加标注方案预设面板以取代常用标注面板，可全显、反选某分类中的标注(可实现快速套用某标注方案)；部分布局紧凑化；改进分量更新对废弃配置项的处理逻辑；修复默认提供的路线文件夹被删除后不再会重生；地图标注数据来源于17173，感谢地图维护者的付出；",
+  "notes": "小版本更新推送，建议更新（仅弹窗一次,可稍后在设置中检查更新）主要更新如下：由于更新较急，其中标注预设方案暂未实现路线管理方面：路线分类右侧增加全选、反选按钮;当前追踪路线增加收起/展开按钮;追踪路线的复选框颜色改为与路线保持一致；最近常用路线的面板整个移除，对于常用路线用户可以自己创建一个分类，直接全选追踪；标注面板增加分类展开/收起增加标注方案预设面板以取代常用标注面板，可全显、反选某分类中的标注(可实现快速套用某标注方案)；部分布局紧凑化；改进分量更新对废弃配置项的处理逻辑；修复默认提供的路线文件夹被删除后不再会重生；当前地图标注数据来源于17173，感谢地图维护者的付出；",
   "app_status": "notice",
-  "app_status_message": "地图标注数据来源于17173，感谢地图维护者的付出；",
+  "app_status_message": "当前地图标注数据来源于17173，感谢地图维护者的付出",
   "requires_launcher_update": false,
   "prompt_update": true,
   "force_update_prompt": false,
@@ -112,7 +112,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/_internal/base_library.zip",
-      "sha256": "7b89d22dd4c23be0bf3cc0560043cf54383d77afb759062c31461532f5dbb700",
+      "sha256": "b1205a5c98af39da67666f2b911fba2bba36f81f1106af7cd936aad1fb88b2a1",
       "size": 1388164
     },
     {
@@ -1613,8 +1613,8 @@
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/GMT-N.exe",
-      "sha256": "1b34b3193323991bd4aa24fa7124f8ec17f17de64237cf25e57c3b136375dd6a",
-      "size": 8559992
+      "sha256": "1e901463a4ecca5dfc127be0906621bcaedf5e8360074291775ec8eb95078f4e",
+      "size": 8559994
     },
     {
       "path": "README.md",
@@ -1625,8 +1625,8 @@
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/updater.exe",
-      "sha256": "254cca6e716d203d1a3b4199492279bed048113e8a5a73c6b6375ad3d925c9ac",
-      "size": 8518511
+      "sha256": "53b2d06386928190cf405edfa214239ca2779949a622886e7b1d18c5e8c03905",
+      "size": 8522062
     }
   ],
   "delete": [],
