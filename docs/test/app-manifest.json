@@ -3,6 +3,7 @@
   "notes": "小版本更新推送，建议更新（仅弹窗一次,可稍后在设置中检查更新）主要更新如下：由于更新较急，其中标注预设方案暂未实现路线管理方面：路线分类右侧增加全选、反选按钮;当前追踪路线增加收起/展开按钮;追踪路线的复选框颜色改为与路线保持一致；最近常用路线的面板整个移除，对于常用路线用户可以自己创建一个分类，直接全选追踪；标注面板增加分类展开/收起增加标注方案预设面板以取代常用标注面板，可全显、反选某分类中的标注(可实现快速套用某标注方案)；部分布局紧凑化；改进分量更新对废弃配置项的处理逻辑；修复默认提供的路线文件夹被删除后不再会重生；当前地图标注数据来源于17173，感谢地图维护者的付出；",
   "app_status": "notice",
   "app_status_message": "当前地图标注数据来源于17173，感谢地图维护者的付出",
+  "app_notice_force_prompt": false,
   "requires_launcher_update": false,
   "prompt_update": true,
   "force_update_prompt": false,
@@ -112,7 +113,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/_internal/base_library.zip",
-      "sha256": "f138b192b3315275d786f8546cacf3987654ca8a02c0d9ee8e2493785cc28bce",
+      "sha256": "9e3967fad14fe0fc5c59230948e023238a22e87716538bfda739d0232a3568d1",
       "size": 1388164
     },
     {
@@ -1606,15 +1607,15 @@
     {
       "path": "config.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/config.json",
-      "sha256": "2f91b722844a22e3a52f8f7cd94f23aa8b13323bcc6265e6cf7e5800aa888513",
-      "size": 1709,
+      "sha256": "ef6bbaad88bfa850ba942bc2439dd9581ce07f6c9afbe8c5d8d0eccee5450df8",
+      "size": 1745,
       "install": "merge_config"
     },
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/GMT-N.exe",
-      "sha256": "47a3520d701a2d2817bb9dca7fe12f9ddd54754b089baf7b9485268617909f59",
-      "size": 8559964
+      "sha256": "3831dd36ce4c4a781e1106e9da182312caf756a6f67990b3f7912125acbb7e79",
+      "size": 8561195
     },
     {
       "path": "README.md",
@@ -1625,8 +1626,8 @@
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/updater.exe",
-      "sha256": "b2cb764148f8c3daa7a8eb07785d35db54d4d60f77b7ac3165e6f3dc35b2edfa",
-      "size": 8521609
+      "sha256": "bd75f5040f73b3c47fccde1a778e491f34183894d5baf0020df68b8da968fbf4",
+      "size": 8521663
     }
   ],
   "delete": [],
@@ -1637,8 +1638,8 @@
     "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/11695114",
     "FEEDBACK_QQ_GROUP": "311609019",
     "APP_UPDATE_MANIFEST_URLS": [
-      "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/app-manifest.json",
-      "https://greenjiao.github.io/Game-Map-Tracker/test/app-manifest.json"
+      "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/app-manifest.json",
+      "https://greenjiao.github.io/Game-Map-Tracker/update/app-manifest.json"
     ]
   }
 }
