@@ -1,9 +1,12 @@
 {
-  "version": "0.1.1",
-  "notes": "大量更新，强烈建议更新，具体更新内容在更新后设置窗口的更新文档中",
+  "version": "0.1.2",
+  "notes": "小版本更新推送，建议更新（仅弹窗一次,可稍后在设置中检查更新）主要更新如下：由于更新较急，其中标注预设方案暂未实现路线管理方面：路线分类右侧增加全选、反选按钮;当前追踪路线增加收起/展开按钮;追踪路线的复选框颜色改为与路线保持一致；最近常用路线的面板整个移除，对于常用路线用户可以自己创建一个分类，直接全选追踪；标注面板增加分类展开/收起增加标注方案预设面板以取代常用标注面板，可全显、反选某分类中的标注(可实现快速套用某标注方案)；部分布局紧凑化；改进分量更新对废弃配置项的处理逻辑；修复默认提供的路线文件夹被删除后不再会重生；当前地图标注数据来源于17173，感谢地图维护者的付出；",
+  "app_status": "notice",
+  "app_status_message": "当前地图标注数据来源于17173，感谢地图维护者的付出",
+  "app_notice_force_prompt": false,
   "requires_launcher_update": false,
   "prompt_update": true,
-  "force_update_prompt": true,
+  "force_update_prompt": false,
   "files": [
     {
       "path": "_internal/81d243bd2c585b0f4821__mypyc.cp314-win_amd64.pyd",
@@ -110,7 +113,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/_internal/base_library.zip",
-      "sha256": "625eb0f6fa694a49bf668c35fd7020111bd0e7c29f080b44c2988422cc2c4ffb",
+      "sha256": "a7ab3d6727e42522f2809754f6351affb2630a11646f9c49f931f808ac195d55",
       "size": 1388164
     },
     {
@@ -1604,27 +1607,27 @@
     {
       "path": "config.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/config.json",
-      "sha256": "7634a3994211fb60d212f71fab745cb7e709dd9210c6ad18e9e8f78d4eeae0aa",
-      "size": 1738,
+      "sha256": "ef6bbaad88bfa850ba942bc2439dd9581ce07f6c9afbe8c5d8d0eccee5450df8",
+      "size": 1745,
       "install": "merge_config"
     },
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/GMT-N.exe",
-      "sha256": "7081a518e14641b83b55ad03246785cb7c0bfa7e9956b7501d1099d05037bf28",
-      "size": 8555563
+      "sha256": "51aadc1872515c0e1de835f71dc9d41499bb8e3929434588f7913651ddbd71db",
+      "size": 8562248
     },
     {
       "path": "README.md",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/README.md",
-      "sha256": "973ddafbe556e07459ead9ed7c03d6cd3501184e80be1ea0aa80d076307d7e4e",
-      "size": 3036
+      "sha256": "ff6084d0a19efe57302bd15617610a0660552c1abd2720602b2b529a7ec44059",
+      "size": 2992
     },
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/updater.exe",
-      "sha256": "c4859ae44355d87765cad7ca9c3eb9bdcde040f85cf8cfbb2e715f66057cbb30",
-      "size": 8521117
+      "sha256": "f4f51b135fa3d89aa2594a7c9553077a98078edc6488cd3d89566205346de5e7",
+      "size": 8521086
     }
   ],
   "delete": [],
@@ -1636,9 +1639,7 @@
     "FEEDBACK_QQ_GROUP": "311609019",
     "APP_UPDATE_MANIFEST_URLS": [
       "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/app-manifest.json",
-      "https://greenjiao.github.io/Game-Map-Tracker/update/app-manifest.json",
-      "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/app-manifest.json",
-      "https://greenjiao.github.io/Game-Map-Tracker/test/app-manifest.json"
+      "https://greenjiao.github.io/Game-Map-Tracker/update/app-manifest.json"
     ]
   }
 }
