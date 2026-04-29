@@ -1,9 +1,11 @@
 {
-  "version": "0.1.2",
-  "notes": "小版本更新推送，建议更新（仅弹窗一次,可稍后在设置中检查更新）主要更新如下：由于更新较急，其中标注预设方案暂未实现路线管理方面：路线分类右侧增加全选、反选按钮;当前追踪路线增加收起/展开按钮;追踪路线的复选框颜色改为与路线保持一致；最近常用路线的面板整个移除，对于常用路线用户可以自己创建一个分类，直接全选追踪；标注面板增加分类展开/收起增加标注方案预设面板以取代常用标注面板，可全显、反选某分类中的标注(可实现快速套用某标注方案)；部分布局紧凑化；改进分量更新对废弃配置项的处理逻辑；修复默认提供的路线文件夹被删除后不再会重生；当前地图标注数据来源于17173，感谢地图维护者的付出；",
-  "app_status": "notice",
-  "app_status_message": "当前地图标注数据来源于17173，感谢地图维护者的付出",
+  "version": "0.1.3",
+  "notes": "较大改动建议更新；路线绘制支持拖动节点；添加一栏路线详情增加统计途径点位类型和标注统计、顺序详情、指定路线颜色（需要在自己手动为节点添加标注的基础上才会纳入统计,不然只是显示点名称和顺序）路线节点与标注的同时添加进行优化，建议为路线节点同时添加标注；样式优化；最好进b站观看最新详情说明",
+  "app_status": "normal",
+  "app_status_message": "",
   "app_notice_force_prompt": false,
+  "min_supported_version": "",
+  "min_supported_version_message": "",
   "requires_launcher_update": false,
   "prompt_update": true,
   "force_update_prompt": false,
@@ -113,7 +115,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/_internal/base_library.zip",
-      "sha256": "9e3967fad14fe0fc5c59230948e023238a22e87716538bfda739d0232a3568d1",
+      "sha256": "10b61e58313e2424047a8efa8c42aec171e14e1ed30c593d3fa92cf4924342d9",
       "size": 1388164
     },
     {
@@ -1614,8 +1616,8 @@
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/GMT-N.exe",
-      "sha256": "3831dd36ce4c4a781e1106e9da182312caf756a6f67990b3f7912125acbb7e79",
-      "size": 8561195
+      "sha256": "59fed391a33ded620eac09918fbfcc43be509df702fcb90d5e3c09f013bf32d5",
+      "size": 8586449
     },
     {
       "path": "README.md",
@@ -1626,8 +1628,8 @@
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/updater.exe",
-      "sha256": "bd75f5040f73b3c47fccde1a778e491f34183894d5baf0020df68b8da968fbf4",
-      "size": 8521663
+      "sha256": "935b6ee5801e2ae4e538a90f2bc4ba9a292fbc7f3dbd58dfefeecc6c18ae98fd",
+      "size": 8521898
     }
   ],
   "delete": [],

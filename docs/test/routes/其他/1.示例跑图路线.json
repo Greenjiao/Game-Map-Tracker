@@ -7,60 +7,95 @@
       "x": 1522,
       "y": 4161,
       "label": "节点 1",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1499,
       "y": 4134,
       "label": "节点 2",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1513,
       "y": 4066,
       "label": "节点 3",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1515,
       "y": 3973,
       "label": "节点 4",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1591,
       "y": 3958,
       "label": "节点 5",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1627,
       "y": 3951,
       "label": "节点 6",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1643,
       "y": 4000,
       "label": "节点 7",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1645,
       "y": 4039,
       "label": "节点 8",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1642,
       "y": 4127,
       "label": "节点 9",
-      "radius": 30
+      "radius": 30,
+      "node_type": "collect"
     },
     {
       "x": 1923,
-      "y": 2929
+      "y": 2929,
+      "node_type": "collect"
+    },
+    {
+      "id": "9862437836624f9c914808e76e3fc08c",
+      "node_type": "collect",
+      "x": 3046,
+      "y": 3008,
+      "typeId": "17310030001",
+      "type": "宝箱"
+    },
+    {
+      "id": "342d9f0158c94fbeb5ce9b002a3d6963",
+      "x": 2915,
+      "y": 3129,
+      "node_type": "collect",
+      "typeId": "17310030001",
+      "type": "宝箱"
+    },
+    {
+      "id": "fcd302f851bc47dcb55effe21be45a2a",
+      "x": 2968,
+      "y": 3186,
+      "node_type": "collect",
+      "typeId": "17310030029",
+      "type": "挑战小游戏"
     }
   ],
-  "id": "2026042108"
+  "id": "2026042108",
+  "color": "#00ffff"
 }
