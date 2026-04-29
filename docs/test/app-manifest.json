@@ -1,6 +1,6 @@
 {
   "version": "0.1.3",
-  "notes": "较大改动建议更新；路线绘制支持拖动节点；添加一栏路线详情增加统计途径点位类型和标注统计、顺序详情、指定路线颜色（需要在自己手动为节点添加标注的基础上才会纳入统计,不然只是显示点名称和顺序）路线节点与标注的同时添加进行优化，建议为路线节点同时添加标注；样式优化；最好进b站观看最新详情说明",
+  "notes": "发现了gitee不支持大文件供未登录用户下载导致出现部分大文件被更新失败的情况，在此做附件测试",
   "app_status": "normal",
   "app_status_message": "",
   "app_notice_force_prompt": false,
@@ -115,7 +115,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/_internal/base_library.zip",
-      "sha256": "4115a45ce2a7d76007765dafd1beb103b1c0aca230dece1a0566ea055411fbe6",
+      "sha256": "b1f4ecbaaddb495f9ebe91554416a83ae8c4af7fdada09380a88b82ac9271c64",
       "size": 1388164
     },
     {
@@ -1616,7 +1616,7 @@
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/GMT-N.exe",
-      "sha256": "2bb1122ac9bcf86e0eae31019bf9882f30cde5a30f8c7545b5190fdd1e706f46",
+      "sha256": "01117a9ee5fde66fff77b52551368e6c76c7710e9b7ba92b5fa84c7e2fd6d73c",
       "size": 8586815
     },
     {
@@ -1628,14 +1628,14 @@
     {
       "path": "tools/json_txt_converter.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/tools/json_txt_converter.exe",
-      "sha256": "687fa521bb9fd2351325bce6a8cefc0cf7c70068062ccbc53fbfdb4827f2213b",
-      "size": 11501746
+      "sha256": "84f971379a8531a395330be319147abbfc90f40b779aeb3150e937c2e4b35382",
+      "size": 11502559
     },
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/updater.exe",
-      "sha256": "46ab1b24e426282514a534b632ce126b61de2c8621b708505bf62452e8f25615",
-      "size": 8521504
+      "sha256": "98caf503726f96ca894d797d3f368b0c93c34f9af090a9e28032ec51e07187f6",
+      "size": 8522422
     }
   ],
   "delete": [],
