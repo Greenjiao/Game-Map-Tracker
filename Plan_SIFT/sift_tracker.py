@@ -1,8 +1,10 @@
 """SIFT + FLANN + RANSAC tracking engine."""
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Iterator
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -10,6 +12,14 @@ import numpy as np
 import config
 from ui_island.services.image_io import imread_unicode
 from ui_island.state.tracking import BaseTracker, TrackResult, TrackState
+
+# Base map descriptor cache: avoids re-running 8192² SIFT on every startup.
+# Cache is keyed by map filename + file size + mtime — any change to the
+# base map automatically invalidates the cache. The CACHE_VERSION below
+# should be bumped whenever the cached structure (kp fields, dtype, CLAHE
+# pipeline) changes so old caches are ignored.
+_CACHE_VERSION = 1
+_CACHE_DIR = Path(__file__).resolve().parent.parent / ".cache" / "sift"
 
 
 _EDGE_GUARD_PX = 24
@@ -30,6 +40,119 @@ _MINIMAP_CENTER_MASK_RATIO = 0.075
 _GLOBAL_RETRY_INTERVAL_FRAMES = 5
 
 
+def _cache_signature(map_path: str) -> dict | None:
+    """Identifying tuple for the base map file. None when path is unreadable."""
+    try:
+        st = os.stat(map_path)
+    except OSError:
+        return None
+    return {
+        "version": _CACHE_VERSION,
+        "path": os.path.abspath(map_path),
+        "size": int(st.st_size),
+        "mtime_ns": int(st.st_mtime_ns),
+        "clahe": float(config.SIFT_CLAHE_LIMIT),
+    }
+
+
+def _cache_path_for(map_path: str) -> Path:
+    base = Path(map_path).name
+    safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in base)
+    return _CACHE_DIR / f"{safe}.v{_CACHE_VERSION}.npz"
+
+
+def _load_descriptor_cache(
+    map_path: str,
+) -> tuple[list[cv2.KeyPoint], np.ndarray] | None:
+    """Return (keypoints, descriptors) if a valid cache exists, else None."""
+    sig = _cache_signature(map_path)
+    if sig is None:
+        return None
+    cache_file = _cache_path_for(map_path)
+    if not cache_file.is_file():
+        return None
+    try:
+        with np.load(str(cache_file), allow_pickle=False) as npz:
+            stored_path = str(npz["sig_path"])
+            stored_size = int(npz["sig_size"])
+            stored_mtime = int(npz["sig_mtime_ns"])
+            stored_version = int(npz["sig_version"])
+            stored_clahe = float(npz["sig_clahe"])
+            if (
+                stored_version != sig["version"]
+                or stored_path != sig["path"]
+                or stored_size != sig["size"]
+                or stored_mtime != sig["mtime_ns"]
+                or abs(stored_clahe - sig["clahe"]) > 1e-9
+            ):
+                return None
+            kp_fields = npz["kp_fields"]  # (N, 7) float32
+            des = npz["des"]              # (N, 128) float32
+    except (OSError, ValueError, KeyError, EOFError):
+        return None
+
+    keypoints: list[cv2.KeyPoint] = []
+    for x, y, size, angle, response, octave, class_id in kp_fields:
+        keypoints.append(
+            cv2.KeyPoint(
+                x=float(x),
+                y=float(y),
+                size=float(size),
+                angle=float(angle),
+                response=float(response),
+                octave=int(octave),
+                class_id=int(class_id),
+            )
+        )
+    return keypoints, des
+
+
+def _save_descriptor_cache(
+    map_path: str,
+    keypoints: list[cv2.KeyPoint],
+    descriptors: np.ndarray,
+) -> None:
+    """Persist keypoints+descriptors. Failures are non-fatal (logged only)."""
+    sig = _cache_signature(map_path)
+    if sig is None:
+        return
+    cache_file = _cache_path_for(map_path)
+    # np.savez auto-appends ".npz" to the path argument, so write to a sibling
+    # tmp path then atomically rename. Track the actual produced filename so
+    # any partial output gets cleaned up on failure.
+    tmp_base = cache_file.with_suffix("")  # strips ".npz"
+    tmp_target = tmp_base.with_name(tmp_base.name + ".tmp")
+    produced = Path(str(tmp_target) + ".npz")
+    try:
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        kp_fields = np.array(
+            [
+                (kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id)
+                for kp in keypoints
+            ],
+            dtype=np.float32,
+        )
+        np.savez(
+            str(tmp_target),
+            kp_fields=kp_fields,
+            des=descriptors.astype(np.float32, copy=False),
+            sig_path=np.array(sig["path"]),
+            sig_size=np.array(sig["size"], dtype=np.int64),
+            sig_mtime_ns=np.array(sig["mtime_ns"], dtype=np.int64),
+            sig_version=np.array(sig["version"], dtype=np.int32),
+            sig_clahe=np.array(sig["clahe"], dtype=np.float64),
+        )
+        os.replace(str(produced), str(cache_file))
+    except OSError as exc:
+        print(f"[SiftTracker] descriptor cache save failed: {exc}")
+        # Clean up any partial tmp file so the cache dir doesn't accumulate junk.
+        try:
+            if produced.exists():
+                produced.unlink()
+        except OSError:
+            pass
+
+
 class SiftTracker(BaseTracker):
     def __init__(self) -> None:
         self.logic_map_bgr = imread_unicode(config.LOGIC_MAP_PATH)
@@ -39,11 +162,9 @@ class SiftTracker(BaseTracker):
         self.map_height, self.map_width = self.logic_map_bgr.shape[:2]
 
         self.clahe = cv2.createCLAHE(clipLimit=config.SIFT_CLAHE_LIMIT, tileGridSize=(8, 8))
-        logic_gray = cv2.cvtColor(self.logic_map_bgr, cv2.COLOR_BGR2GRAY)
-        logic_gray = self.clahe.apply(logic_gray)
-
         self.sift = cv2.SIFT_create()
-        self.kp_big, self.des_big = self.sift.detectAndCompute(logic_gray, None)
+
+        self.kp_big, self.des_big = self._load_or_compute_base_descriptors()
         if self.des_big is None:
             self.des_big = np.empty((0, 128), dtype=np.float32)
         self._kp_big_pts = np.array([kp.pt for kp in self.kp_big], dtype=np.float32)
@@ -63,6 +184,39 @@ class SiftTracker(BaseTracker):
         self._max_lost = config.MAX_LOST_FRAMES
         self._pending_edge_xy: tuple[int, int] | None = None
         self._pending_edge_hits = 0
+
+    def _load_or_compute_base_descriptors(
+        self,
+    ) -> tuple[list[cv2.KeyPoint], np.ndarray]:
+        """Try cache first, fall back to recomputation. Always logs timing."""
+        map_path = config.LOGIC_MAP_PATH
+        t_start = time.time()
+
+        cached = _load_descriptor_cache(map_path)
+        if cached is not None:
+            keypoints, descriptors = cached
+            elapsed = (time.time() - t_start) * 1000.0
+            print(
+                f"[SiftTracker] base descriptors loaded from cache: "
+                f"{len(keypoints)} keypoints in {elapsed:.0f}ms"
+            )
+            return keypoints, descriptors
+
+        logic_gray = cv2.cvtColor(self.logic_map_bgr, cv2.COLOR_BGR2GRAY)
+        logic_gray = self.clahe.apply(logic_gray)
+        keypoints, descriptors = self.sift.detectAndCompute(logic_gray, None)
+        if descriptors is None:
+            descriptors = np.empty((0, 128), dtype=np.float32)
+            keypoints = list(keypoints) if keypoints is not None else []
+        else:
+            keypoints = list(keypoints)
+        elapsed = (time.time() - t_start) * 1000.0
+        print(
+            f"[SiftTracker] base descriptors computed: "
+            f"{len(keypoints)} keypoints in {elapsed:.0f}ms (caching for next launch)"
+        )
+        _save_descriptor_cache(map_path, keypoints, descriptors)
+        return keypoints, descriptors
 
     def set_anchor(self, x: int, y: int) -> None:
         self._last_x, self._last_y = int(x), int(y)
