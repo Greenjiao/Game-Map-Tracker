@@ -31,6 +31,7 @@ from ..dialogs.point_order_dialog import open_point_order_dialog
 from ..dialogs.route_notes_dialog import RouteNodeEditorPanel, RouteNotesDialog, edit_route_notes, route_color_to_hex
 from ..dialogs.settings_dialog import styled_confirm, styled_info
 from ..dialogs.text_input_dialog import prompt_text_input
+from ..services import resource_metadata
 from ..services.route_manager import NODE_TYPE_COLLECT, NODE_TYPE_TELEPORT, NODE_TYPE_VIRTUAL
 from ..widgets import ElidedCheckBox, RouteListItem, RouteSection, TrackedRouteItem
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
@@ -1502,6 +1503,8 @@ QCheckBox::indicator:checked:hover {{
         current_color = self.window.route_mgr.route_color_override(route_id) or None
         route_color = self.window.route_mgr.color_for(route_id) if route_id else (255, 209, 26)
         nodes = self._route_notes_nodes(route)
+        current_enable_versions = self.window.route_mgr.route_enable_versions(route_id)
+        enable_version_options = resource_metadata.route_enable_version_options(current_enable_versions or [])
         if not isinstance(self.window, QWidget):
             result = edit_route_notes(
                 None,
@@ -1510,17 +1513,27 @@ QCheckBox::indicator:checked:hover {{
                 route_color,
                 current_color,
                 nodes,
+                current_enable_versions,
+                enable_version_options,
             )
             accepted, notes, color = result[:3]
             nodes_changed = bool(result[3]) if len(result) > 3 else False
             edited_nodes = result[4] if len(result) > 4 else nodes
+            enable_versions_changed = bool(result[5]) if len(result) > 5 else False
+            edited_enable_versions = result[6] if len(result) > 6 else current_enable_versions
             notes_changed = notes != current_notes or color != current_color
-            if not accepted or (not notes_changed and not nodes_changed):
+            if not accepted or (not notes_changed and not nodes_changed and not enable_versions_changed):
                 return
             if notes_changed and not self.window.route_mgr.update_route_notes_and_color(category, name, notes, color):
                 styled_info(self.window, strings.ROUTE_NOTES_TITLE, strings.ROUTE_NOTES_SAVE_FAILED.format(name=name))
                 return
             if nodes_changed and not self.window.route_mgr.save_route_points(route_id, edited_nodes):
+                styled_info(self.window, strings.ROUTE_NOTES_TITLE, strings.ROUTE_NOTES_SAVE_FAILED.format(name=name))
+                return
+            if enable_versions_changed and not self.window.route_mgr.update_route_enable_versions(
+                route_id,
+                edited_enable_versions or [],
+            ):
                 styled_info(self.window, strings.ROUTE_NOTES_TITLE, strings.ROUTE_NOTES_SAVE_FAILED.format(name=name))
                 return
             self._route_notes_refresh_preview()
@@ -1548,6 +1561,8 @@ QCheckBox::indicator:checked:hover {{
             route_color,
             current_color,
             nodes,
+            enable_versions=current_enable_versions,
+            enable_version_options=enable_version_options,
             modal=False,
         )
         center_dialog(dialog, self.window)
@@ -1565,6 +1580,9 @@ QCheckBox::indicator:checked:hover {{
             "original_notes_value": route.get("notes"),
             "original_points": deepcopy(route.get("points", []) or []),
             "original_draft_nodes": dialog.draft_nodes(),
+            "original_enable_versions": current_enable_versions,
+            "original_had_enable_versions": "enable_versions" in route,
+            "original_enable_versions_value": deepcopy(route.get("enable_versions")),
         }
         dialog.nodes_changed_signal.connect(lambda rid=route_id: self._on_route_notes_nodes_changed(rid))
         dialog.color_preview_changed.connect(lambda _color, rid=route_id: self._on_route_notes_color_changed(rid))
@@ -1595,6 +1613,7 @@ QCheckBox::indicator:checked:hover {{
             dialog.notes_text() != session.get("original_notes", "")
             or dialog.color_override() != session.get("original_color")
             or dialog.draft_nodes() != session.get("original_draft_nodes", [])
+            or dialog.enable_versions() != session.get("original_enable_versions")
         )
 
     def _route_notes_nodes_changed_for_save(self, session: dict) -> bool:
@@ -1650,6 +1669,10 @@ QCheckBox::indicator:checked:hover {{
             route["notes"] = session.get("original_notes_value")
         else:
             route.pop("notes", None)
+        if session.get("original_had_enable_versions"):
+            route["enable_versions"] = deepcopy(session.get("original_enable_versions_value"))
+        else:
+            route.pop("enable_versions", None)
         self._route_notes_refresh_preview()
 
     def _discard_route_notes_session(self, *, prompt: bool) -> bool:
@@ -1691,9 +1714,11 @@ QCheckBox::indicator:checked:hover {{
         notes = dialog.notes_text()
         color = dialog.color_override()
         edited_nodes = dialog.nodes()
+        edited_enable_versions = dialog.enable_versions()
         notes_changed = notes != session.get("original_notes", "") or color != session.get("original_color")
         nodes_changed = edited_nodes != session.get("original_points", [])
-        if not notes_changed and not nodes_changed:
+        enable_versions_changed = edited_enable_versions != session.get("original_enable_versions")
+        if not notes_changed and not nodes_changed and not enable_versions_changed:
             self._route_notes_session = None
             dialog.force_close(True)
             return True
@@ -1703,6 +1728,13 @@ QCheckBox::indicator:checked:hover {{
             self._apply_route_notes_preview()
             return False
         if nodes_changed and not self.window.route_mgr.save_route_points(route_id, edited_nodes):
+            styled_info(self.window, strings.ROUTE_NOTES_TITLE, strings.ROUTE_NOTES_SAVE_FAILED.format(name=name))
+            self._apply_route_notes_preview(nodes=edited_nodes)
+            return False
+        if enable_versions_changed and not self.window.route_mgr.update_route_enable_versions(
+            route_id,
+            edited_enable_versions or [],
+        ):
             styled_info(self.window, strings.ROUTE_NOTES_TITLE, strings.ROUTE_NOTES_SAVE_FAILED.format(name=name))
             self._apply_route_notes_preview(nodes=edited_nodes)
             return False

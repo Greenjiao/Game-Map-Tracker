@@ -54,8 +54,8 @@ class RouteFormatConverterTests(unittest.TestCase):
 
         keys = list(payload)
         self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
-        self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-        self.assertIn(resource_metadata.APP_FORMAT_VERSION, payload["enable_versions"])
+        self.assertNotIn("format_version", payload)
+        self.assertNotIn("enable_versions", payload)
         self.assertEqual(payload["annotation_hash"], "b" * 32)
         self.assertEqual(payload["custom"], {"kept": True})
         self.assertNotIn("color", payload)
@@ -63,7 +63,6 @@ class RouteFormatConverterTests(unittest.TestCase):
         self.assertNotIn("map_hash", payload)
         self.assertNotIn("map_hashs", payload)
         self.assertNotIn("map_info", payload)
-        self.assertLess(keys.index("enable_versions"), keys.index("name"))
         self.assertLess(keys.index("notes"), keys.index("loop"))
 
     def test_convert_route_folder_writes_new_files_without_inventing_map_metadata(self) -> None:
@@ -95,8 +94,8 @@ class RouteFormatConverterTests(unittest.TestCase):
             self.assertNotIn("color", payload)
             self.assertEqual(payload["name"], "路线")
             self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
-            self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-            self.assertIn(resource_metadata.APP_FORMAT_VERSION, payload["enable_versions"])
+            self.assertNotIn("format_version", payload)
+            self.assertNotIn("enable_versions", payload)
             self.assertEqual(payload["points"][0]["x"], expected_x)
             self.assertEqual(payload["points"][0]["y"], expected_y)
 
@@ -146,7 +145,7 @@ class RouteFormatConverterTests(unittest.TestCase):
         )
 
         self.assertEqual(payload["id"], "f" * 32)
-        self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
+        self.assertEqual(payload["format_version"], "old-format")
         self.assertEqual(payload["enable_versions"], ["old-format", resource_metadata.APP_FORMAT_VERSION])
         self.assertNotIn("coordinate_space_id", payload)
         self.assertNotIn("map_info", payload)
@@ -156,7 +155,7 @@ class RouteFormatConverterTests(unittest.TestCase):
         payload = normalize_route_payload({"id": "2026041913", "name": "路线", "points": []})
 
         self.assertEqual(payload["id"], "2026041913")
-        self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
+        self.assertNotIn("format_version", payload)
 
     def test_old_big_map_xy_to_17173_xy_uses_reversed_fit_formula(self) -> None:
         old_x, old_y = _old_xy_from_latlng(1.2, -0.75)
@@ -183,8 +182,8 @@ class RouteFormatConverterTests(unittest.TestCase):
 
         self.assertEqual(point_count, 1)
         self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
-        self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-        self.assertIn(resource_metadata.APP_FORMAT_VERSION, payload["enable_versions"])
+        self.assertNotIn("format_version", payload)
+        self.assertNotIn("enable_versions", payload)
         self.assertEqual(payload["points"][0]["x"], expected_x)
         self.assertEqual(payload["points"][0]["y"], expected_y)
         self.assertEqual(payload["points"][0]["label"], "A")
@@ -227,8 +226,8 @@ class RouteFormatConverterTests(unittest.TestCase):
             self.assertEqual(payload["points"][0]["x"], expected_x)
             self.assertEqual(payload["points"][0]["y"], expected_y)
             self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
-            self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-            self.assertIn(resource_metadata.APP_FORMAT_VERSION, payload["enable_versions"])
+            self.assertNotIn("format_version", payload)
+            self.assertNotIn("enable_versions", payload)
             self.assertNotIn("coordinate_space_id", payload)
 
     def test_annotate_route_payload_matches_annotations_and_preserves_manual_fields(self) -> None:

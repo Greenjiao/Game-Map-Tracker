@@ -126,6 +126,10 @@ class TrackingState:
     latencies: deque[float] = field(default_factory=lambda: deque(maxlen=30))
     last_result: TrackResult | None = None
     last_player_xy: tuple[int, int] | None = None
+    display_stable_xy: tuple[int, int] | None = None
+    display_pending_locked_xy: tuple[int, int] | None = None
+    display_pending_locked_count: int = 0
+    display_needs_lock_confirmation: bool = False
     latest_minimap: np.ndarray | None = None
     tracking_attempts_paused: bool = False
     tracking_paused_state: TrackState = TrackState.SEARCHING

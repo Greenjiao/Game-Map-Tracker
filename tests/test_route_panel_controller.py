@@ -206,6 +206,7 @@ class _FakeRouteManager:
         self.colors: dict[str, tuple[int, int, int]] = {}
         self.saved_points_calls: list[tuple[str, list[dict], bool | None]] = []
         self.saved_notes_calls: list[tuple[str, str, str, str | None]] = []
+        self.saved_enable_versions_calls: list[tuple[str, list[str]]] = []
         self._new_point_id = 0
 
     @staticmethod
@@ -249,6 +250,29 @@ class _FakeRouteManager:
     def get_route_notes(self, category: str, name: str) -> str:
         route = self._route_by_category_name(category, name)
         return str(route.get("notes") or "") if route is not None else ""
+
+    def route_enable_versions(self, route_id: str) -> list[str] | None:
+        route = self.routes.get(route_id)
+        enable_versions = route.get("enable_versions") if route is not None else None
+        if not isinstance(enable_versions, list):
+            return None
+        return [str(item).strip() for item in enable_versions if str(item or "").strip()]
+
+    def update_route_enable_versions(self, route_id: str, versions: list[str]) -> bool:
+        route = self.routes.get(route_id)
+        if route is None:
+            return False
+        cleaned = []
+        for item in versions:
+            value = str(item or "").strip()
+            if value and value not in cleaned:
+                cleaned.append(value)
+        if cleaned:
+            route["enable_versions"] = cleaned
+        else:
+            route.pop("enable_versions", None)
+        self.saved_enable_versions_calls.append((route_id, cleaned))
+        return True
 
     def update_route_notes_and_color(
         self,
@@ -523,6 +547,35 @@ class RoutePanelFilterTests(unittest.TestCase):
 
         self.assertEqual(window.route_mgr.saved_notes_calls, [("矿物", "矿线", "new", "#112233")])
         self.assertEqual(window.route_mgr.saved_points_calls, [("route-1", edited_nodes, None)])
+        self.assertEqual(window.map_view.refresh_count, 1)
+
+    def test_route_notes_dialog_saves_enable_versions_without_auto_restoring_current_version(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "鐭跨墿",
+                "display_name": "鐭跨嚎",
+                "notes": "old",
+                "enable_versions": ["old-format", "GMT-N-0.1.3"],
+                "points": [],
+            }
+        })
+        controller = self._controller_for(window)
+
+        with (
+            patch(
+                "ui_island.controllers.route_panel_controller.edit_route_notes",
+                return_value=(True, "old", None, False, [], True, ["old-format"]),
+            ),
+            patch("ui_island.controllers.route_panel_controller.toast"),
+        ):
+            controller.show_route_notes_dialog("鐭跨墿", "鐭跨嚎")
+
+        self.assertEqual(window.route_mgr.saved_notes_calls, [])
+        self.assertEqual(window.route_mgr.saved_points_calls, [])
+        self.assertEqual(window.route_mgr.saved_enable_versions_calls, [("route-1", ["old-format"])])
+        self.assertEqual(window.route_mgr.routes["route-1"]["enable_versions"], ["old-format"])
         self.assertEqual(window.map_view.refresh_count, 1)
 
 

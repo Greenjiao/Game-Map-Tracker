@@ -25,8 +25,11 @@ debug_minimap.png
 # SIFT base-map descriptor cache (regenerated automatically on first launch)
 .cache/
 
-# SIFT 调试转储（仅在 GMT_SIFT_DEBUG=1 时产生）
-debug/sift_failures/
+# 调试模式产物（仅 GMT_SIFT_DEBUG=1 时产生），不应入库
+debug/
+
+# 运行日志（崩溃日志、路线转换日志等），不应入库
+logs/
 
 # Build outputs
 build/
@@ -38,4 +41,6 @@ dist/
 
 routes/采样分析添加标注/采样分析添加标注1.json
 routes_converted/采样分析添加标注1.json
-.gitignore
+
+# 发行脚本读取的本机私有运行时配置（含下发链接等），不应入库
+runtime_config.json

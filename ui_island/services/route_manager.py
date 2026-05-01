@@ -202,6 +202,17 @@ def _ensure_route_metadata(payload: dict) -> dict:
     return payload
 
 
+def _ensure_existing_route_metadata(payload: dict) -> dict:
+    resource_metadata.ensure_metadata(
+        payload,
+        include_id=False,
+        include_route_defaults=True,
+        preserve_format_version=True,
+        enable_versions_policy="append_current_if_list",
+    )
+    return payload
+
+
 def _ensure_annotation_metadata(payload: dict) -> dict:
     return resource_metadata.ensure_metadata(
         payload,
@@ -1015,12 +1026,10 @@ class RouteManager:
     def _validate_route_metadata(self, route: dict, display_name: str) -> None:
         if not isinstance(route, dict):
             return
-        if not str(route.get("format_version") or "").strip():
-            self._record_resource_warning("route_missing_format", display_name)
         enable_versions = route.get("enable_versions")
-        if not isinstance(enable_versions, list):
-            self._record_resource_warning("route_missing_version", display_name)
-        elif resource_metadata.APP_FORMAT_VERSION not in [str(item) for item in enable_versions]:
+        if isinstance(enable_versions, list) and resource_metadata.APP_FORMAT_VERSION not in [
+            str(item) for item in enable_versions
+        ]:
             self._record_resource_warning("route_incompatible_version", display_name)
 
 
@@ -1040,20 +1049,16 @@ class RouteManager:
             return [f"标注数据文件格式无效：{rel}"]
 
         warnings: list[str] = []
-        if not str(payload.get("format_version") or "").strip():
-            warnings.append(f"标注数据文件缺少 format_version：{rel}")
         enable_versions = payload.get("enable_versions")
-        if not isinstance(enable_versions, list):
-            warnings.append(f"标注数据文件缺少 enable_versions：{rel}")
-        elif resource_metadata.APP_FORMAT_VERSION not in [str(item) for item in enable_versions]:
+        if isinstance(enable_versions, list) and resource_metadata.APP_FORMAT_VERSION not in [
+            str(item) for item in enable_versions
+        ]:
             warnings.append(f"标注数据文件版本可能不兼容：{rel}")
 
         return warnings
 
     def route_metadata_warnings(self) -> list[str]:
         labels = {
-            "route_missing_format": "路线缺少 format_version",
-            "route_missing_version": "路线缺少 enable_versions",
             "route_incompatible_version": "路线版本可能不兼容",
         }
         warnings: list[str] = []
@@ -1419,6 +1424,7 @@ class RouteManager:
         if new_type_id == type_id:
             point["typeId"] = new_type_id
             point["type"] = str(new_type_name or new_type_id).strip() or new_type_id
+            point["manual"] = True
             self._sync_annotation_count(types, points_by_type, type_id)
             return self._write_annotation_payload(file_path, payload)
 
@@ -1432,6 +1438,7 @@ class RouteManager:
         moved = dict(point)
         moved["typeId"] = new_type_id
         moved["type"] = str(new_type_name or new_type_id).strip() or new_type_id
+        moved["manual"] = True
         old_points.pop(point_index)
         new_points.append(moved)
         self._sync_annotation_count(types, points_by_type, type_id)
@@ -2385,6 +2392,47 @@ class RouteManager:
             return ""
         return notes if isinstance(notes, str) else str(notes)
 
+    def route_enable_versions(self, route_ref: str) -> list[str] | None:
+        route_id = self.resolve_route_id(route_ref)
+        route = self.route_for_id(route_id) if route_id is not None else None
+        if route is None:
+            return None
+        if "enable_versions" not in route and not resource_metadata.format_version_as_enable_version(route):
+            return None
+        return resource_metadata.enable_versions_with_format_version(route)
+
+    def update_route_enable_versions(self, route_ref: str, versions: list[str]) -> bool:
+        route_id = self.resolve_route_id(route_ref)
+        route = self.route_for_id(route_id) if route_id is not None else None
+        category = self.category_for_route_id(route_id) if route_id is not None else None
+        if route is None or category is None:
+            return False
+
+        had_enable_versions = "enable_versions" in route
+        old_enable_versions = route.get("enable_versions", None)
+        cleaned = resource_metadata.normalize_enable_versions(
+            [
+                resource_metadata.format_version_as_enable_version(route),
+                *resource_metadata.normalize_enable_versions(versions),
+            ]
+        )
+        route["enable_versions"] = cleaned
+        try:
+            self._write_route_file(
+                category,
+                route.get("display_name", ""),
+                route,
+                preserve_manual_enable_versions=True,
+            )
+        except Exception as e:
+            if had_enable_versions:
+                route["enable_versions"] = old_enable_versions
+            else:
+                route.pop("enable_versions", None)
+            print(f"Save route enable_versions failed route_id={route_id}: {e}")
+            return False
+        return True
+
     def route_color_override(self, route_ref: str) -> str:
         route_id = self.resolve_route_id(route_ref)
         if route_id is None:
@@ -2960,17 +3008,35 @@ class RouteManager:
     def _category_path(self, category: str) -> str:
         return os.path.join(self.base_folder, category)
 
-    def _write_route_file(self, category: str, name: str, route: dict) -> None:
+    def _write_route_file(
+        self,
+        category: str,
+        name: str,
+        route: dict,
+        *,
+        preserve_manual_enable_versions: bool = False,
+    ) -> None:
         path = self._route_file_path(category, name)
         route_id = self.route_id(route)
         if not route_id:
             route_id = self._next_route_id()
             route["id"] = route_id
-        payload = self._serialize_route(route, name, route_id)
+        payload = self._serialize_route(
+            route,
+            name,
+            route_id,
+            preserve_manual_enable_versions=preserve_manual_enable_versions,
+        )
         self._write_json_file(path, payload)
 
     @staticmethod
-    def _serialize_route(route: dict, default_name: str, route_id: str) -> dict:
+    def _serialize_route(
+        route: dict,
+        default_name: str,
+        route_id: str,
+        *,
+        preserve_manual_enable_versions: bool = False,
+    ) -> dict:
         payload = {
             key: value
             for key, value in route.items()
@@ -2981,7 +3047,16 @@ class RouteManager:
         notes = payload.get("notes", "")
         payload["notes"] = "" if notes is None else (notes if isinstance(notes, str) else str(notes))
         payload.pop("annotation_hash", None)
-        _ensure_route_metadata(payload)
+        if preserve_manual_enable_versions:
+            resource_metadata.ensure_metadata(
+                payload,
+                include_id=False,
+                include_route_defaults=True,
+                preserve_format_version=True,
+                enable_versions_policy="preserve",
+            )
+        else:
+            _ensure_existing_route_metadata(payload)
         if "color" in payload:
             normalized_color = _normalize_route_color_hex(payload.get("color"))
             if normalized_color is None:

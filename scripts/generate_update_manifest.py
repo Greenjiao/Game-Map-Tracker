@@ -42,7 +42,7 @@ RUNTIME_CONFIG_STRING_KEYS = (
     "FEEDBACK_QQ_GROUP",
 )
 RUNTIME_CONFIG_LIST_KEYS = ("APP_UPDATE_MANIFEST_URLS",)
-RUNTIME_CONFIG_STRING_LIST_KEYS = ("APP_ENABLE_ROUTE_VERSIONS",)
+RUNTIME_CONFIG_STRING_LIST_KEYS = ("APP_ENABLE_VERSIONS",)
 APP_STATUS_NORMAL = "normal"
 APP_STATUS_NOTICE = "notice"
 APP_STATUS_DISABLED = "disabled"
@@ -52,7 +52,7 @@ _VERSION_RE = re.compile(r"^\s*v?(\d+)\.(\d+)\.(\d+)(?:[-+]([0-9A-Za-z.-]+))?\s*
 
 
 def default_runtime_config_path() -> Path:
-    return Path.home() / "Desktop" / "runtime_config.json"
+    return Path(__file__).resolve().parent.parent / "runtime_config.json"
 
 
 def sha256_file(path: Path) -> str:
@@ -361,7 +361,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--runtime-config",
         default=str(default_runtime_config_path()),
-        help="运行时配置 JSON 路径，默认读取当前用户桌面的 runtime_config.json。",
+        help="运行时配置 JSON 路径，默认读取仓库根目录的 runtime_config.json。",
     )
     parser.add_argument(
         "--obsolete-config-key",

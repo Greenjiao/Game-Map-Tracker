@@ -154,19 +154,22 @@ class MapView(QWidget):
         cx: int | None,
         cy: int | None,
         minimap_bgr: np.ndarray | None = None,
+        *,
+        auto_visit: bool = True,
+        snap_center: bool = False,
     ) -> None:
         if self._base_map is None or cx is None or cy is None:
             return
 
         self._last_state = state
         self._last_player = (cx, cy)
-        self._last_auto_visit = True
+        self._last_auto_visit = bool(auto_visit)
         if minimap_bgr is not None:
             self._last_minimap = minimap_bgr
         if self._center_locked or self._view_center is None:
             target_x = float(cx)
             target_y = float(cy)
-            if self._view_center is None:
+            if snap_center or self._view_center is None:
                 # 首次定位 — 直接设置，不需要逐渐拉到位
                 self._view_center = QPointF(target_x, target_y)
             else:
@@ -191,7 +194,7 @@ class MapView(QWidget):
                     new_y = cur_y + dy * alpha
                 self._view_center = QPointF(new_x, new_y)
 
-        self._render_frame(state, cx, cy, auto_visit=True)
+        self._render_frame(state, cx, cy, auto_visit=auto_visit)
 
     def _render_frame(self, state: TrackState, cx: int, cy: int, auto_visit: bool = True) -> None:
         if self._base_map is None or self._view_center is None:

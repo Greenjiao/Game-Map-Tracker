@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 import numpy as np
 
+from ui_island.services import resource_metadata
 from ui_island.services.route_manager import (
     _GuideTarget,
     _config_opacity,
@@ -681,6 +682,206 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(saved["node_type"], "teleport")
             self.assertEqual((saved["x"], saved["y"]), (10, 21))
             self.assertNotIn("visited", saved)
+
+    def test_save_route_preserves_format_version_and_appends_current_enable_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "format_version": "old-format",
+                        "enable_versions": ["old-format"],
+                        "name": "route",
+                        "points": [{"x": 1, "y": 2}],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(manager.set_point_position("2026010101", 0, 10, 20))
+
+            payload = json.loads(route_file.read_text(encoding="utf-8"))
+            self.assertEqual(payload["format_version"], "old-format")
+            self.assertEqual(payload["enable_versions"], ["old-format", resource_metadata.APP_FORMAT_VERSION])
+
+    def test_save_existing_route_does_not_create_missing_format_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "enable_versions": ["old-format"],
+                        "name": "route",
+                        "points": [{"x": 1, "y": 2}],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(manager.set_point_position("2026010101", 0, 10, 20))
+
+            payload = json.loads(route_file.read_text(encoding="utf-8"))
+            self.assertNotIn("format_version", payload)
+            self.assertEqual(payload["enable_versions"], ["old-format", resource_metadata.APP_FORMAT_VERSION])
+
+    def test_update_route_enable_versions_respects_manual_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "format_version": "old-format",
+                        "enable_versions": ["old-format", resource_metadata.APP_FORMAT_VERSION],
+                        "name": "route",
+                        "points": [],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(manager.update_route_enable_versions("2026010101", ["old-format"]))
+
+            payload = json.loads(route_file.read_text(encoding="utf-8"))
+            self.assertEqual(payload["format_version"], "old-format")
+            self.assertEqual(payload["enable_versions"], ["old-format"])
+
+    def test_update_route_enable_versions_keeps_empty_array(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "format_version": "old-format",
+                        "enable_versions": ["old-format"],
+                        "name": "route",
+                        "points": [],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(manager.update_route_enable_versions("2026010101", []))
+
+            payload = json.loads(route_file.read_text(encoding="utf-8"))
+            self.assertEqual(payload["format_version"], "old-format")
+            self.assertEqual(payload["enable_versions"], ["old-format"])
+
+    def test_update_route_enable_versions_keeps_empty_array_without_format_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "enable_versions": ["old-format"],
+                        "name": "route",
+                        "points": [],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(manager.update_route_enable_versions("2026010101", []))
+
+            payload = json.loads(route_file.read_text(encoding="utf-8"))
+            self.assertNotIn("format_version", payload)
+            self.assertEqual(payload["enable_versions"], [])
+
+    def test_route_enable_versions_uses_format_version_when_field_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            (category / "route.json").write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "format_version": "old-format",
+                        "name": "route",
+                        "points": [],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertEqual(manager.route_enable_versions("2026010101"), ["old-format"])
+
+    def test_route_and_annotation_warnings_only_check_current_enable_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            (category / "missing.json").write_text(
+                json.dumps({"id": "2026010101", "name": "missing", "points": []}),
+                encoding="utf-8",
+            )
+            (category / "unsupported.json").write_text(
+                json.dumps(
+                    {"id": "2026010102", "name": "unsupported", "enable_versions": ["old-format"], "points": []},
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            warnings = manager.route_metadata_warnings()
+
+            self.assertEqual(len(warnings), 1)
+            self.assertIn("unsupported", warnings[0])
+
+            missing_annotation = base / "missing_annotation.json"
+            missing_annotation.write_text(json.dumps({"types": [], "pointsByType": {}}), encoding="utf-8")
+            unsupported_annotation = base / "unsupported_annotation.json"
+            unsupported_annotation.write_text(
+                json.dumps(
+                    {"enable_versions": ["old-format"], "types": [], "pointsByType": {}},
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+
+            with patch("config.selected_annotation_file_from_settings", return_value="missing_annotation.json"), patch(
+                "config.selected_annotation_path_from_settings", return_value=str(missing_annotation)
+            ):
+                self.assertEqual(manager.annotation_metadata_warnings(), [])
+            with patch("config.selected_annotation_file_from_settings", return_value="unsupported_annotation.json"), patch(
+                "config.selected_annotation_path_from_settings", return_value=str(unsupported_annotation)
+            ):
+                annotation_warnings = manager.annotation_metadata_warnings()
+
+            self.assertEqual(len(annotation_warnings), 1)
+            self.assertIn("unsupported_annotation.json", annotation_warnings[0])
 
     def test_set_point_position_preview_updates_memory_without_writing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1507,7 +1708,34 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(moved["sourceId"], 7)
             self.assertEqual(moved["typeId"], "ore")
             self.assertEqual(moved["type"], "Ore")
+            self.assertTrue(moved["manual"])
             self.assertIsNone(manager._annotation_points_cache)
+
+    def test_change_annotation_point_type_marks_same_type_edit_manual(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            points_file = Path(tmp) / "points.json"
+            points_file.write_text(
+                json.dumps(
+                    {
+                        "types": [{"typeId": "flower", "type": "Sunflower", "count": 1}],
+                        "pointsByType": {
+                            "flower": [{"x": 1, "y": 2, "typeId": "flower", "type": "Old Name"}],
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(Path(tmp) / "routes"))
+
+            with patch("ui_island.services.route_manager._default_annotation_points_file", return_value=str(points_file)):
+                self.assertTrue(manager.change_annotation_point_type("flower", 0, "flower", "Sunflower"))
+
+            payload = json.loads(points_file.read_text(encoding="utf-8"))
+            point = payload["pointsByType"]["flower"][0]
+            self.assertEqual(point["typeId"], "flower")
+            self.assertEqual(point["type"], "Sunflower")
+            self.assertTrue(point["manual"])
 
     def test_delete_annotation_point_removes_point_and_updates_count(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1614,6 +1842,7 @@ class RouteGuideTests(unittest.TestCase):
 
             payload = json.loads((category / "路线.json").read_text(encoding="utf-8"))
             self.assertTrue(_is_13_digit_route_id(payload["id"]))
+            self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
 
     def test_create_route_avoids_generated_id_collisions_before_reload(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

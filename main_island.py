@@ -130,9 +130,9 @@ def main() -> int:
 
 def _write_crash_log(exc: BaseException) -> None:
     try:
-        debug_dir = config.app_path("debug")
-        os.makedirs(debug_dir, exist_ok=True)
-        path = os.path.join(debug_dir, "app_crash.log")
+        logs_dir = config.app_path("logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        path = os.path.join(logs_dir, "app_crash.log")
         with open(path, "a", encoding="utf-8") as handle:
             handle.write(f"\n[{datetime.now().isoformat(timespec='seconds')}]\n")
             traceback.print_exception(type(exc), exc, exc.__traceback__, file=handle)

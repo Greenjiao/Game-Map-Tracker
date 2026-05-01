@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPoint, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
+    QCheckBox,
+    QDialog,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -16,12 +18,16 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QGraphicsOpacityEffect,
+    QSlider,
+    QSizeGrip,
     QSizePolicy,
+    QSplitter,
     QVBoxLayout,
     QWidget,
-    QDialog,
 )
 
+import config
+from ui_island.services import resource_metadata
 from ui_island.services.route_manager import (
     NODE_TYPE_COLLECT,
     NODE_TYPE_TELEPORT,
@@ -38,16 +44,46 @@ from .annotation_type_picker import open_annotation_type_picker
 from ..design import strings
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
 from ..widgets.annotation_type_widgets import annotation_icon_path
-from ..widgets.factory import make_route_panel_line_edit, make_scroll_area
+from ..widgets.factory import make_compact_slider, make_route_panel_line_edit, make_scroll_area
 
 _NODE_ICON_SIZE = 22
+_NODE_NAME_MIN_WIDTH = 80
+_NODE_DRAG_PREVIEW_MIN_WIDTH = 200
 _STAT_COLUMNS = 3
 _TITLE_ROW_HEIGHT = 26
 _NODE_PANEL_SPACING = 8
 _NODE_SCROLL_MIN_HEIGHT = 220
 _STATS_SCROLL_DEFAULT_HEIGHT = 72
 _STATS_SCROLL_MAX_HEIGHT = 150
-_COLOR_BUTTON_TEXT = "（当前路线颜色）"
+_ROUTE_NOTES_DIALOG_MIN_WIDTH = 640
+_ROUTE_NOTES_DIALOG_MAX_WIDTH = 1280
+_ROUTE_NOTES_DIALOG_INITIAL_WIDTH = 680
+_ROUTE_NOTES_DIALOG_INITIAL_HEIGHT = 460
+_ROUTE_NOTES_LEFT_MIN_WIDTH = 300
+_ROUTE_NOTES_RIGHT_MIN_WIDTH = 200
+_ROUTE_NOTES_NODE_PANEL_MAX_WIDTH = _ROUTE_NOTES_DIALOG_MAX_WIDTH - _ROUTE_NOTES_LEFT_MIN_WIDTH
+_ROUTE_NOTES_MIN_OPACITY_PERCENT = 35
+_ROUTE_NOTES_DEFAULT_OPACITY_PERCENT = 100
+_ROUTE_NOTES_OPACITY_SLIDER_MIN_WIDTH = 88
+_ROUTE_NOTES_OPACITY_SLIDER_MAX_WIDTH = 112
+_ROUTE_NOTES_LAYOUT_SAVE_DELAY_MS = 300
+_COLOR_BUTTON_TEXT = "当前路线颜色"
+_COLOR_BUTTON_WIDTH = 96
+
+
+def _clamp_int(value: object, default: int, minimum: int, maximum: int) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        parsed = default
+    return max(minimum, min(maximum, parsed))
+
+
+def _route_notes_config_int(key: str, default: int, minimum: int, maximum: int) -> int:
+    value = getattr(config, key, None)
+    if value is None:
+        value = getattr(config, "settings", {}).get(key, default)
+    return _clamp_int(value, default, minimum, maximum)
 
 
 def normalize_color_hex(value: object) -> str | None:
@@ -159,6 +195,72 @@ def _persistable_route_node(point: dict) -> dict:
     copied = dict(point)
     copied.pop("icon_path", None)
     return copied
+
+
+class RouteEnableVersionsDialog(StyledDialogBase):
+    def __init__(
+        self,
+        parent,
+        options: list[str],
+        selected_versions: list[str] | tuple[str, ...] | set[str] | None = None,
+    ) -> None:
+        super().__init__(parent, "兼容版本", min_width=420, max_width=520)
+        self._selected: list[str] | None = None
+        self._checkboxes: list[QCheckBox] = []
+        selected = set(resource_metadata.normalize_enable_versions(selected_versions))
+        clean_options = resource_metadata.normalize_enable_versions(options)
+
+        if not clean_options:
+            empty = QLabel("暂无可用兼容版本")
+            empty.setObjectName("DimLabel")
+            empty.setWordWrap(True)
+            self.shell_layout.addWidget(empty)
+        else:
+            scroll = make_scroll_area(
+                object_name="RouteEnableVersionsScroll",
+                horizontal_policy=Qt.ScrollBarAlwaysOff,
+                min_height=120,
+                max_height=260,
+            )
+            host = QWidget()
+            host.setObjectName("AnnotationPanelInner")
+            layout = QVBoxLayout(host)
+            layout.setContentsMargins(4, 4, 4, 4)
+            layout.setSpacing(6)
+            for version in clean_options:
+                checkbox = QCheckBox(version, host)
+                checkbox.setObjectName("RouteEnableVersionCheckBox")
+                checkbox.setChecked(version in selected)
+                checkbox.setToolTip(version)
+                layout.addWidget(checkbox)
+                self._checkboxes.append(checkbox)
+            layout.addStretch(1)
+            scroll.setWidget(host)
+            self.shell_layout.addWidget(scroll, stretch=1)
+
+        self.add_action_row(confirm_text="确定", cancel_text=strings.ROUTE_NOTES_CANCEL, on_confirm=self._save)
+        self.adjustSize()
+
+    def _save(self) -> None:
+        self._selected = resource_metadata.normalize_enable_versions(
+            checkbox.text() for checkbox in self._checkboxes if checkbox.isChecked()
+        )
+        self.accept()
+
+    def selected_versions(self) -> list[str] | None:
+        return list(self._selected) if self._selected is not None else None
+
+
+def open_route_enable_versions_dialog(
+    parent,
+    options: list[str],
+    selected_versions: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> list[str] | None:
+    dialog = RouteEnableVersionsDialog(parent, options, selected_versions)
+    center_dialog(dialog, parent)
+    if dialog.exec() == QDialog.Accepted:
+        return dialog.selected_versions()
+    return None
 
 
 class RouteNodeStatsPanel(QWidget):
@@ -387,6 +489,7 @@ class RouteNodeEditorPanel(QWidget):
             size_policy=(QSizePolicy.Ignored, QSizePolicy.Fixed),
         )
         name_input.setObjectName("RouteNotesNodeName")
+        name_input.setMinimumWidth(_NODE_NAME_MIN_WIDTH)
         name_input.setProperty("routeNotesDragIndex", index)
         current_label = str(point.get("label") or "").strip()
         name_input.setText(display_name if not current_label or is_auto_route_node_label(current_label) else current_label)
@@ -622,7 +725,7 @@ class RouteNodeEditorPanel(QWidget):
 
         name = QLabel(route_node_display_name(point, index), preview)
         name.setObjectName("RouteNotesDragPreviewName")
-        name.setMinimumWidth(120)
+        name.setMinimumWidth(_NODE_NAME_MIN_WIDTH)
         layout.addWidget(name, stretch=1)
 
         order = QLabel(f"{index + 1}/{len(self._nodes)}", preview)
@@ -630,7 +733,7 @@ class RouteNodeEditorPanel(QWidget):
         layout.addWidget(order)
 
         width = self._node_rows[index].width() if 0 <= index < len(self._node_rows) else 260
-        preview.setFixedWidth(max(220, width))
+        preview.setFixedWidth(max(_NODE_DRAG_PREVIEW_MIN_WIDTH, width))
         return preview
 
     def _move_drag_preview(self, global_pos) -> None:
@@ -703,27 +806,74 @@ class RouteNotesDialog(StyledDialogBase):
         color_override: str | None,
         nodes: list[dict],
         *,
+        enable_versions: list[str] | None = None,
+        enable_version_options: list[str] | None = None,
         modal: bool = True,
     ) -> None:
-        super().__init__(parent, route_name, modal=modal, min_width=760, max_width=980)
+        super().__init__(
+            parent,
+            route_name,
+            modal=modal,
+            min_width=_ROUTE_NOTES_DIALOG_MIN_WIDTH,
+            max_width=_ROUTE_NOTES_DIALOG_MAX_WIDTH,
+        )
         self._route_name = route_name
         self._notes = notes
         self._route_color_hex = route_color_to_hex(route_color)
         self._color_override = normalize_color_hex(color_override) if color_override else None
         self._original_nodes = [_persistable_route_node(point) for point in nodes if isinstance(point, dict)]
+        self._enable_versions = (
+            resource_metadata.normalize_enable_versions(enable_versions)
+            if isinstance(enable_versions, list)
+            else None
+        )
+        self._original_enable_versions = (
+            list(self._enable_versions) if self._enable_versions is not None else None
+        )
+        self._enable_version_options = resource_metadata.route_enable_version_options(
+            [*(enable_version_options or []), *(self._enable_versions or [])]
+        )
         self._controller_managed = not modal
         self._force_close = False
+        self._initializing_layout = True
+        self.setMinimumSize(_ROUTE_NOTES_DIALOG_MIN_WIDTH, _ROUTE_NOTES_DIALOG_INITIAL_HEIGHT)
+        self.setMaximumWidth(_ROUTE_NOTES_DIALOG_MAX_WIDTH)
+        self._initial_splitter_sizes_pending = True
+        self._layout_save_timer = QTimer(self)
+        self._layout_save_timer.setSingleShot(True)
+        self._layout_save_timer.setInterval(_ROUTE_NOTES_LAYOUT_SAVE_DELAY_MS)
+        self._layout_save_timer.timeout.connect(self._persist_layout_preferences)
         self.annotation_group_expanded = getattr(parent, "annotation_group_expanded", {})
         self._on_annotation_group_expanded_changed = getattr(parent, "_on_annotation_group_expanded_changed", None)
+        self._preferred_dialog_width = _route_notes_config_int(
+            "ROUTE_NOTES_DIALOG_WIDTH",
+            _ROUTE_NOTES_DIALOG_INITIAL_WIDTH,
+            _ROUTE_NOTES_DIALOG_MIN_WIDTH,
+            _ROUTE_NOTES_DIALOG_MAX_WIDTH,
+        )
+        max_node_panel_width = max(
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            self._preferred_dialog_width - _ROUTE_NOTES_LEFT_MIN_WIDTH,
+        )
+        self._preferred_node_panel_width = _route_notes_config_int(
+            "ROUTE_NOTES_NODE_PANEL_WIDTH",
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            min(_ROUTE_NOTES_NODE_PANEL_MAX_WIDTH, max_node_panel_width),
+        )
 
-        content = QWidget(self)
-        content_layout = QHBoxLayout(content)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(14)
+        self._build_title_opacity_controls()
 
-        left = QWidget(content)
+        self.splitter = QSplitter(Qt.Horizontal, self)
+        self.splitter.setObjectName("RouteNotesSplitter")
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.setHandleWidth(8)
+        self.splitter.splitterMoved.connect(self._on_splitter_moved)
+
+        left = QWidget(self.splitter)
         left.setObjectName("RouteNotesLeftColumn")
-        left.setMinimumWidth(340)
+        left.setMinimumWidth(_ROUTE_NOTES_LEFT_MIN_WIDTH)
+        left.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         left_layout = QVBoxLayout(left)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(10)
@@ -731,11 +881,11 @@ class RouteNotesDialog(StyledDialogBase):
         self.stats_panel = RouteNodeStatsPanel(left)
         self.stats_panel.set_nodes(nodes)
         left_layout.addWidget(self.stats_panel)
-        content_layout.addWidget(left, stretch=3)
+        self.splitter.addWidget(left)
 
-        right = QWidget(content)
+        right = QWidget(self.splitter)
         right.setObjectName("RouteNotesRightColumn")
-        right.setMinimumWidth(300)
+        right.setMinimumWidth(_ROUTE_NOTES_RIGHT_MIN_WIDTH)
         right.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(0, 0, 0, 0)
@@ -752,11 +902,126 @@ class RouteNotesDialog(StyledDialogBase):
         self.node_panel.set_nodes(nodes)
         self.node_panel.nodes_changed.connect(self._on_node_panel_nodes_changed)
         right_layout.addWidget(self.node_panel, stretch=1)
-        content_layout.addWidget(right, stretch=2)
+        self.splitter.addWidget(right)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 1)
 
-        self.shell_layout.addWidget(content, stretch=1)
+        self.shell_layout.addWidget(self.splitter, stretch=1)
         self.add_action_row(confirm_text=strings.ROUTE_NOTES_CONFIRM, cancel_text=strings.ROUTE_NOTES_CANCEL)
-        self.resize(840, 460)
+        self._size_grip = QSizeGrip(self.shell)
+        self._size_grip.setObjectName("RouteNotesSizeGrip")
+        self._size_grip.setFixedSize(16, 16)
+        self._size_grip.setToolTip("拖动调整窗口大小")
+        self.resize(self._preferred_dialog_width, _ROUTE_NOTES_DIALOG_INITIAL_HEIGHT)
+        self._apply_initial_splitter_sizes()
+        self._position_size_grip()
+        self._initializing_layout = False
+
+    def _build_title_opacity_controls(self) -> None:
+        title_layout = self.title_bar.layout()
+        if title_layout is None:
+            return
+        close_index = title_layout.indexOf(self.close_btn)
+        insert_index = close_index if close_index >= 0 else title_layout.count()
+
+        opacity_label = QLabel("透明度", self.title_bar)
+        opacity_label.setObjectName("StatLabel")
+        opacity_label.setToolTip("路线详情窗口透明度")
+        title_layout.insertWidget(insert_index, opacity_label)
+        insert_index += 1
+
+        self.opacity_slider = make_compact_slider(
+            object_name="RouteNotesOpacitySlider",
+            minimum=_ROUTE_NOTES_MIN_OPACITY_PERCENT,
+            maximum=100,
+            value=_ROUTE_NOTES_DEFAULT_OPACITY_PERCENT,
+            min_width=_ROUTE_NOTES_OPACITY_SLIDER_MIN_WIDTH,
+            max_width=_ROUTE_NOTES_OPACITY_SLIDER_MAX_WIDTH,
+            parent=self.title_bar,
+        )
+        self.opacity_slider.setToolTip("路线详情窗口透明度：100%")
+        self.opacity_slider.valueChanged.connect(self._on_opacity_slider_changed)
+        title_layout.insertWidget(insert_index, self.opacity_slider)
+        self._on_opacity_slider_changed(self.opacity_slider.value())
+
+    def _apply_initial_splitter_sizes(self) -> None:
+        if not hasattr(self, "splitter"):
+            return
+        max_right_width = min(
+            _ROUTE_NOTES_NODE_PANEL_MAX_WIDTH,
+            max(
+                _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+                (self.width() or self._preferred_dialog_width) - _ROUTE_NOTES_LEFT_MIN_WIDTH,
+            ),
+        )
+        right_width = _clamp_int(
+            self._preferred_node_panel_width,
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            max_right_width,
+        )
+        left_width = max(_ROUTE_NOTES_LEFT_MIN_WIDTH, self._preferred_dialog_width - right_width - 50)
+        self.splitter.setSizes([left_width, right_width])
+        self._initial_splitter_sizes_pending = False
+
+    def _on_splitter_moved(self, _pos: int, _index: int) -> None:
+        self._initial_splitter_sizes_pending = False
+        self._schedule_layout_preferences_save()
+
+    def _route_notes_panel_widths(self) -> tuple[int, int]:
+        sizes = self.splitter.sizes() if hasattr(self, "splitter") else []
+        if len(sizes) >= 2 and sum(sizes) > 0:
+            return int(sizes[0]), int(sizes[1])
+        return 0, int(getattr(self, "_preferred_node_panel_width", _ROUTE_NOTES_RIGHT_MIN_WIDTH))
+
+    def _persist_layout_preferences(self) -> None:
+        if getattr(self, "_initializing_layout", False):
+            return
+        _left_width, right_width = self._route_notes_panel_widths()
+        dialog_width = _clamp_int(
+            self.width(),
+            _ROUTE_NOTES_DIALOG_INITIAL_WIDTH,
+            _ROUTE_NOTES_DIALOG_MIN_WIDTH,
+            _ROUTE_NOTES_DIALOG_MAX_WIDTH,
+        )
+        right_width = _clamp_int(
+            right_width,
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            _ROUTE_NOTES_RIGHT_MIN_WIDTH,
+            min(
+                _ROUTE_NOTES_NODE_PANEL_MAX_WIDTH,
+                max(_ROUTE_NOTES_RIGHT_MIN_WIDTH, dialog_width - _ROUTE_NOTES_LEFT_MIN_WIDTH),
+            ),
+        )
+        try:
+            config.save_config(
+                {
+                    "ROUTE_NOTES_DIALOG_WIDTH": dialog_width,
+                    "ROUTE_NOTES_NODE_PANEL_WIDTH": right_width,
+                }
+            )
+        except Exception as exc:
+            print(f"Save route notes layout failed: {exc}")
+
+    def _schedule_layout_preferences_save(self) -> None:
+        if getattr(self, "_initializing_layout", False):
+            return
+        timer = getattr(self, "_layout_save_timer", None)
+        if timer is not None:
+            timer.start()
+
+    def _flush_layout_preferences_save(self) -> None:
+        timer = getattr(self, "_layout_save_timer", None)
+        if timer is not None and timer.isActive():
+            timer.stop()
+        self._persist_layout_preferences()
+
+    def _position_size_grip(self) -> None:
+        grip = getattr(self, "_size_grip", None)
+        if grip is None:
+            return
+        grip.move(self.shell.width() - grip.width() - 3, self.shell.height() - grip.height() - 3)
+        grip.raise_()
 
     def _build_notes_column(self, layout: QVBoxLayout) -> None:
         notes_header = QWidget(self)
@@ -773,13 +1038,19 @@ class RouteNotesDialog(StyledDialogBase):
         self.color_button = QPushButton(self)
         self.color_button.clicked.connect(self._pick_color)
         self.color_button.setFixedHeight(26)
-        self.color_button.setMinimumWidth(112)
+        self.color_button.setFixedWidth(_COLOR_BUTTON_WIDTH)
         header_layout.addWidget(self.color_button)
 
         self.reset_color_button = QPushButton(strings.ROUTE_NOTES_COLOR_RESET, self)
         self.reset_color_button.clicked.connect(self._reset_color)
         self.reset_color_button.setFixedHeight(26)
         header_layout.addWidget(self.reset_color_button)
+        self.enable_versions_button = QPushButton("查看/修改兼容版本", self)
+        self.enable_versions_button.setObjectName("RouteEnableVersionsButton")
+        self.enable_versions_button.clicked.connect(self._edit_enable_versions)
+        self.enable_versions_button.setFixedHeight(26)
+        header_layout.addWidget(self.enable_versions_button)
+
         header_layout.addStretch()
         layout.addWidget(notes_header)
 
@@ -790,6 +1061,7 @@ class RouteNotesDialog(StyledDialogBase):
         self.editor.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.editor, stretch=1)
         self._sync_color_controls()
+        self._sync_enable_versions_button()
 
     def _on_node_panel_nodes_changed(self) -> None:
         self._refresh_stats_section()
@@ -910,6 +1182,7 @@ class RouteNotesDialog(StyledDialogBase):
             size_policy=(QSizePolicy.Ignored, QSizePolicy.Fixed),
         )
         name_input.setObjectName("RouteNotesNodeName")
+        name_input.setMinimumWidth(_NODE_NAME_MIN_WIDTH)
         current_label = str(point.get("label") or "").strip()
         name_input.setText(display_name if not current_label or is_auto_route_node_label(current_label) else current_label)
         name_input.setToolTip(display_name)
@@ -1070,7 +1343,7 @@ class RouteNotesDialog(StyledDialogBase):
 
         name = QLabel(route_node_display_name(point, index), preview)
         name.setObjectName("RouteNotesDragPreviewName")
-        name.setMinimumWidth(120)
+        name.setMinimumWidth(_NODE_NAME_MIN_WIDTH)
         layout.addWidget(name, stretch=1)
 
         order = QLabel(f"{index + 1}/{len(self._nodes)}", preview)
@@ -1078,7 +1351,7 @@ class RouteNotesDialog(StyledDialogBase):
         layout.addWidget(order)
 
         width = self._node_rows[index].width() if 0 <= index < len(self._node_rows) else 260
-        preview.setFixedWidth(max(220, width))
+        preview.setFixedWidth(max(_NODE_DRAG_PREVIEW_MIN_WIDTH, width))
         return preview
 
     def _move_drag_preview(self, global_pos) -> None:
@@ -1213,22 +1486,65 @@ class RouteNotesDialog(StyledDialogBase):
     def color_override(self) -> str | None:
         return self._color_override
 
+    def enable_versions(self) -> list[str] | None:
+        return list(self._enable_versions) if self._enable_versions is not None else None
+
+    def enable_versions_changed(self) -> bool:
+        return self._enable_versions != self._original_enable_versions
+
     def nodes(self) -> list[dict]:
         return self.node_panel.nodes()
 
     def nodes_changed(self) -> bool:
         return self.nodes() != self._original_nodes
 
+    def _edit_enable_versions(self) -> None:
+        options = resource_metadata.route_enable_version_options(
+            [*(self._enable_version_options or []), *(self._enable_versions or [])]
+        )
+        selected = open_route_enable_versions_dialog(self, options, self._enable_versions or [])
+        if selected is None:
+            return
+        if not options and not selected and self._enable_versions is None:
+            return
+        self._enable_versions = selected
+        self._enable_version_options = resource_metadata.route_enable_version_options([*options, *selected])
+        self._sync_enable_versions_button()
+
+    def _sync_enable_versions_button(self) -> None:
+        versions = self._enable_versions or []
+        suffix = str(len(versions)) if versions else "无"
+        self.enable_versions_button.setText(f"查看/修改兼容版本（{suffix}）")
+        if versions:
+            self.enable_versions_button.setToolTip("兼容版本：\n" + "\n".join(versions))
+        else:
+            self.enable_versions_button.setToolTip("暂无兼容版本")
+
+    def _on_opacity_slider_changed(self, value: int) -> None:
+        percent = max(_ROUTE_NOTES_MIN_OPACITY_PERCENT, min(100, int(value)))
+        self.setWindowOpacity(percent / 100.0)
+        if hasattr(self, "opacity_slider"):
+            self.opacity_slider.setToolTip(f"路线详情窗口透明度：{percent}%")
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._position_size_grip()
+        if getattr(self, "_initial_splitter_sizes_pending", False):
+            self._apply_initial_splitter_sizes()
+        self._schedule_layout_preferences_save()
+
     def accept(self) -> None:
         if self._controller_managed and not self._force_close:
             self.confirm_requested.emit()
             return
+        self._flush_layout_preferences_save()
         super().accept()
 
     def reject(self) -> None:
         if self._controller_managed and not self._force_close:
             self.cancel_requested.emit()
             return
+        self._flush_layout_preferences_save()
         super().reject()
 
     def closeEvent(self, event) -> None:
@@ -1236,11 +1552,13 @@ class RouteNotesDialog(StyledDialogBase):
             event.ignore()
             self.cancel_requested.emit()
             return
+        self._flush_layout_preferences_save()
         super().closeEvent(event)
 
     def force_close(self, accepted: bool = False) -> None:
         self._force_close = True
         try:
+            self._flush_layout_preferences_save()
             if accepted:
                 super().accept()
             else:
@@ -1256,10 +1574,37 @@ def edit_route_notes(
     route_color: tuple[int, int, int],
     color_override: str | None,
     nodes: list[dict],
-) -> tuple[bool, str, str | None, bool, list[dict]]:
-    dialog = RouteNotesDialog(parent, route_name, notes, route_color, color_override, nodes)
+    enable_versions: list[str] | None = None,
+    enable_version_options: list[str] | None = None,
+) -> tuple[bool, str, str | None, bool, list[dict], bool, list[str] | None]:
+    dialog = RouteNotesDialog(
+        parent,
+        route_name,
+        notes,
+        route_color,
+        color_override,
+        nodes,
+        enable_versions=enable_versions,
+        enable_version_options=enable_version_options,
+    )
     center_dialog(dialog, parent)
     accepted = dialog.exec() == QDialog.Accepted
     if not accepted:
-        return False, notes, color_override, False, [dict(point) for point in nodes if isinstance(point, dict)]
-    return True, dialog.notes_text(), dialog.color_override(), dialog.nodes_changed(), dialog.nodes()
+        return (
+            False,
+            notes,
+            color_override,
+            False,
+            [dict(point) for point in nodes if isinstance(point, dict)],
+            False,
+            enable_versions,
+        )
+    return (
+        True,
+        dialog.notes_text(),
+        dialog.color_override(),
+        dialog.nodes_changed(),
+        dialog.nodes(),
+        dialog.enable_versions_changed(),
+        dialog.enable_versions(),
+    )

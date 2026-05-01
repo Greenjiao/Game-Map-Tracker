@@ -77,6 +77,41 @@ class MapViewRenderingTests(unittest.TestCase):
         self.assertEqual(divisor, 1)
         self.assertEqual(image.shape[:2], (1024, 1024))
 
+    def test_update_frame_can_disable_auto_visit_and_preserves_it_on_refresh(self) -> None:
+        route_mgr = _RecordingRouteManager()
+        view = MapView(route_mgr)
+        view.resize(200, 200)
+        view.set_map(np.zeros((800, 800, 3), dtype=np.uint8))
+
+        view.update_frame(TrackState.INERTIAL, 400, 400, auto_visit=False)
+        view._refresh_from_last_frame()
+
+        self.assertEqual(len(route_mgr.draw_calls), 2)
+        self.assertFalse(route_mgr.draw_calls[0]["auto_visit"])
+        self.assertFalse(route_mgr.draw_calls[1]["auto_visit"])
+
+    def test_snap_center_bypasses_smoothing_and_jump_damping(self) -> None:
+        route_mgr = _RecordingRouteManager()
+        view = MapView(route_mgr)
+        view.resize(200, 200)
+        view.set_map(np.zeros((1000, 1000, 3), dtype=np.uint8))
+        view._view_center = QPointF(100, 100)
+
+        view.update_frame(TrackState.LOCKED, 500, 500, snap_center=True)
+
+        self.assertEqual(view._view_center, QPointF(500, 500))
+
+    def test_locked_large_jump_without_snap_is_damped(self) -> None:
+        route_mgr = _RecordingRouteManager()
+        view = MapView(route_mgr)
+        view.resize(200, 200)
+        view.set_map(np.zeros((1000, 1000, 3), dtype=np.uint8))
+        view._view_center = QPointF(100, 100)
+
+        view.update_frame(TrackState.LOCKED, 900, 900)
+
+        self.assertNotEqual(view._view_center, QPointF(900, 900))
+
 
 if __name__ == "__main__":
     unittest.main()

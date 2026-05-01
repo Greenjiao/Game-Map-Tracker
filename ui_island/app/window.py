@@ -77,6 +77,8 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
     _NATIVE_HOTKEY_ID_ALT_GRAVE = 1
     _HOTKEY_DEBOUNCE_SEC = 0.35
     _AUTO_RECENTER_MOVE_THRESHOLD = 3
+    _DISPLAY_LOCK_CONFIRM_FRAMES = 2
+    _DISPLAY_LOCK_CONFIRM_DISTANCE = 80
     _RESIZE_MARGIN = 6
     _SIDEBAR_RESIZE_MARGIN = 6
     _SIDEBAR_MIN_WIDTH = 200
@@ -107,6 +109,10 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.tracking_state.latencies = deque(maxlen=30)
         self.tracking_state.last_result = None
         self.tracking_state.last_player_xy = None
+        self.tracking_state.display_stable_xy = None
+        self.tracking_state.display_pending_locked_xy = None
+        self.tracking_state.display_pending_locked_count = 0
+        self.tracking_state.display_needs_lock_confirmation = False
         self.tracking_state.latest_minimap = None
 
         self._is_windows = sys.platform.startswith("win")
@@ -1335,6 +1341,10 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.map_view.preview_relocate(x, y, TrackState.SEARCHING)
         self.coord_label.setText(f"{x} , {y}")
         self._last_player_xy = (x, y)
+        self.tracking_state.display_stable_xy = (x, y)
+        self.tracking_state.display_pending_locked_xy = None
+        self.tracking_state.display_pending_locked_count = 0
+        self.tracking_state.display_needs_lock_confirmation = False
 
         if self._mode in (WindowMode.PAUSED, WindowMode.MAXIMIZED):
             return
@@ -1345,6 +1355,65 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             self._restore_lock_after_relocate = None
             self._update_lock_button_visibility()
         self._frame_ready.emit(TrackResult(TrackState.SEARCHING, x=x, y=y, latency_ms=0.0))
+
+    def _display_result_for_frame(self, result: TrackResult, state: TrackState) -> tuple[TrackResult, bool, bool]:
+        stable_xy = self.tracking_state.display_stable_xy or self._last_player_xy
+        if self.isMaximized() or state == TrackState.SEARCHING:
+            self.tracking_state.display_pending_locked_xy = None
+            self.tracking_state.display_pending_locked_count = 0
+            self.tracking_state.display_needs_lock_confirmation = False
+            return result, True, False
+        if state == TrackState.LOST:
+            self.tracking_state.display_pending_locked_xy = None
+            self.tracking_state.display_pending_locked_count = 0
+            self.tracking_state.display_needs_lock_confirmation = stable_xy is not None
+            return result, True, False
+
+        if state == TrackState.INERTIAL:
+            self.tracking_state.display_pending_locked_xy = None
+            self.tracking_state.display_pending_locked_count = 0
+            self.tracking_state.display_needs_lock_confirmation = True
+            if stable_xy is None:
+                return result, False, False
+            display = TrackResult(state, stable_xy[0], stable_xy[1], result.match_count, result.latency_ms)
+            return display, False, False
+
+        if state != TrackState.LOCKED or result.x is None or result.y is None:
+            return result, True, False
+
+        current_xy = (int(result.x), int(result.y))
+        if stable_xy is None:
+            self.tracking_state.display_stable_xy = current_xy
+            self.tracking_state.display_pending_locked_xy = None
+            self.tracking_state.display_pending_locked_count = 0
+            self.tracking_state.display_needs_lock_confirmation = False
+            return result, True, True
+
+        if not self.tracking_state.display_needs_lock_confirmation:
+            self.tracking_state.display_stable_xy = current_xy
+            return result, True, False
+
+        pending_xy = self.tracking_state.display_pending_locked_xy
+        if pending_xy is not None:
+            pending_delta = max(abs(current_xy[0] - pending_xy[0]), abs(current_xy[1] - pending_xy[1]))
+        else:
+            pending_delta = 0
+        if pending_xy is None or pending_delta > self._DISPLAY_LOCK_CONFIRM_DISTANCE:
+            self.tracking_state.display_pending_locked_xy = current_xy
+            self.tracking_state.display_pending_locked_count = 1
+        else:
+            self.tracking_state.display_pending_locked_xy = current_xy
+            self.tracking_state.display_pending_locked_count += 1
+
+        if self.tracking_state.display_pending_locked_count >= self._DISPLAY_LOCK_CONFIRM_FRAMES:
+            self.tracking_state.display_stable_xy = current_xy
+            self.tracking_state.display_pending_locked_xy = None
+            self.tracking_state.display_pending_locked_count = 0
+            self.tracking_state.display_needs_lock_confirmation = False
+            return result, True, True
+
+        display = TrackResult(TrackState.INERTIAL, stable_xy[0], stable_xy[1], result.match_count, result.latency_ms)
+        return display, False, False
 
     def _on_frame(self, result: TrackResult) -> None:
         state = TrackState.SEARCHING if self.isMaximized() else result.state
@@ -1376,27 +1445,38 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         elif state != TrackState.LOCKED:
             self._jump_anomaly_count = 0
 
-        self._last_result = result
-        self.dot.set_state(state)
+        display_result, auto_visit, snap_center = self._display_result_for_frame(result, state)
+        display_state = display_result.state
+
+        self._last_result = display_result
+        self.dot.set_state(display_state)
         mini = self._mini_icon
         if mini is not None:
-            mini.set_state(state)
-        self.tracking_controller.apply_state_feedback(state)
+            mini.set_state(display_state)
+        self.tracking_controller.apply_state_feedback(display_state)
         self._latencies.append(result.latency_ms)
 
         avg_latency = sum(self._latencies) / len(self._latencies) if self._latencies else 0.0
         fps = 1000.0 / avg_latency if avg_latency > 0 else 0.0
 
-        if not self.isMaximized() and result.x is not None and result.y is not None:
-            coord_text = f"{result.x} , {result.y}"
+        if not self.isMaximized() and display_result.x is not None and display_result.y is not None:
+            coord_text = f"{display_result.x} , {display_result.y}"
             self.coord_label.setText(coord_text)
-            if self._last_player_xy is not None:
-                dx = abs(result.x - self._last_player_xy[0])
-                dy = abs(result.y - self._last_player_xy[1])
+            if auto_visit and self._last_player_xy is not None:
+                dx = abs(display_result.x - self._last_player_xy[0])
+                dy = abs(display_result.y - self._last_player_xy[1])
                 if max(dx, dy) >= self._AUTO_RECENTER_MOVE_THRESHOLD:
                     self.map_view.set_center_locked(True)
-            self._last_player_xy = (result.x, result.y)
-            self.map_view.update_frame(result.state, result.x, result.y, self._latest_minimap)
+            if auto_visit:
+                self._last_player_xy = (display_result.x, display_result.y)
+            self.map_view.update_frame(
+                display_result.state,
+                display_result.x,
+                display_result.y,
+                self._latest_minimap,
+                auto_visit=auto_visit,
+                snap_center=snap_center,
+            )
             progress_signature = self.route_panel_controller.build_tracked_route_progress_signature()
             if progress_signature != self._tracked_route_progress_signature:
                 self.route_panel_controller.refresh_tracked_routes()

@@ -320,6 +320,7 @@ class AppUpdaterTests(unittest.TestCase):
                             "DOCUMENTATION_URL": "https://example.test/docs",
                             "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/example",
                             "FEEDBACK_QQ_GROUP": "123456789",
+                            "APP_ENABLE_VERSIONS": ["GMT-N-0.1.2", "GMT-N-0.1.3", "GMT-N-0.1.3", ""],
                             "APP_UPDATE_MANIFEST_URL": "https://legacy.test/app-manifest.json",
                             "APP_UPDATE_MANIFEST_URLS": [
                                 "https://legacy.test/app-manifest.json",
@@ -360,6 +361,7 @@ class AppUpdaterTests(unittest.TestCase):
             self.assertEqual(config.DOCUMENTATION_URL, "https://example.test/docs")
             self.assertEqual(config.FEEDBACK_BILIBILI_URL, "https://space.bilibili.com/example")
             self.assertEqual(config.FEEDBACK_QQ_GROUP, "123456789")
+            self.assertEqual(config.APP_ENABLE_VERSIONS, ["GMT-N-0.1.2", "GMT-N-0.1.3"])
             self.assertEqual(
                 config.APP_UPDATE_MANIFEST_URLS,
                 ["https://legacy.test/app-manifest.json", "https://github.test/app-manifest.json"],
@@ -708,7 +710,7 @@ class AppUpdaterTests(unittest.TestCase):
                             "https://github.test/app-manifest.json",
                             "",
                         ],
-                        "APP_ENABLE_ROUTE_VERSIONS": ["0.1.2", "0.1.3", "0.1.3", ""],
+                        "APP_ENABLE_VERSIONS": ["0.1.2", "0.1.3", "0.1.3", ""],
                         "SECRET_TOKEN": "do-not-ship",
                         "ROUTE_DEFAULT_COLOR": "#ff00ff",
                     }
@@ -743,7 +745,7 @@ class AppUpdaterTests(unittest.TestCase):
                     "https://gitee.test/app-manifest.json",
                     "https://github.test/app-manifest.json",
                 ],
-                "APP_ENABLE_ROUTE_VERSIONS": ["0.1.2", "0.1.3"],
+                "APP_ENABLE_VERSIONS": ["0.1.2", "0.1.3"],
             },
         )
         self.assertNotIn("SECRET_TOKEN", manifest["runtime_config"])

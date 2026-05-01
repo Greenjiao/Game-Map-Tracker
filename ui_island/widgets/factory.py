@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QLineEdit, QPushButton, QFrame, QScrollArea, QSizePolicy
+from PySide6.QtWidgets import QLabel, QLineEdit, QPushButton, QFrame, QScrollArea, QSizePolicy, QSlider
 
 from ..design import tokens
 
@@ -93,6 +93,32 @@ def make_route_panel_line_edit(
     if size_policy is not None:
         editor.setSizePolicy(*size_policy)
     return editor
+
+
+def make_compact_slider(
+    *,
+    object_name: str = "",
+    minimum: int = 0,
+    maximum: int = 100,
+    value: int | None = None,
+    orientation: Qt.Orientation = Qt.Horizontal,
+    min_width: int | None = None,
+    max_width: int | None = None,
+    parent=None,
+) -> QSlider:
+    slider = QSlider(orientation, parent)
+    if object_name:
+        slider.setObjectName(object_name)
+    slider.setProperty("compactSlider", "true")
+    slider.setRange(minimum, maximum)
+    slider.setValue(maximum if value is None else value)
+    slider.setFixedHeight(tokens.RECENT_ROUTE_ITEM_HEIGHT)
+    slider.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    if min_width is not None:
+        slider.setMinimumWidth(min_width)
+    if max_width is not None:
+        slider.setMaximumWidth(max_width)
+    return slider
 
 
 def make_label(

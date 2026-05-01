@@ -239,7 +239,12 @@ def _is_valid_route_id(value: object) -> bool:
 
 
 def _ensure_route_metadata(payload: dict) -> dict:
-    resource_metadata.ensure_metadata(payload, include_route_defaults=True)
+    resource_metadata.ensure_metadata(
+        payload,
+        include_route_defaults=True,
+        preserve_format_version=True,
+        enable_versions_policy="append_current_if_list",
+    )
     raw_id = str(payload.get("id") or "").strip()
     if _is_valid_route_id(raw_id):
         payload["id"] = raw_id

@@ -39,6 +39,7 @@ import config
 from . import StyledConfirm, StyledDialogBase, StyledMessage, Toast, center_dialog, place_left_of, toast, toast_persistent
 from .annotation_type_picker import open_annotation_type_multi_picker
 from .color_picker import open_styled_color_picker
+from .route_notes_dialog import open_route_enable_versions_dialog
 from ..app.app_info import APP_VERSION
 from ..design import qss, strings, tokens
 from ..services.annotation_preferences import normalize_type_ids
@@ -52,6 +53,7 @@ from ..services.app_updater import (
     start_restart_update,
 )
 from ..services.hotkey_config import hotkey_sequence, payload_from_key_sequence
+from ..services import resource_metadata
 from ..services.settings_schema import ALL_FIELDS, COMMON_FIELDS, FIELD_INDEX, SIFT_FIELDS, TOOL_BUTTONS, Field
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
 from ..widgets.factory import make_scroll_area
@@ -353,7 +355,7 @@ class RouteFormatConverterDialog(StyledDialogBase):
             if annotate:
                 placeholder = "转换日志：会按当前标注文件为路线节点自动补齐 type、typeId 和 node_type"
             else:
-                placeholder = "转换日志：会转换坐标并补齐 id、format_version、enable_versions"
+                placeholder = "转换日志：会转换坐标并补齐 id，保留 format_version，已有 enable_versions 时追加当前版本"
             self._log.setPlaceholderText(placeholder)
         if annotate:
             self._ensure_annotation_type_defaults()
@@ -501,10 +503,10 @@ class RouteFormatConverterDialog(StyledDialogBase):
                 self._append_log(f"... 还有 {remaining} 条，见完整日志")
 
     def _write_conversion_log(self, report, *, input_dir: str, output_dir: str, mode: str) -> str:
-        debug_dir = config.app_path("debug")
-        os.makedirs(debug_dir, exist_ok=True)
+        logs_dir = config.app_path("logs")
+        os.makedirs(logs_dir, exist_ok=True)
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        path = os.path.join(debug_dir, f"route_conversion_{stamp}.log")
+        path = os.path.join(logs_dir, f"route_conversion_{stamp}.log")
         lines = [
             f"时间：{datetime.now().isoformat(timespec='seconds')}",
             f"模式：{mode}",
@@ -533,10 +535,10 @@ class RouteFormatConverterDialog(StyledDialogBase):
     def _show_conversion_error(self, title: str, exc: Exception) -> None:
         self._append_log(f"[错误] {exc}")
         try:
-            debug_dir = config.app_path("debug")
-            os.makedirs(debug_dir, exist_ok=True)
+            logs_dir = config.app_path("logs")
+            os.makedirs(logs_dir, exist_ok=True)
             stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            path = os.path.join(debug_dir, f"route_conversion_error_{stamp}.log")
+            path = os.path.join(logs_dir, f"route_conversion_error_{stamp}.log")
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write(traceback.format_exc())
             self._append_log(f"错误日志：{path}")
@@ -623,7 +625,7 @@ class RouteFormatConverterDialog(StyledDialogBase):
                     confirmed = styled_confirm(
                         self,
                         "覆盖转换路线",
-                        "此操作会把旧路线坐标转换为新路线坐标，补齐 id、format_version、enable_versions，并直接覆盖源路线文件。\n\n"
+                        "此操作会把旧路线坐标转换为新路线坐标，补齐 id，保留 format_version，已有 enable_versions 时追加当前版本，并直接覆盖源路线文件。\n\n"
                         "正式执行前请先备份原路线文件。确定继续吗？",
                         confirm_text="已备份，开始转换",
                         cancel_text="取消",
@@ -867,6 +869,7 @@ class SettingsDialog(QDialog):
         self._map_dir_combo: QComboBox | None = None
         self._map_file_combo: QComboBox | None = None
         self._annotation_file_combo: QComboBox | None = None
+        self._annotation_enable_versions_button: QPushButton | None = None
         self._route_multi_color_checkbox: QCheckBox | None = None
         self._route_special_lines_follow_checkbox: QCheckBox | None = None
         self._route_strict_guide_checkbox: QCheckBox | None = None
@@ -1725,7 +1728,7 @@ class SettingsDialog(QDialog):
         self._annotation_file_combo = combo
         self._initial_values["ANNOTATION_FILE"] = current
         self._set_annotation_combo_value(current)
-        combo.currentIndexChanged.connect(lambda _index: self._sync_annotation_file_tooltip())
+        combo.currentIndexChanged.connect(lambda _index: self._sync_annotation_file_state())
         layout.addWidget(combo)
 
         choose_btn = QPushButton("选择文件")
@@ -1733,8 +1736,15 @@ class SettingsDialog(QDialog):
         choose_btn.clicked.connect(self._on_choose_annotation_file)
         layout.addWidget(choose_btn)
 
+        versions_btn = QPushButton("查看/修改兼容版本")
+        versions_btn.setObjectName("AnnotationEnableVersionsButton")
+        versions_btn.setFixedHeight(28)
+        versions_btn.clicked.connect(self._on_edit_annotation_enable_versions)
+        self._annotation_enable_versions_button = versions_btn
+        layout.addWidget(versions_btn)
+
         layout.addStretch()
-        self._sync_annotation_file_tooltip()
+        self._sync_annotation_file_state()
         return row
 
     def _on_choose_annotation_file(self) -> None:
@@ -1766,7 +1776,7 @@ class SettingsDialog(QDialog):
             index = self._annotation_file_combo.findData("")
         if index >= 0:
             self._annotation_file_combo.setCurrentIndex(index)
-        self._sync_annotation_file_tooltip()
+        self._sync_annotation_file_state()
 
     def _refresh_annotation_file_combo_preserving_selection(self) -> None:
         if self._annotation_file_combo is None:
@@ -1784,7 +1794,7 @@ class SettingsDialog(QDialog):
         if index >= 0:
             self._annotation_file_combo.setCurrentIndex(index)
         self._annotation_file_combo.blockSignals(False)
-        self._sync_annotation_file_tooltip()
+        self._sync_annotation_file_state()
 
     def _sync_annotation_file_tooltip(self) -> None:
         if self._annotation_file_combo is None:
@@ -1798,6 +1808,59 @@ class SettingsDialog(QDialog):
             self._annotation_file_combo.setToolTip("保存后用于地图标注显示和编辑")
         else:
             self._annotation_file_combo.setToolTip("未找到标注文件，可选择 JSON 文件导入 annotations/")
+
+    def _selected_annotation_enable_versions(self) -> list[str]:
+        if self._annotation_file_combo is None:
+            return []
+        rel = config.normalize_annotation_file(self._annotation_file_combo.currentData())
+        path = config.resolve_app_path(rel) if rel else ""
+        return resource_metadata.enable_versions_with_format_version(resource_metadata.read_json_payload(path))
+
+    def _annotation_visible_enable_versions(self) -> list[str]:
+        return self._selected_annotation_enable_versions()
+
+    def _sync_annotation_file_state(self) -> None:
+        self._sync_annotation_file_tooltip()
+        rel = ""
+        path = ""
+        if self._annotation_file_combo is not None:
+            rel = config.normalize_annotation_file(self._annotation_file_combo.currentData())
+            path = config.resolve_app_path(rel) if rel else ""
+        exists = bool(path and os.path.isfile(path))
+        versions = self._annotation_visible_enable_versions() if exists else []
+        if self._annotation_enable_versions_button is not None:
+            suffix = str(len(versions)) if versions else "无"
+            self._annotation_enable_versions_button.setText(f"查看/修改兼容版本（{suffix}）")
+            self._annotation_enable_versions_button.setEnabled(exists)
+            if exists and versions:
+                tooltip = "兼容版本：\n" + "\n".join(versions) + "\n\n点击查看或修改；不会修改创建时的版本"
+            elif exists:
+                tooltip = "暂无兼容版本\n\n点击查看或修改；不会修改创建时的版本"
+            else:
+                tooltip = "请先选择存在的标注文件"
+            self._annotation_enable_versions_button.setToolTip(tooltip)
+
+    def _on_edit_annotation_enable_versions(self) -> None:
+        if self._annotation_file_combo is None:
+            return
+        rel = config.normalize_annotation_file(self._annotation_file_combo.currentData())
+        path = config.resolve_app_path(rel) if rel else ""
+        if not path or not os.path.isfile(path):
+            styled_info(self, "标注兼容版本", "请先选择存在的标注文件。")
+            self._sync_annotation_file_state()
+            return
+
+        current_versions = self._selected_annotation_enable_versions()
+        options = resource_metadata.route_enable_version_options(current_versions)
+        selected = open_route_enable_versions_dialog(self, options, current_versions)
+        if selected is None:
+            return
+        if not resource_metadata.write_annotation_enable_versions(path, selected):
+            styled_info(self, "标注兼容版本", "写入标注文件兼容版本失败。")
+            self._sync_annotation_file_state()
+            return
+        self._sync_annotation_file_state()
+        toast(self, "标注兼容版本已更新")
 
     def _build_minimap_row(self) -> QWidget:
         row = QWidget()

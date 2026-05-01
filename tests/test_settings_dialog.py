@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import unittest
@@ -143,6 +144,108 @@ class SettingsDialogMapTests(unittest.TestCase):
                 self.assertEqual(combo.currentText(), "请选择标注文件")
                 self.assertEqual(combo.findData("annotations/current.json"), -1)
                 self.assertNotIn("缺失", [combo.itemText(index) for index in range(combo.count())])
+                dialog.close()
+            finally:
+                config.BASE_DIR = old_base_dir
+                config.ANNOTATION_FILE = old_annotation_file
+
+    def test_annotation_enable_versions_show_file_versions_and_switches_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            old_base_dir = config.BASE_DIR
+            old_annotation_file = getattr(config, "ANNOTATION_FILE", "")
+            try:
+                config.BASE_DIR = tmp
+                config.ANNOTATION_FILE = "annotations/current.json"
+                annotations_dir = Path(tmp, "annotations")
+                annotations_dir.mkdir(parents=True)
+                (annotations_dir / "current.json").write_text(
+                    json.dumps({"enable_versions": ["1.0.0", "hidden", "2.0.0"]}),
+                    encoding="utf-8",
+                )
+                (annotations_dir / "other.json").write_text(
+                    json.dumps({"enable_versions": ["2.0.0"]}),
+                    encoding="utf-8",
+                )
+
+                with patch("config.APP_ENABLE_VERSIONS", ["1.0.0", "2.0.0"], create=True):
+                    dialog = SettingsDialog(None)
+                    self._app.processEvents()
+
+                    button = dialog._annotation_enable_versions_button
+                    combo = dialog._annotation_file_combo
+                    self.assertIsNotNone(button)
+                    self.assertIsNotNone(combo)
+                    self.assertEqual(button.text(), "查看/修改兼容版本（3）")
+                    self.assertIn("1.0.0", button.toolTip())
+                    self.assertIn("2.0.0", button.toolTip())
+                    self.assertIn("hidden", button.toolTip())
+                    self.assertTrue(button.isEnabled())
+
+                    combo.setCurrentIndex(combo.findData("annotations/other.json"))
+                    self._app.processEvents()
+
+                    self.assertEqual(button.text(), "查看/修改兼容版本（1）")
+                    self.assertIn("2.0.0", button.toolTip())
+                    self.assertTrue(button.isEnabled())
+                dialog.close()
+            finally:
+                config.BASE_DIR = old_base_dir
+                config.ANNOTATION_FILE = old_annotation_file
+
+    def test_annotation_enable_versions_disabled_without_selected_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            old_base_dir = config.BASE_DIR
+            old_annotation_file = getattr(config, "ANNOTATION_FILE", "")
+            try:
+                config.BASE_DIR = tmp
+                config.ANNOTATION_FILE = ""
+                Path(tmp, "annotations").mkdir(parents=True)
+
+                dialog = SettingsDialog(None)
+                self._app.processEvents()
+
+                self.assertEqual(dialog._annotation_enable_versions_button.text(), "查看/修改兼容版本（无）")
+                self.assertFalse(dialog._annotation_enable_versions_button.isEnabled())
+                dialog.close()
+            finally:
+                config.BASE_DIR = old_base_dir
+                config.ANNOTATION_FILE = old_annotation_file
+
+    def test_edit_annotation_enable_versions_writes_empty_array_and_preserves_format_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            old_base_dir = config.BASE_DIR
+            old_annotation_file = getattr(config, "ANNOTATION_FILE", "")
+            try:
+                config.BASE_DIR = tmp
+                config.ANNOTATION_FILE = "annotations/current.json"
+                annotations_dir = Path(tmp, "annotations")
+                annotations_dir.mkdir(parents=True)
+                path = annotations_dir / "current.json"
+                path.write_text(
+                    json.dumps(
+                        {
+                            "format_version": "publisher-format",
+                            "enable_versions": ["1.0.0"],
+                            "pointsByType": {"ore": []},
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+
+                with (
+                    patch("config.APP_ENABLE_VERSIONS", ["1.0.0"], create=True),
+                    patch("ui_island.dialogs.settings_dialog.open_route_enable_versions_dialog", return_value=[]),
+                    patch("ui_island.dialogs.settings_dialog.toast"),
+                ):
+                    dialog = SettingsDialog(None)
+                    self._app.processEvents()
+                    dialog._on_edit_annotation_enable_versions()
+
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                self.assertEqual(payload["format_version"], "publisher-format")
+                self.assertEqual(payload["enable_versions"], ["publisher-format"])
+                self.assertEqual(payload["pointsByType"], {"ore": []})
+                self.assertEqual(dialog._annotation_enable_versions_button.text(), "查看/修改兼容版本（1）")
                 dialog.close()
             finally:
                 config.BASE_DIR = old_base_dir
@@ -301,7 +404,7 @@ class SettingsDialogMapTests(unittest.TestCase):
 
                 self.assertFalse(refresh_called["value"])
                 self.assertIn("完整日志：", dialog._log.toPlainText())
-                self.assertTrue(list(Path(tmp, "debug").glob("route_conversion_*.log")))
+                self.assertTrue(list(Path(tmp, "logs").glob("route_conversion_*.log")))
                 dialog.close()
                 parent.close()
             finally:
@@ -371,7 +474,7 @@ class SettingsDialogMapTests(unittest.TestCase):
                     dialog._start_conversion()
 
                 self.assertIn("[错误] bad conversion", dialog._log.toPlainText())
-                self.assertTrue(list(Path(tmp, "debug").glob("route_conversion_error_*.log")))
+                self.assertTrue(list(Path(tmp, "logs").glob("route_conversion_error_*.log")))
                 styled_info.assert_called()
                 dialog.close()
             finally:

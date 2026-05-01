@@ -535,6 +535,55 @@ QLineEdit:focus {{
     border: 1px solid rgba(10, 132, 255, 0.65);
     background: {ACCENT_SOFT};
 }}
+QSlider[compactSlider="true"] {{
+    min-height: 18px;
+    max-height: 18px;
+    background: transparent;
+}}
+QSlider[compactSlider="true"]::groove:horizontal {{
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+}}
+QSlider[compactSlider="true"]::sub-page:horizontal {{
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(10, 132, 255, 0.70);
+}}
+QSlider[compactSlider="true"]::add-page:horizontal {{
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.10);
+}}
+QSlider[compactSlider="true"]::handle:horizontal {{
+    width: 12px;
+    height: 12px;
+    margin: -5px 0;
+    border-radius: 6px;
+    background: {FG};
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}}
+QSlider[compactSlider="true"]::handle:horizontal:hover {{
+    background: #ffffff;
+    border-color: rgba(10, 132, 255, 0.85);
+}}
+QSplitter#RouteNotesSplitter {{
+    background: transparent;
+}}
+QSplitter#RouteNotesSplitter::handle:horizontal {{
+    width: 8px;
+    margin: 28px 1px 0px 1px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+}}
+QSplitter#RouteNotesSplitter::handle:horizontal:hover {{
+    background: rgba(10, 132, 255, 0.32);
+}}
+QSizeGrip#RouteNotesSizeGrip {{
+    width: 16px;
+    height: 16px;
+    background: transparent;
+}}
 QComboBox {{
     background: rgba(255, 255, 255, 0.08);
     color: {FG};

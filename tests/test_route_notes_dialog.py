@@ -15,6 +15,9 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSizeGrip,
+    QSlider,
+    QSplitter,
     QStyle,
     QStyleOptionSlider,
     QWidget,
@@ -23,8 +26,15 @@ from PySide6.QtWidgets import (
 from ui_island.services.route_manager import NODE_TYPE_COLLECT, NODE_TYPE_TELEPORT, NODE_TYPE_VIRTUAL
 from ui_island.dialogs.route_notes_dialog import (
     _NODE_ICON_SIZE,
+    _NODE_NAME_MIN_WIDTH,
     _NODE_PANEL_SPACING,
     _NODE_SCROLL_MIN_HEIGHT,
+    _ROUTE_NOTES_DIALOG_INITIAL_HEIGHT,
+    _ROUTE_NOTES_DIALOG_INITIAL_WIDTH,
+    _ROUTE_NOTES_MIN_OPACITY_PERCENT,
+    _ROUTE_NOTES_OPACITY_SLIDER_MAX_WIDTH,
+    _ROUTE_NOTES_OPACITY_SLIDER_MIN_WIDTH,
+    _ROUTE_NOTES_RIGHT_MIN_WIDTH,
     _TITLE_ROW_HEIGHT,
     RouteNotesDialog,
     apply_route_node_auto_labels,
@@ -40,6 +50,13 @@ class RouteNotesDialogTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls._app = QApplication.instance() or QApplication([])
+
+    def setUp(self) -> None:
+        self._save_config_patcher = patch("ui_island.dialogs.route_notes_dialog.config.save_config")
+        self._mock_save_config = self._save_config_patcher.start()
+
+    def tearDown(self) -> None:
+        self._save_config_patcher.stop()
 
     def test_route_node_display_name_falls_back_to_indexed_name(self) -> None:
         self.assertEqual(route_node_display_name({}, 2), "节点 3")
@@ -106,8 +123,10 @@ class RouteNotesDialogTests(unittest.TestCase):
 
         names = [editor.text() for editor in dialog.findChildren(QLineEdit, "RouteNotesNodeName")]
         icons = dialog.findChildren(QPushButton, "RouteNotesNodeIcon")
+        name_inputs = dialog.findChildren(QLineEdit, "RouteNotesNodeName")
 
         self.assertEqual(names, ["节点 1", "已命名"])
+        self.assertTrue(all(editor.minimumWidth() == _NODE_NAME_MIN_WIDTH for editor in name_inputs))
         self.assertEqual([icon.property("fallbackIcon") for icon in icons], [True, True])
         self.assertTrue(all(icon.iconSize() == QSize(_NODE_ICON_SIZE, _NODE_ICON_SIZE) for icon in icons))
 
@@ -340,7 +359,7 @@ class RouteNotesDialogTests(unittest.TestCase):
         ):
             from ui_island.dialogs.route_notes_dialog import edit_route_notes
 
-            accepted, _notes, _color, nodes_changed, nodes = edit_route_notes(
+            accepted, _notes, _color, nodes_changed, nodes, versions_changed, versions = edit_route_notes(
                 None,
                 "路线",
                 "",
@@ -352,6 +371,8 @@ class RouteNotesDialogTests(unittest.TestCase):
         self.assertFalse(accepted)
         self.assertFalse(nodes_changed)
         self.assertEqual(nodes, [{"x": 1, "y": 2}])
+        self.assertFalse(versions_changed)
+        self.assertIsNone(versions)
 
     def test_dialog_title_uses_route_name_without_duplicate_subtitle(self) -> None:
         route_name = "Long Route Name"
@@ -371,8 +392,86 @@ class RouteNotesDialogTests(unittest.TestCase):
         self.assertIsNotNone(header)
         self.assertIn(dialog.color_button, header_buttons)
         self.assertIn(dialog.reset_color_button, header_buttons)
-        self.assertEqual(dialog.color_button.text(), "（当前路线颜色）")
+        self.assertIn(dialog.enable_versions_button, header_buttons)
+        self.assertIsNotNone(dialog.findChild(QPushButton, "RouteEnableVersionsButton"))
+        self.assertEqual(dialog.color_button.text(), "当前路线颜色")
+        self.assertEqual(dialog.color_button.width(), 96)
         self.assertNotIn("#", dialog.color_button.text())
+
+    def test_route_enable_versions_dialog_allows_unchecking_current_version(self) -> None:
+        dialog = RouteNotesDialog(
+            None,
+            "Route",
+            "",
+            (0x56, 0x34, 0x12),
+            None,
+            [],
+            enable_versions=["old-format", "GMT-N-0.1.3"],
+            enable_version_options=["GMT-N-0.1.3"],
+        )
+
+        with patch(
+            "ui_island.dialogs.route_notes_dialog.open_route_enable_versions_dialog",
+            return_value=["old-format"],
+        ):
+            dialog._edit_enable_versions()
+
+        self.assertTrue(dialog.enable_versions_changed())
+        self.assertEqual(dialog.enable_versions(), ["old-format"])
+        self.assertEqual(dialog.enable_versions_button.text(), "查看/修改兼容版本（1）")
+
+    def test_route_enable_versions_button_shows_version_count(self) -> None:
+        dialog = RouteNotesDialog(
+            None,
+            "Route",
+            "",
+            (0x56, 0x34, 0x12),
+            None,
+            [],
+            enable_versions=["1.0.0", "1.0.1"],
+            enable_version_options=["1.0.0", "1.0.1"],
+        )
+
+        self.assertEqual(dialog.enable_versions_button.text(), "查看/修改兼容版本（2）")
+        self.assertIn("1.0.0", dialog.enable_versions_button.toolTip())
+        self.assertIn("1.0.1", dialog.enable_versions_button.toolTip())
+
+        with patch(
+            "ui_island.dialogs.route_notes_dialog.open_route_enable_versions_dialog",
+            return_value=[],
+        ):
+            dialog._edit_enable_versions()
+
+        self.assertEqual(dialog.enable_versions(), [])
+        self.assertEqual(dialog.enable_versions_button.text(), "查看/修改兼容版本（无）")
+
+    def test_opacity_slider_updates_route_notes_window_opacity(self) -> None:
+        dialog = RouteNotesDialog(None, "路线", "", (0x56, 0x34, 0x12), None, [])
+        slider = dialog.findChild(QSlider, "RouteNotesOpacitySlider")
+
+        self.assertIsNotNone(slider)
+        self.assertEqual(slider.property("compactSlider"), "true")
+        self.assertEqual(slider.minimum(), _ROUTE_NOTES_MIN_OPACITY_PERCENT)
+        self.assertEqual(slider.maximum(), 100)
+        self.assertEqual(slider.minimumWidth(), _ROUTE_NOTES_OPACITY_SLIDER_MIN_WIDTH)
+        self.assertEqual(slider.maximumWidth(), _ROUTE_NOTES_OPACITY_SLIDER_MAX_WIDTH)
+        self.assertAlmostEqual(dialog.windowOpacity(), 1.0)
+
+        slider.setValue(55)
+
+        self.assertAlmostEqual(dialog.windowOpacity(), 0.55, places=2)
+        self.assertIn("55%", slider.toolTip())
+
+    def test_opacity_slider_lives_in_title_bar_before_close_button(self) -> None:
+        dialog = RouteNotesDialog(None, "路线", "", (0x56, 0x34, 0x12), None, [])
+        slider = dialog.findChild(QSlider, "RouteNotesOpacitySlider")
+        header = dialog.findChild(QWidget, "RouteNotesHeaderRow")
+
+        self.assertIsNotNone(slider)
+        self.assertIs(slider.parent(), dialog.title_bar)
+        self.assertNotIn(slider, header.findChildren(QSlider) if header is not None else [])
+        title_layout = dialog.title_bar.layout()
+        self.assertLess(title_layout.indexOf(slider), title_layout.indexOf(dialog.close_btn))
 
     def test_follow_global_button_is_enabled_only_for_custom_color(self) -> None:
         follow_dialog = RouteNotesDialog(None, "路线", "", (0x56, 0x34, 0x12), None, [])
@@ -412,10 +511,19 @@ class RouteNotesDialogTests(unittest.TestCase):
         self.assertNotIn(stats, right.findChildren(QWidget))
         self.assertIsNone(right_stats)
         self.assertEqual(editor.minimumHeight(), 120)
+        self.assertEqual(right.minimumWidth(), _ROUTE_NOTES_RIGHT_MIN_WIDTH)
+        self.assertGreaterEqual(dialog.width(), dialog.minimumWidth())
+        self.assertEqual(dialog.height(), _ROUTE_NOTES_DIALOG_INITIAL_HEIGHT)
         self.assertEqual(stats_scroll.minimumHeight(), 72)
         self.assertEqual(stats_scroll.maximumHeight(), 72)
         self.assertEqual(nodes_title.minimumHeight(), notes_header.minimumHeight())
         self.assertEqual(nodes_title.maximumHeight(), notes_header.maximumHeight())
+        splitter = dialog.findChild(QSplitter, "RouteNotesSplitter")
+        size_grip = dialog.findChild(QSizeGrip, "RouteNotesSizeGrip")
+        self.assertIsNotNone(splitter)
+        self.assertFalse(splitter.childrenCollapsible())
+        self.assertEqual(splitter.handleWidth(), 8)
+        self.assertIsNotNone(size_grip)
 
         dialog.show()
         self._app.processEvents()
@@ -601,7 +709,51 @@ class RouteNotesDialogTests(unittest.TestCase):
 
         picker.assert_called_once()
         self.assertEqual(dialog.color_override(), "#abcdef")
-        self.assertEqual(dialog.color_button.text(), "（当前路线颜色）")
+        self.assertEqual(dialog.color_button.text(), "当前路线颜色")
+
+    def test_route_details_uses_persisted_dialog_and_node_panel_widths(self) -> None:
+        with (
+            patch("ui_island.dialogs.route_notes_dialog.config.ROUTE_NOTES_DIALOG_WIDTH", 860, create=True),
+            patch("ui_island.dialogs.route_notes_dialog.config.ROUTE_NOTES_NODE_PANEL_WIDTH", 280, create=True),
+        ):
+            dialog = RouteNotesDialog(None, "Route", "", (0x56, 0x34, 0x12), None, [])
+            dialog.show()
+            self._app.processEvents()
+
+        self.assertEqual(dialog.width(), 860)
+        splitter = dialog.findChild(QSplitter, "RouteNotesSplitter")
+        self.assertIsNotNone(splitter)
+        self.assertAlmostEqual(splitter.sizes()[1], 280, delta=24)
+
+    def test_route_details_persists_dialog_and_node_panel_widths(self) -> None:
+        dialog = RouteNotesDialog(None, "Route", "", (0x56, 0x34, 0x12), None, [])
+        dialog.show()
+        self._app.processEvents()
+        dialog.resize(880, dialog.height())
+        dialog.splitter.setSizes([580, 300])
+        self._app.processEvents()
+        expected_right_width = dialog.splitter.sizes()[1]
+
+        dialog._persist_layout_preferences()
+
+        self._mock_save_config.assert_called()
+        payload = self._mock_save_config.call_args.args[0]
+        self.assertEqual(payload["ROUTE_NOTES_DIALOG_WIDTH"], 880)
+        self.assertEqual(payload["ROUTE_NOTES_NODE_PANEL_WIDTH"], expected_right_width)
+
+    def test_route_details_schedules_layout_save_while_dragging_sizes(self) -> None:
+        dialog = RouteNotesDialog(None, "Route", "", (0x56, 0x34, 0x12), None, [])
+        dialog.show()
+        self._app.processEvents()
+
+        dialog.resize(840, dialog.height())
+        self.assertTrue(dialog._layout_save_timer.isActive())
+
+        dialog._layout_save_timer.stop()
+        dialog._on_splitter_moved(260, 1)
+        self.assertTrue(dialog._layout_save_timer.isActive())
+
+        dialog._layout_save_timer.stop()
 
     def test_node_scrollbar_has_draggable_handle_and_changes_value_when_dragged(self) -> None:
         nodes = [{"label": f"Node {index}", "x": index, "y": index} for index in range(400)]
