@@ -657,6 +657,70 @@ QPushButton#SettingsTabButton[selected="true"] {{
     background: rgba(255, 255, 255, 0.14);
     color: {FG};
 }}
+QLabel#SettingsToolGroupLabel {{
+    color: {FG_DIM};
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 0px 0px 1px;
+}}
+QPushButton[settingsTopToolButton="true"] {{
+    background: rgba(255, 255, 255, 0.10);
+    color: {FG};
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+}}
+QPushButton[settingsTopToolButton="true"]:hover {{
+    background: {ACCENT_SOFT};
+    border-color: rgba(10, 132, 255, 0.48);
+}}
+QPushButton[settingsTopToolButton="true"]:pressed {{
+    background: rgba(10, 132, 255, 0.22);
+    border-color: rgba(10, 132, 255, 0.66);
+}}
+QPushButton[settingsToolButton="true"] {{
+    background: rgba(255, 255, 255, 0.12);
+    color: {FG};
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 2px 7px;
+    font-size: 11px;
+    min-height: 26px;
+}}
+QPushButton[settingsToolButton="true"] QLabel#SettingsToolButtonIcon,
+QPushButton[settingsToolButton="true"] QLabel#SettingsToolButtonText {{
+    background: transparent;
+    color: {FG};
+    font-size: 11px;
+}}
+QPushButton[settingsToolButton="true"] QLabel#SettingsToolButtonText {{
+    font-weight: 500;
+}}
+QPushButton[settingsToolButton="true"]:hover {{
+    background: {ACCENT_SOFT};
+    border-color: rgba(10, 132, 255, 0.58);
+}}
+QPushButton[settingsToolButton="true"]:pressed {{
+    background: rgba(10, 132, 255, 0.25);
+    border-color: rgba(10, 132, 255, 0.72);
+}}
+QPushButton[settingsConversionButton="true"] {{
+    background: rgba(255, 255, 255, 0.12);
+    color: {FG};
+    border-color: rgba(255, 255, 255, 0.08);
+    font-weight: 600;
+}}
+QPushButton[settingsConversionButton="true"]:hover {{
+    background: {ACCENT_SOFT};
+    border-color: rgba(10, 132, 255, 0.58);
+    color: {FG};
+}}
+QPushButton[settingsConversionButton="true"]:pressed {{
+    background: rgba(10, 132, 255, 0.25);
+    border-color: rgba(10, 132, 255, 0.72);
+}}
 QKeySequenceEdit {{
     background: rgba(255, 255, 255, 0.08);
     color: {FG};

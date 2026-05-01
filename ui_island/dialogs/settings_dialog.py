@@ -672,11 +672,19 @@ class RouteFormatConverterDialog(StyledDialogBase):
 
 
 class AnnotationFormatConverterDialog(StyledDialogBase):
+    _MODE_LEGACY_COORDINATES = "legacy_coordinates"
+    _MODE_OUTSIDE_FORMAT = "outside_format"
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent, "标注转换", min_width=680, max_width=860)
+        self._mode_combo: QComboBox | None = None
         self._old_file_editor: QLineEdit | None = None
         self._new_file_editor: QLineEdit | None = None
+        self._new_file_row: QWidget | None = None
+        self._source_version_label: QLabel | None = None
         self._merge_checkbox: QCheckBox | None = None
+        self._merge_option_row: QWidget | None = None
+        self._start_button: QPushButton | None = None
         self._log: QPlainTextEdit | None = None
         self._build_ui()
         self.resize(760, 480)
@@ -687,16 +695,32 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
 
-        warning = QLabel("合并前请先备份标注数据")
+        warning = QLabel("选择转换会在 annotations/ 下生成新标注文件，不会覆盖原文件。但选择合并前请先备份目标文件")
         warning.setObjectName("FieldLabel")
         warning.setWordWrap(True)
         layout.addWidget(warning)
 
+        mode_row = QWidget(self)
+        mode_layout = QHBoxLayout(mode_row)
+        mode_layout.setContentsMargins(0, 0, 0, 0)
+        mode_layout.setSpacing(8)
+        mode_label = QLabel("转换模式")
+        mode_label.setObjectName("FieldLabel")
+        mode_layout.addWidget(mode_label)
+        mode_combo = QComboBox(self)
+        mode_combo.addItem("旧坐标迁移", self._MODE_LEGACY_COORDINATES)
+        mode_combo.addItem("外部格式转换", self._MODE_OUTSIDE_FORMAT)
+        mode_combo.currentIndexChanged.connect(self._sync_mode_ui)
+        self._mode_combo = mode_combo
+        mode_layout.addWidget(mode_combo, stretch=1)
+        layout.addWidget(mode_row)
+
         self._old_file_editor = self._build_file_row(
             layout,
-            "旧标注文件",
+            "原标注文件",
             config.ensure_annotations_dir(),
             self._choose_old_file,
+            include_version_label=True,
         )
         self._new_file_editor = self._build_file_row(
             layout,
@@ -704,6 +728,7 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
             config.selected_annotation_path_from_settings() or config.ensure_annotations_dir(),
             self._choose_new_file,
         )
+        self._new_file_row = self._new_file_editor.parentWidget()
 
         option_row = QWidget(self)
         option_layout = QHBoxLayout(option_row)
@@ -716,10 +741,12 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
         option_layout.addWidget(merge_checkbox)
         option_layout.addStretch()
         layout.addWidget(option_row)
+        self._merge_option_row = option_row
 
         start_btn = QPushButton("开始转换")
         start_btn.setFixedHeight(32)
         start_btn.clicked.connect(self._start_conversion)
+        self._start_button = start_btn
         layout.addWidget(start_btn)
 
         log = QPlainTextEdit(self)
@@ -731,9 +758,18 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
 
         self.shell_layout.addWidget(content, stretch=1)
         self.add_action_row(confirm_text="关闭", cancel_text="")
-        self._sync_merge_ui()
+        self._sync_source_version_label()
+        self._sync_mode_ui()
 
-    def _build_file_row(self, layout: QVBoxLayout, label_text: str, value: str, callback) -> QLineEdit:
+    def _build_file_row(
+        self,
+        layout: QVBoxLayout,
+        label_text: str,
+        value: str,
+        callback,
+        *,
+        include_version_label: bool = False,
+    ) -> QLineEdit:
         row = QWidget(self)
         row_layout = QHBoxLayout(row)
         row_layout.setContentsMargins(0, 0, 0, 0)
@@ -744,6 +780,13 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
         editor = QLineEdit(value)
         editor.setMinimumHeight(28)
         row_layout.addWidget(editor, stretch=1)
+        if include_version_label:
+            editor.textChanged.connect(self._sync_source_version_label)
+            version_label = QLabel("创建格式：未识别")
+            version_label.setObjectName("FieldLabel")
+            version_label.setMinimumWidth(150)
+            row_layout.addWidget(version_label)
+            self._source_version_label = version_label
         button = QPushButton("浏览")
         button.setFixedHeight(28)
         button.clicked.connect(callback)
@@ -760,6 +803,7 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
         )
         if selected and self._old_file_editor is not None:
             self._old_file_editor.setText(selected)
+            self._sync_source_version_label()
 
     def _choose_new_file(self) -> None:
         selected, _selected_filter = QFileDialog.getOpenFileName(
@@ -771,41 +815,91 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
         if selected and self._new_file_editor is not None:
             self._new_file_editor.setText(selected)
 
-    def _sync_merge_ui(self) -> None:
-        merge = self._merge_checkbox.isChecked() if self._merge_checkbox is not None else True
+    def _current_mode(self) -> str:
+        if self._mode_combo is None:
+            return self._MODE_LEGACY_COORDINATES
+        return str(self._mode_combo.currentData() or self._MODE_LEGACY_COORDINATES)
+
+    def _source_format_version(self) -> str:
+        from tools.annotation_converters.base import source_format_version
+
+        old_file = self._old_file_editor.text().strip() if self._old_file_editor is not None else ""
+        return source_format_version(old_file)
+
+    def _source_format_is_supported(self) -> bool:
+        version = self._source_format_version()
+        return bool(version and version in resource_metadata.default_enable_versions())
+
+    def _sync_source_version_label(self) -> None:
+        if self._source_version_label is None:
+            return
+        version = self._source_format_version()
+        self._source_version_label.setText(f"创建格式：{version or '未识别'}")
+        self._sync_mode_ui()
+
+    def _sync_mode_ui(self) -> None:
+        mode = self._current_mode()
+        legacy_mode = mode == self._MODE_LEGACY_COORDINATES
+        if self._new_file_row is not None:
+            self._new_file_row.setVisible(legacy_mode)
+        if self._merge_option_row is not None:
+            self._merge_option_row.setVisible(legacy_mode)
+        if self._merge_checkbox is not None:
+            self._merge_checkbox.setEnabled(legacy_mode)
         if self._new_file_editor is not None:
-            self._new_file_editor.setEnabled(merge)
+            self._new_file_editor.setEnabled(legacy_mode and self._merge_checkbox is not None and self._merge_checkbox.isChecked())
+        if self._start_button is not None:
+            self._start_button.setEnabled(legacy_mode or self._source_format_is_supported())
+
+    def _sync_merge_ui(self) -> None:
+        self._sync_mode_ui()
 
     def _append_log(self, text: str) -> None:
         if self._log is not None:
             self._log.appendPlainText(text)
 
     def _start_conversion(self) -> None:
-        from tools.annotation_format_converter import convert_annotation_file
+        from tools.annotation_converters.registry import (
+            MODE_LEGACY_COORDINATES,
+            MODE_OUTSIDE_FORMAT,
+            convert_annotation_file,
+        )
 
         old_file = self._old_file_editor.text().strip() if self._old_file_editor is not None else ""
         new_file = self._new_file_editor.text().strip() if self._new_file_editor is not None else ""
-        merge = self._merge_checkbox.isChecked() if self._merge_checkbox is not None else True
+        mode = self._current_mode()
+        merge = mode == self._MODE_LEGACY_COORDINATES and (
+            self._merge_checkbox.isChecked() if self._merge_checkbox is not None else True
+        )
         if not old_file:
-            styled_info(self, "标注转换", "请先选择旧标注文件。")
+            styled_info(self, "标注转换", "请先选择原标注文件。")
             return
-        if merge and not new_file:
+        if mode == self._MODE_OUTSIDE_FORMAT and not self._source_format_is_supported():
+            version = self._source_format_version()
+            if version:
+                styled_info(self, "标注转换", f"此格式版本暂未兼容转换：{version}")
+            else:
+                styled_info(self, "标注转换", "原标注文件缺少 format_version，暂未兼容转换。")
+            return
+        if mode == self._MODE_LEGACY_COORDINATES and merge and not new_file:
             styled_info(self, "标注转换", "请先选择要合并的新标注文件。")
             return
-        confirmed = styled_confirm(
-            self,
-            "标注转换",
-            "合并前请先备份标注数据\n\n转换会在 annotations/ 下生成新的标注文件，不会覆盖旧标注或新标注文件。确定继续吗？",
-            confirm_text="已备份，开始转换",
-            cancel_text="取消",
-        )
-        if not confirmed:
-            return
+        if merge:
+            confirmed = styled_confirm(
+                self,
+                "标注转换",
+                "合并前请先备份标注数据\n\n转换会在 annotations/ 下生成新的标注文件，不会覆盖旧标注或新标注文件。确定继续吗？",
+                confirm_text="已备份，开始转换",
+                cancel_text="取消",
+            )
+            if not confirmed:
+                return
         if self._log is not None:
             self._log.clear()
 
         try:
             report = convert_annotation_file(
+                MODE_OUTSIDE_FORMAT if mode == self._MODE_OUTSIDE_FORMAT else MODE_LEGACY_COORDINATES,
                 old_file,
                 config.ensure_annotations_dir(),
                 merge=merge,
@@ -850,7 +944,22 @@ class SettingsDialog(QDialog):
     _SECTION_H_MARGIN = 14
     _SECTION_TOP_MARGIN = 12
     _SECTION_BOTTOM_MARGIN = 12
-    _TOOLS_SECTION_WIDTH = 112
+    _TOOLS_SECTION_WIDTH = 136
+    _TOOLS_SCROLL_MAX_HEIGHT = 252
+    _TOOL_BUTTON_ICONS = {
+        "检查更新": "↻",
+        "夸克网盘": "☁",
+        "路线资源": "◇",
+        "更新文档": "▤",
+        "问题反馈": "?",
+        "标注转换": "⌖",
+        "路线转换": "⤳",
+    }
+    _TOOL_BUTTON_GROUPS = (
+        ("常用入口", ("夸克网盘", "路线资源", "更新文档", "问题反馈")),
+        ("数据转换", ("标注转换", "路线转换")),
+    )
+    _TITLE_BAR_TOOL_NAMES = {"检查更新"}
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -920,6 +1029,13 @@ class SettingsDialog(QDialog):
         subtitle.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         subtitle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         title_row.addWidget(subtitle, stretch=1)
+
+        check_update_btn = QPushButton(self._settings_tool_button_text("检查更新"))
+        check_update_btn.setProperty("settingsTopToolButton", True)
+        check_update_btn.setFixedHeight(24)
+        check_update_btn.clicked.connect(self._on_check_update_clicked)
+        self._update_check_button = check_update_btn
+        title_row.addWidget(check_update_btn)
 
         version_label = QLabel(f"当前版本：{APP_VERSION}")
         version_label.setObjectName("StatLabel")
@@ -1109,9 +1225,9 @@ class SettingsDialog(QDialog):
 
         title_label = QLabel("通用设置")
         title_label.setObjectName("TitleLabel")
-        title_label.setStyleSheet("font-size: 13px;")
+        title_label.setStyleSheet("font-size: 12px;")
         title_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        title_label.setFixedHeight(title_label.sizeHint().height())
+        title_label.setFixedHeight(16)
         card_layout.addWidget(title_label)
 
         tab_bar = QWidget()
@@ -1611,9 +1727,6 @@ class SettingsDialog(QDialog):
         choose_btn.clicked.connect(self._on_choose_map_file)
         layout.addWidget(choose_btn)
 
-        hint = QLabel("放入 maps/ 后重启")
-        hint.setObjectName("StatLabel")
-        layout.addWidget(hint)
         layout.addStretch()
         self._sync_map_file_tooltip()
         return row
@@ -1931,40 +2044,99 @@ class SettingsDialog(QDialog):
 
         title_label = QLabel("工具")
         title_label.setObjectName("TitleLabel")
-        title_label.setStyleSheet("font-size: 13px;")
+        title_label.setStyleSheet("font-size: 12px;")
+        title_label.setFixedHeight(16)
         card_layout.addWidget(title_label)
 
+        body = QWidget()
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(4)
+
+        grouped_names = set()
+        for group_index, (group_title, names) in enumerate(self._TOOL_BUTTON_GROUPS):
+            if group_index > 0:
+                body_layout.addSpacing(4)
+            if group_title != "常用入口":
+                group_label = QLabel(group_title)
+                group_label.setObjectName("SettingsToolGroupLabel")
+                body_layout.addWidget(group_label)
+            for name in names:
+                grouped_names.add(name)
+                body_layout.addWidget(self._build_settings_tool_button(name))
+
         for name in TOOL_BUTTONS:
-            btn = QPushButton(name)
-            btn.setMinimumHeight(30)
-            if name == "检查更新":
-                self._update_check_button = btn
-                btn.clicked.connect(self._on_check_update_clicked)
-            elif name == "夸克网盘":
-                btn.setToolTip("提供夸克网盘最新链接下载")
-                btn.clicked.connect(self._on_quark_download_clicked)
-            elif name == "路线资源":
-                btn.setToolTip("使用默认浏览器打开 config.json 中配置的路线资源链接")
-                btn.clicked.connect(self._on_route_resource_clicked)
-            elif name == "更新文档":
-                btn.setToolTip("使用默认浏览器打开更新文档链接")
-                btn.clicked.connect(self._on_documentation_clicked)
-            elif name == "问题反馈":
-                btn.setToolTip("查看问题反馈与交流方式")
-                btn.clicked.connect(self._on_feedback_clicked)
-            elif name == "标注转换":
-                btn.setToolTip("将旧标注坐标转换为当前标注坐标")
-                btn.clicked.connect(self._on_annotation_converter_clicked)
-            elif name == "路线转换":
-                btn.setToolTip("批量把旧路线 JSON 另存为当前元数据格式")
-                btn.clicked.connect(self._on_route_converter_clicked)
-            else:
-                btn.clicked.connect(
-                    lambda _=False, n=name: styled_info(self, n, f"“{n}”功能尚未实现。")
-                )
-            card_layout.addWidget(btn)
-        card_layout.addStretch()
+            if name not in grouped_names and name not in self._TITLE_BAR_TOOL_NAMES:
+                body_layout.addWidget(self._build_settings_tool_button(name))
+        body_layout.addStretch(1)
+
+        scroll = make_scroll_area(
+            object_name="SettingsToolsScroll",
+            max_height=self._TOOLS_SCROLL_MAX_HEIGHT,
+            horizontal_policy=Qt.ScrollBarAlwaysOff,
+            vertical_policy=Qt.ScrollBarAsNeeded,
+            size_policy=(QSizePolicy.Preferred, QSizePolicy.Expanding),
+        )
+        scroll.setWidget(body)
+        card_layout.addWidget(scroll, stretch=1)
         return card
+
+    @classmethod
+    def _settings_tool_button_text(cls, name: str) -> str:
+        icon = cls._TOOL_BUTTON_ICONS.get(name, "")
+        return f"{icon} {name}" if icon else name
+
+    def _build_settings_tool_button(self, name: str) -> QPushButton:
+        btn = QPushButton()
+        btn.setMinimumHeight(26)
+        btn.setProperty("settingsToolButton", True)
+        self._decorate_settings_tool_button(btn, name)
+        if name in {"标注转换", "路线转换"}:
+            btn.setProperty("settingsConversionButton", True)
+        if name == "夸克网盘":
+            btn.setToolTip("提供夸克网盘最新链接下载")
+            btn.clicked.connect(self._on_quark_download_clicked)
+        elif name == "路线资源":
+            btn.setToolTip("使用默认浏览器打开 config.json 中配置的路线资源链接")
+            btn.clicked.connect(self._on_route_resource_clicked)
+        elif name == "更新文档":
+            btn.setToolTip("使用默认浏览器打开更新文档链接")
+            btn.clicked.connect(self._on_documentation_clicked)
+        elif name == "问题反馈":
+            btn.setToolTip("查看问题反馈与交流方式")
+            btn.clicked.connect(self._on_feedback_clicked)
+        elif name == "标注转换":
+            btn.setToolTip("将旧标注坐标转换为当前标注坐标")
+            btn.clicked.connect(self._on_annotation_converter_clicked)
+        elif name == "路线转换":
+            btn.setToolTip("批量把旧路线 JSON 另存为当前元数据格式")
+            btn.clicked.connect(self._on_route_converter_clicked)
+        else:
+            btn.clicked.connect(lambda _=False, n=name: styled_info(self, n, f"“{n}”功能尚未实现。"))
+        return btn
+
+    def _decorate_settings_tool_button(self, button: QPushButton, name: str) -> None:
+        icon_label = QLabel(self._TOOL_BUTTON_ICONS.get(name, ""), button)
+        icon_label.setObjectName("SettingsToolButtonIcon")
+        icon_label.setFixedWidth(16)
+        icon_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        icon_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
+        text_label = QLabel(name, button)
+        text_label.setObjectName("SettingsToolButtonText")
+        text_label.setAlignment(Qt.AlignCenter)
+        text_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
+        right_balance = QWidget(button)
+        right_balance.setFixedWidth(16)
+        right_balance.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
+        layout = QHBoxLayout(button)
+        layout.setContentsMargins(7, 0, 7, 0)
+        layout.setSpacing(0)
+        layout.addWidget(icon_label)
+        layout.addWidget(text_label, stretch=1)
+        layout.addWidget(right_balance)
 
     def _on_annotation_converter_clicked(self) -> None:
         dialog = AnnotationFormatConverterDialog(self)
@@ -2123,7 +2295,7 @@ class SettingsDialog(QDialog):
         self._update_check_running = False
         if self._update_check_button is not None:
             self._update_check_button.setEnabled(True)
-            self._update_check_button.setText("检查更新")
+            self._update_check_button.setText(self._settings_tool_button_text("检查更新"))
 
         if not isinstance(result, AppUpdateCheckResult):
             styled_info(
@@ -2261,7 +2433,7 @@ class SettingsDialog(QDialog):
         self._clear_update_progress()
         if self._update_check_button is not None:
             self._update_check_button.setEnabled(True)
-            self._update_check_button.setText("检查更新")
+            self._update_check_button.setText(self._settings_tool_button_text("检查更新"))
 
         if not isinstance(result, AppUpdateInstallResult):
             styled_info(
