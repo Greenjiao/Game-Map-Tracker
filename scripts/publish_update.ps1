@@ -303,6 +303,12 @@ $PublishedConverter = Join-Path $UpdateDir "tools\json_txt_converter.exe"
 if (Test-Path $PublishedConverter) {
     Remove-Item -Force $PublishedConverter
 }
+$PublishedPointsIconIndex = Join-Path $UpdateDir "tools\points_icon\icons.json"
+if (Test-Path $PublishedPointsIconIndex) {
+    $InternalPointsIconRoot = Join-Path $UpdateDir "_internal\tools\points_icon"
+    New-Item -ItemType Directory -Force -Path $InternalPointsIconRoot | Out-Null
+    Copy-Item $PublishedPointsIconIndex -Destination (Join-Path $InternalPointsIconRoot "icons.json") -Force
+}
 
 $PublishedMapsRoot = Join-Path $UpdateDir "maps"
 $PublishedMapImages = @()
@@ -354,7 +360,10 @@ if (Test-Path $AnnotationsRoot) {
 
 $PointsIconRoot = Join-Path $UpdateDir "tools/points_icon"
 if (Test-Path $PointsIconRoot) {
-    $PointsIconFiles = @(Get-ChildItem -File -Path $PointsIconRoot -Filter *.png -ErrorAction SilentlyContinue)
+    $PointsIconFiles = @(
+        Get-ChildItem -File -Path $PointsIconRoot -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension.ToLowerInvariant() -in @(".json", ".png") }
+    )
     foreach ($file in $PointsIconFiles) {
         $rel = ($file.FullName.Substring($UpdateDir.Length).TrimStart('\', '/')) -replace '\\', '/'
         $manifestArgs += @("--include", $rel)

@@ -1650,10 +1650,514 @@
       "size": 8520726
     },
     {
+      "path": "tools/points_icon/17310030001.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030001.png",
+      "sha256": "afc49cadd465e591fcffa9d4f4573055c64240bc3d3f4191c5b3ed5f8ed3b119",
+      "size": 7086
+    },
+    {
+      "path": "tools/points_icon/17310030002.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030002.png",
+      "sha256": "92f75b63064da5b41e7b34144e1d5c2a8cb0a1c86f87d12bbc7b029b1d8d0402",
+      "size": 7415
+    },
+    {
+      "path": "tools/points_icon/17310030003.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030003.png",
+      "sha256": "b4ae67051d0f4c76ea700dad12b4b4db5ff4f247cf6f965354b53804faf11dcf",
+      "size": 8104
+    },
+    {
+      "path": "tools/points_icon/17310030004.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030004.png",
+      "sha256": "fa23fdbbf0ec12a6fa29084f7e21a3b001dfc8b09e464925a37f2d60d2908c0b",
+      "size": 7105
+    },
+    {
+      "path": "tools/points_icon/17310030005.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030005.png",
+      "sha256": "26899b4b01c3f727fa78807e6a5666af4ea0de85321a0369aef8b31c34f83749",
+      "size": 3569
+    },
+    {
+      "path": "tools/points_icon/17310030006.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030006.png",
+      "sha256": "57c5f066115761f164eb6cc5c85ecc949aa9e87d38ede1a9d4c49f301a36004e",
+      "size": 3110
+    },
+    {
+      "path": "tools/points_icon/17310030007.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030007.png",
+      "sha256": "7df12d1c6ed31788005f9ea3c17bb092c716f52af789616bab9ff1c3fa726438",
+      "size": 3331
+    },
+    {
+      "path": "tools/points_icon/17310030008.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030008.png",
+      "sha256": "38eb7d8a6fd95f311323e156195862c158a0e90210156f86526db5a51c488b66",
+      "size": 3915
+    },
+    {
+      "path": "tools/points_icon/17310030009.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030009.png",
+      "sha256": "ccf33b0c310bb0897b16c60e4befc23dc2c639c5e8b7cf56adcd8588adde94e8",
+      "size": 2916
+    },
+    {
+      "path": "tools/points_icon/17310030010.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030010.png",
+      "sha256": "4e572d9f1f570ddf9f3d1f134a1def786599c54419ea1c85e94a74de8ce3688e",
+      "size": 3476
+    },
+    {
+      "path": "tools/points_icon/17310030011.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030011.png",
+      "sha256": "55e7bdcc964a84ca28961db19ade075a79a275aecd04dc56cf245765fcf5ebae",
+      "size": 3271
+    },
+    {
+      "path": "tools/points_icon/17310030012.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030012.png",
+      "sha256": "2d96139f582c03f512bcf783818011453cf019467aca287cb233b4e4e51b00ea",
+      "size": 2980
+    },
+    {
+      "path": "tools/points_icon/17310030013.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030013.png",
+      "sha256": "8bf3482348c877fa796dfe10b84d41f3533b98a7004903800c615823d3aa7783",
+      "size": 3145
+    },
+    {
+      "path": "tools/points_icon/17310030014.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030014.png",
+      "sha256": "6964c60754e436e3235fbc25a467377efc60d95720682035a3295b8a168c2d24",
+      "size": 3376
+    },
+    {
+      "path": "tools/points_icon/17310030015.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030015.png",
+      "sha256": "df1861472144d703df4236fe4c13136e5c2822768042de5ee6b7a9efeeea8ee5",
+      "size": 3140
+    },
+    {
+      "path": "tools/points_icon/17310030016.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030016.png",
+      "sha256": "7e8064b04c596cbacfe1b52d065057e6b1917b1e5f1cca6d806845ad27512299",
+      "size": 3250
+    },
+    {
+      "path": "tools/points_icon/17310030017.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030017.png",
+      "sha256": "b8bbab096f5d814961cf3517092e17541f6c85e7652e3f63b8ecdd470f2e8b2b",
+      "size": 3126
+    },
+    {
+      "path": "tools/points_icon/17310030018.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030018.png",
+      "sha256": "8bc7045f67fb25841cd70ad66bb6cd1624fa5e0824a9c945af832d92472886ef",
+      "size": 3430
+    },
+    {
+      "path": "tools/points_icon/17310030019.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030019.png",
+      "sha256": "faafae77cb0a98fe4df11a6fb6840d4d476cd4f7fd928031a513a6a19f781d5a",
+      "size": 3633
+    },
+    {
+      "path": "tools/points_icon/17310030020.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030020.png",
+      "sha256": "1863354cec53b888f8dc189e37e76c41911d3eae2d2b481e4ca172bba4449d77",
+      "size": 3135
+    },
+    {
+      "path": "tools/points_icon/17310030021.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030021.png",
+      "sha256": "020399ef2b2424b914cc5dbf8bc34db1975678354bf0c83e45c96b7f035b81ca",
+      "size": 3513
+    },
+    {
+      "path": "tools/points_icon/17310030022.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030022.png",
+      "sha256": "94d03d80835e7dcf7e8b1bda198ba2ff5e643f6b6a1bb368fde3a0ca0362a00f",
+      "size": 3384
+    },
+    {
+      "path": "tools/points_icon/17310030023.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030023.png",
+      "sha256": "11e607cfae363ff7c30e2f6ca97be418a07f946612f8f645de4f3591566ec119",
+      "size": 6991
+    },
+    {
+      "path": "tools/points_icon/17310030024.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030024.png",
+      "sha256": "a94ade26ff0774c13020c50c6032b3fa959d97b50bd1649aaa57472a0e34a853",
+      "size": 7103
+    },
+    {
+      "path": "tools/points_icon/17310030025.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030025.png",
+      "sha256": "c2a570868e37161358ec75e4d596868a5edfc9f72b7578902c86810ce687b6fd",
+      "size": 7108
+    },
+    {
+      "path": "tools/points_icon/17310030026.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030026.png",
+      "sha256": "eb0a6c4a518aa93c2c6f29e6db5a96078f2d2fa60e5364ffa6db7803977c110c",
+      "size": 7321
+    },
+    {
+      "path": "tools/points_icon/17310030027.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030027.png",
+      "sha256": "7cb34fd510d2b661a0eb1f79e690976eed37178ab2a65ad90a2cf0cb17edc0d8",
+      "size": 8108
+    },
+    {
+      "path": "tools/points_icon/17310030028.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030028.png",
+      "sha256": "888d0a10f7f1c3a9e96d43bfc1733a40155e018fdb9cba7f978e899acec40d38",
+      "size": 7847
+    },
+    {
+      "path": "tools/points_icon/17310030029.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030029.png",
+      "sha256": "ab0527193272a34ca411fcad456075d37f4699299ea127c84d20bf0cd39222fc",
+      "size": 7643
+    },
+    {
+      "path": "tools/points_icon/17310030030.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030030.png",
+      "sha256": "9465ba9661a8d1fd070b3cc25d3ba632eb1f230b01026445847c60a38b53dde8",
+      "size": 6073
+    },
+    {
+      "path": "tools/points_icon/17310030031.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030031.png",
+      "sha256": "eabfc32c5355958b6ffbc8b4fbdcf53837447df833d77db84820e86ee3343188",
+      "size": 6286
+    },
+    {
+      "path": "tools/points_icon/17310030032.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030032.png",
+      "sha256": "4c880f2496164ede7ee2c26123b81040f18bce2ae289ce89a8cfcb142f42ef35",
+      "size": 7795
+    },
+    {
+      "path": "tools/points_icon/17310030033.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030033.png",
+      "sha256": "d63e1499a0f14186cc9adb1deb212822408f3a92246c6ff3ad60be9bf7e56fde",
+      "size": 5289
+    },
+    {
+      "path": "tools/points_icon/17310030034.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030034.png",
+      "sha256": "dac01dd6473a22d7e65abafd026226c02276b7c384480efc22d4b8630175091c",
+      "size": 8991
+    },
+    {
+      "path": "tools/points_icon/17310030035.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030035.png",
+      "sha256": "0fe061c0b99feb156a208804119dcfd2ae2496539798df3181491a4eccda19e8",
+      "size": 7735
+    },
+    {
+      "path": "tools/points_icon/17310030036.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030036.png",
+      "sha256": "c579bba8202e3f54c616bd81fc301807c4ac0efbb28e69901564a4972a75013e",
+      "size": 6510
+    },
+    {
+      "path": "tools/points_icon/17310030037.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030037.png",
+      "sha256": "b0a9c051475b2ed12619ffb5294f653cdc1a0c590abea8b6135623ff9be1c464",
+      "size": 6620
+    },
+    {
+      "path": "tools/points_icon/17310030038.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030038.png",
+      "sha256": "d005f90e7f5bfed570f2bfe3d6fe65d00310bbffb7ccd37d6db14caaf4394e3d",
+      "size": 8473
+    },
+    {
+      "path": "tools/points_icon/17310030039.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030039.png",
+      "sha256": "26ad477ebca5d56aca17c272a2d4e01ff93fc678cbfe40ce9f7ec126ff667fa6",
+      "size": 7761
+    },
+    {
+      "path": "tools/points_icon/17310030040.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030040.png",
+      "sha256": "708818319db2150ff7bc4a44bf18b917ec8f5226f4fa28942c2470e4dfd8cce2",
+      "size": 8040
+    },
+    {
+      "path": "tools/points_icon/17310030041.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030041.png",
+      "sha256": "f4dd88ad8364ef57eaefa837261920ec7b69b9eaa0aa7b544f9766ce6de938e1",
+      "size": 7926
+    },
+    {
+      "path": "tools/points_icon/17310030042.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030042.png",
+      "sha256": "52b0d43d2e54cda5071037f56b698a14128d33b85e4f8cc565002d1efc5e45b7",
+      "size": 6818
+    },
+    {
+      "path": "tools/points_icon/17310030043.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030043.png",
+      "sha256": "d6a1e9cf05ce53597d9086e9fdd05814dc3704b83d8e0cd1c333828299f1c9d6",
+      "size": 2519
+    },
+    {
+      "path": "tools/points_icon/17310030044.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030044.png",
+      "sha256": "93db117cab85b8b434be0667d84e70469be042900db3cebd937a67dd9371e3ad",
+      "size": 2469
+    },
+    {
+      "path": "tools/points_icon/17310030045.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030045.png",
+      "sha256": "6ef24b2b111b1268bee24800734f0597a8841feffa0fdd6d79c9ac3d5e3f0686",
+      "size": 2416
+    },
+    {
+      "path": "tools/points_icon/17310030046.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030046.png",
+      "sha256": "cb4989f080d604707e0ff6a1e912fce68745791fc23853c06f1d9c68ddca74e6",
+      "size": 2542
+    },
+    {
+      "path": "tools/points_icon/17310030047.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030047.png",
+      "sha256": "35b57bdddfa21b5f6e754baf1246fe2bb18f46f211db771eeeeda9fdd3f8f448",
+      "size": 2529
+    },
+    {
+      "path": "tools/points_icon/17310030048.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030048.png",
+      "sha256": "78720ebbb9a8cee57972421fa70c7140acd4ab213372fd494012d17aafe3212b",
+      "size": 2169
+    },
+    {
+      "path": "tools/points_icon/17310030049.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030049.png",
+      "sha256": "4d7d702ea27606cf30ae13f35c9983a94ba85d859ff45a3787ec359595b8dd6f",
+      "size": 2848
+    },
+    {
+      "path": "tools/points_icon/17310030050.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030050.png",
+      "sha256": "54135f5b07769c0b6481695c350d4d8418552f7efac9c896985f08a501d8963d",
+      "size": 2590
+    },
+    {
+      "path": "tools/points_icon/17310030051.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030051.png",
+      "sha256": "c1f228684f4165da27ee9e98495a0f0e9d984655447fb41efc9a04514e8d9755",
+      "size": 2805
+    },
+    {
+      "path": "tools/points_icon/17310030052.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030052.png",
+      "sha256": "b2e191a961c2780f45af0b352cb99a65e9113cd51759bf3d8b221a7d6e8f2527",
+      "size": 2990
+    },
+    {
+      "path": "tools/points_icon/17310030053.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030053.png",
+      "sha256": "3fcff5034df750fbaa7edbfc10e2136063a711255b50a327cd39768d360f3e62",
+      "size": 2535
+    },
+    {
+      "path": "tools/points_icon/17310030054.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030054.png",
+      "sha256": "3be02ff9e51f9e8953283e644bb6b61926af7b2b1a318ab098f631bf1e766cc1",
+      "size": 2607
+    },
+    {
+      "path": "tools/points_icon/17310030055.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030055.png",
+      "sha256": "28331f442292caf455fb8a206eb4a689a10ff67c321d26c7f71d22002c3cd6d9",
+      "size": 2947
+    },
+    {
+      "path": "tools/points_icon/17310030056.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030056.png",
+      "sha256": "bda74d1d75a8de84e8b23ebf472277606903ca18af4fbf07f6585f83453ac3e4",
+      "size": 2387
+    },
+    {
+      "path": "tools/points_icon/17310030057.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030057.png",
+      "sha256": "359f60f6501524170383585063ce89b591f127ed585daa1c30ae89b09f47faa3",
+      "size": 2877
+    },
+    {
+      "path": "tools/points_icon/17310030058.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030058.png",
+      "sha256": "3774cc742bf23e089327d2b8cf96c73669ec719d3b942ccaa15a77c6d5785f09",
+      "size": 2784
+    },
+    {
+      "path": "tools/points_icon/17310030059.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030059.png",
+      "sha256": "06fde631f38b1d290ee5d5a58133b611e3e17628ccc9e185afd1b92d6c4cfc9a",
+      "size": 2582
+    },
+    {
+      "path": "tools/points_icon/17310030060.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030060.png",
+      "sha256": "2b212bda1386b63c4dd6eee912251cf560c3cd1be2da26fdae8cf3213851384c",
+      "size": 2640
+    },
+    {
+      "path": "tools/points_icon/17310030061.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030061.png",
+      "sha256": "d11243a2ea3118eb47aadf2003609b4b570190701758dab606c5e907c36bfcf1",
+      "size": 2339
+    },
+    {
+      "path": "tools/points_icon/17310030062.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030062.png",
+      "sha256": "b5863bf1ce38658cf75a64515d05821f4627e298798c03935d22c2eb582f34f1",
+      "size": 2819
+    },
+    {
+      "path": "tools/points_icon/17310030063.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030063.png",
+      "sha256": "a1b256befbd1b708feadac63ff493ad8926944c82daabca6a42ba72162be0f05",
+      "size": 2775
+    },
+    {
+      "path": "tools/points_icon/17310030064.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030064.png",
+      "sha256": "89ebcfe9d4bd2d390820aa8c2f176affbaed3e266e8052fb081ed5fb52506cff",
+      "size": 2935
+    },
+    {
+      "path": "tools/points_icon/17310030065.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030065.png",
+      "sha256": "040566aa46323ca4fc8d4ceaf8d6b64f1cb0f9322d6de282d869c2c73156b3ed",
+      "size": 2803
+    },
+    {
+      "path": "tools/points_icon/17310030066.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030066.png",
+      "sha256": "15af91c1b1253ff3a6a9b044b0a0e65c3601e0ab200dd30f8c9fa9681fd4ef7e",
+      "size": 2515
+    },
+    {
+      "path": "tools/points_icon/17310030067.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030067.png",
+      "sha256": "35698470d5366ff2ed750038e0dc098504e37dd2d5310f4f2b76adb01c7038bc",
+      "size": 2644
+    },
+    {
+      "path": "tools/points_icon/17310030068.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030068.png",
+      "sha256": "dc114c7bdc95998544b96f88a25cdc1693ffdcd5726520c7062d2e6ba4b3da23",
+      "size": 2768
+    },
+    {
+      "path": "tools/points_icon/17310030069.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030069.png",
+      "sha256": "519c16e421c5f402fbb4f7c082a5ed375fbadf1bc4bd1cec71d7b98a94bb0118",
+      "size": 2847
+    },
+    {
+      "path": "tools/points_icon/17310030070.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030070.png",
+      "sha256": "28def1c721d34d12c44cdfc2679d3f0d6d609f099fd22ee6fb8b4ce75e29b2da",
+      "size": 2600
+    },
+    {
+      "path": "tools/points_icon/17310030071.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030071.png",
+      "sha256": "51a35f5055220e4bf19defea59b74b10bb3fcbf9286640be7d7ad5d64ecbd12b",
+      "size": 2697
+    },
+    {
+      "path": "tools/points_icon/17310030072.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030072.png",
+      "sha256": "d9d68b820078bec01832a7b8e11983ae538a55db2ef4ec44c989a465a950b2ed",
+      "size": 2479
+    },
+    {
+      "path": "tools/points_icon/17310030073.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030073.png",
+      "sha256": "85b0f5f992982bdfe777688f8ec40501f7df8bd4af31f48f75bb16be08ee3244",
+      "size": 2612
+    },
+    {
+      "path": "tools/points_icon/17310030074.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030074.png",
+      "sha256": "a7cf9133dd11fd23d01999b92be9de1b4419edcc22663575c39842b03d92e52a",
+      "size": 2494
+    },
+    {
+      "path": "tools/points_icon/17310030075.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030075.png",
+      "sha256": "d22ba3273c99e8576bc841c59a02d3dc0a49964a6e9f3d0e771be04938786ae3",
+      "size": 2534
+    },
+    {
+      "path": "tools/points_icon/17310030076.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030076.png",
+      "sha256": "e08ab1606a164a4dc6ac25b4484a82b6ca79a556308301a920c50225649103b7",
+      "size": 3033
+    },
+    {
+      "path": "tools/points_icon/17310030077.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030077.png",
+      "sha256": "99c77cc6a481876ff4e11794d8620e0e6da0c273946f35fc36c2af2db918b4d6",
+      "size": 2317
+    },
+    {
+      "path": "tools/points_icon/17310030078.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030078.png",
+      "sha256": "4a834476985a773dcc87177187212a81703ec13fa1fa8d90d8bcd5167320be2a",
+      "size": 2793
+    },
+    {
+      "path": "tools/points_icon/17310030079.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030079.png",
+      "sha256": "4a25028b122a61ad1b22f8cc7508c067b69ef110c51ae0299cb0c69f79f87c8c",
+      "size": 2460
+    },
+    {
+      "path": "tools/points_icon/17310030080.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030080.png",
+      "sha256": "a6667bacb651098bb9c95c2036c00b0497a36c34f5d904212c3179d5f0be9a95",
+      "size": 2705
+    },
+    {
+      "path": "tools/points_icon/17310030081.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030081.png",
+      "sha256": "2cc67f4013afdea42e7e425d668946f504980fc9fbf4e34d60c8127f031db32c",
+      "size": 2687
+    },
+    {
+      "path": "tools/points_icon/17310030082.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030082.png",
+      "sha256": "b04c548b695b1a27bf9b6466cf715a98d41d61a5c6d3e0c497a624ee7e71c5cd",
+      "size": 2493
+    },
+    {
       "path": "tools/points_icon/17310030083.png",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17310030083.png",
       "sha256": "4ddad6f96e5df471e3ca1d7a6709484961603db8627781c8c9be0dda488ba1fd",
       "size": 5384
+    },
+    {
+      "path": "tools/points_icon/icons.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/icons.json",
+      "sha256": "37588d17c5845681e80027d31639d724bdfede23206a92c03315b067853ef8fa",
+      "size": 19494
+    },
+    {
+      "path": "_internal/tools/points_icon/icons.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/_internal/tools/points_icon/icons.json",
+      "sha256": "37588d17c5845681e80027d31639d724bdfede23206a92c03315b067853ef8fa",
+      "size": 19494
     }
   ],
   "delete": [

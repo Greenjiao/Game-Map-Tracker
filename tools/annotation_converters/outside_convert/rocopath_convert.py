@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import re
+import sys
 from collections import OrderedDict
 from pathlib import Path
 
@@ -68,8 +69,42 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def _candidate_gmt_type_index_paths() -> list[Path]:
+    roots: list[Path] = []
+    try:
+        import config
+
+        roots.append(Path(config.BASE_DIR))
+    except Exception:
+        pass
+
+    if getattr(sys, "frozen", False):
+        roots.append(Path(sys.executable).resolve().parent)
+
+    roots.append(_project_root())
+
+    result: list[Path] = []
+    seen: set[Path] = set()
+    for root in roots:
+        path = root / "tools" / "points_icon" / "icons.json"
+        if path in seen:
+            continue
+        seen.add(path)
+        result.append(path)
+    return result
+
+
+def _gmt_type_index_path() -> Path:
+    candidates = _candidate_gmt_type_index_paths()
+    for path in candidates:
+        if path.is_file():
+            return path
+    detail = ", ".join(str(path) for path in candidates)
+    raise FileNotFoundError(f"tools/points_icon/icons.json 不存在，已尝试：{detail}")
+
+
 def _load_gmt_type_items() -> dict[str, dict]:
-    path = _project_root() / "tools" / "points_icon" / "icons.json"
+    path = _gmt_type_index_path()
     with path.open("r", encoding="utf-8-sig") as handle:
         payload = json.load(handle)
     if not isinstance(payload, list):

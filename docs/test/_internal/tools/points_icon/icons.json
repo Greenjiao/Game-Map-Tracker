@@ -1,0 +1,666 @@
+[
+  {
+    "typeId": "17310030001",
+    "type": "宝箱",
+    "groupId": "1731003001",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030001.png",
+    "iconPath": "17310030001.png"
+  },
+  {
+    "typeId": "17310030002",
+    "type": "果树",
+    "groupId": "1731003002",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030002.png",
+    "iconPath": "17310030002.png"
+  },
+  {
+    "typeId": "17310030003",
+    "type": "矿石",
+    "groupId": "1731003003",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030003.png",
+    "iconPath": "17310030003.png"
+  },
+  {
+    "typeId": "17310030004",
+    "type": "未分类材料",
+    "groupId": "1731003004",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030004.png",
+    "iconPath": "17310030004.png"
+  },
+  {
+    "typeId": "17310030005",
+    "type": "草系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030005.png",
+    "iconPath": "17310030005.png"
+  },
+  {
+    "typeId": "17310030006",
+    "type": "萌系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030006.png",
+    "iconPath": "17310030006.png"
+  },
+  {
+    "typeId": "17310030007",
+    "type": "火系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030007.png",
+    "iconPath": "17310030007.png"
+  },
+  {
+    "typeId": "17310030008",
+    "type": "虫系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030008.png",
+    "iconPath": "17310030008.png"
+  },
+  {
+    "typeId": "17310030009",
+    "type": "水系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030009.png",
+    "iconPath": "17310030009.png"
+  },
+  {
+    "typeId": "17310030010",
+    "type": "翼系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030010.png",
+    "iconPath": "17310030010.png"
+  },
+  {
+    "typeId": "17310030011",
+    "type": "幽系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030011.png",
+    "iconPath": "17310030011.png"
+  },
+  {
+    "typeId": "17310030012",
+    "type": "电系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030012.png",
+    "iconPath": "17310030012.png"
+  },
+  {
+    "typeId": "17310030013",
+    "type": "光系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030013.png",
+    "iconPath": "17310030013.png"
+  },
+  {
+    "typeId": "17310030014",
+    "type": "地系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030014.png",
+    "iconPath": "17310030014.png"
+  },
+  {
+    "typeId": "17310030015",
+    "type": "龙系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030015.png",
+    "iconPath": "17310030015.png"
+  },
+  {
+    "typeId": "17310030016",
+    "type": "毒系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030016.png",
+    "iconPath": "17310030016.png"
+  },
+  {
+    "typeId": "17310030017",
+    "type": "武系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030017.png",
+    "iconPath": "17310030017.png"
+  },
+  {
+    "typeId": "17310030018",
+    "type": "恶系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030018.png",
+    "iconPath": "17310030018.png"
+  },
+  {
+    "typeId": "17310030019",
+    "type": "幻系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030019.png",
+    "iconPath": "17310030019.png"
+  },
+  {
+    "typeId": "17310030020",
+    "type": "冰系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030020.png",
+    "iconPath": "17310030020.png"
+  },
+  {
+    "typeId": "17310030021",
+    "type": "普通系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030021.png",
+    "iconPath": "17310030021.png"
+  },
+  {
+    "typeId": "17310030022",
+    "type": "机械系",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030022.png",
+    "iconPath": "17310030022.png"
+  },
+  {
+    "typeId": "17310030023",
+    "type": "未分类精灵",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030023.png",
+    "iconPath": "17310030023.png"
+  },
+  {
+    "typeId": "17310030024",
+    "type": "BOSS（精灵首领）",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030024.png",
+    "iconPath": "17310030024.png"
+  },
+  {
+    "typeId": "17310030025",
+    "type": "副本",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030025.png",
+    "iconPath": "17310030025.png"
+  },
+  {
+    "typeId": "17310030026",
+    "type": "露天对战",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030026.png",
+    "iconPath": "17310030026.png"
+  },
+  {
+    "typeId": "17310030027",
+    "type": "支线任务",
+    "groupId": "1731003004",
+    "group": "任务",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030027.png",
+    "iconPath": "17310030027.png"
+  },
+  {
+    "typeId": "17310030028",
+    "type": "未分类任务",
+    "groupId": "1731003004",
+    "group": "任务",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030028.png",
+    "iconPath": "17310030028.png"
+  },
+  {
+    "typeId": "17310030029",
+    "type": "挑战小游戏",
+    "groupId": "1731003005",
+    "group": "其他",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030029.png",
+    "iconPath": "17310030029.png"
+  },
+  {
+    "typeId": "17310030030",
+    "type": "未分类内容",
+    "groupId": "1731003005",
+    "group": "其他",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030030.png",
+    "iconPath": "17310030030.png"
+  },
+  {
+    "typeId": "17310030031",
+    "type": "精灵的宝藏",
+    "groupId": "1731003001",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030031.png",
+    "iconPath": "17310030031.png"
+  },
+  {
+    "typeId": "17310030032",
+    "type": "精灵好感度植物",
+    "groupId": "1731003002",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030032.png",
+    "iconPath": "17310030032.png"
+  },
+  {
+    "typeId": "17310030033",
+    "type": "魔法石",
+    "groupId": "1731003003",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030033.png",
+    "iconPath": "17310030033.png"
+  },
+  {
+    "typeId": "17310030034",
+    "type": "魔法",
+    "groupId": "1731003003",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030034.png",
+    "iconPath": "17310030034.png"
+  },
+  {
+    "typeId": "17310030035",
+    "type": "眠枭之星（蓝）",
+    "groupId": "1731003003",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030035.png",
+    "iconPath": "17310030035.png"
+  },
+  {
+    "typeId": "17310030036",
+    "type": "崭新乐章",
+    "groupId": "1731003003",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030036.png",
+    "iconPath": "17310030036.png"
+  },
+  {
+    "typeId": "17310030037",
+    "type": "稀有精灵",
+    "groupId": "1731003002",
+    "group": "精灵",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030037.png",
+    "iconPath": "17310030037.png"
+  },
+  {
+    "typeId": "17310030038",
+    "type": "魔力之源（传送点）",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030038.png",
+    "iconPath": "17310030038.png"
+  },
+  {
+    "typeId": "17310030039",
+    "type": "眠枭庇护所",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030039.png",
+    "iconPath": "17310030039.png"
+  },
+  {
+    "typeId": "17310030040",
+    "type": "稀兽花种",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030040.png",
+    "iconPath": "17310030040.png"
+  },
+  {
+    "typeId": "17310030041",
+    "type": "炼金台",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030041.png",
+    "iconPath": "17310030041.png"
+  },
+  {
+    "typeId": "17310030042",
+    "type": "未分类地点",
+    "groupId": "1731003003",
+    "group": "地点",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030042.png",
+    "iconPath": "17310030042.png"
+  },
+  {
+    "typeId": "17310030043",
+    "type": "黄石榴石",
+    "groupId": "1731003006",
+    "group": "矿石",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030043.png",
+    "iconPath": "17310030043.png"
+  },
+  {
+    "typeId": "17310030044",
+    "type": "黑晶琉璃",
+    "groupId": "1731003006",
+    "group": "矿石",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030044.png",
+    "iconPath": "17310030044.png"
+  },
+  {
+    "typeId": "17310030045",
+    "type": "紫莲刚玉",
+    "groupId": "1731003006",
+    "group": "矿石",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030045.png",
+    "iconPath": "17310030045.png"
+  },
+  {
+    "typeId": "17310030046",
+    "type": "蓝晶碧玺",
+    "groupId": "1731003006",
+    "group": "矿石",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030046.png",
+    "iconPath": "17310030046.png"
+  },
+  {
+    "typeId": "17310030047",
+    "type": "眠枭之星（黄）",
+    "groupId": "1731003001",
+    "group": "收集",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030047.png",
+    "iconPath": "17310030047.png"
+  },
+  {
+    "typeId": "17310030048",
+    "type": "幽幽鬼火",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030048.png",
+    "iconPath": "17310030048.png"
+  },
+  {
+    "typeId": "17310030049",
+    "type": "恶魔雪茄",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030049.png",
+    "iconPath": "17310030049.png"
+  },
+  {
+    "typeId": "17310030050",
+    "type": "彩玉花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030050.png",
+    "iconPath": "17310030050.png"
+  },
+  {
+    "typeId": "17310030051",
+    "type": "大嘴花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030051.png",
+    "iconPath": "17310030051.png"
+  },
+  {
+    "typeId": "17310030052",
+    "type": "短木莲",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030052.png",
+    "iconPath": "17310030052.png"
+  },
+  {
+    "typeId": "17310030053",
+    "type": "藻羽花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030053.png",
+    "iconPath": "17310030053.png"
+  },
+  {
+    "typeId": "17310030054",
+    "type": "风卷草",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030054.png",
+    "iconPath": "17310030054.png"
+  },
+  {
+    "typeId": "17310030055",
+    "type": "凤眼莲",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030055.png",
+    "iconPath": "17310030055.png"
+  },
+  {
+    "typeId": "17310030056",
+    "type": "海桑花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030056.png",
+    "iconPath": "17310030056.png"
+  },
+  {
+    "typeId": "17310030057",
+    "type": "海神花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030057.png",
+    "iconPath": "17310030057.png"
+  },
+  {
+    "typeId": "17310030058",
+    "type": "花星角",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030058.png",
+    "iconPath": "17310030058.png"
+  },
+  {
+    "typeId": "17310030059",
+    "type": "火焰花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030059.png",
+    "iconPath": "17310030059.png"
+  },
+  {
+    "typeId": "17310030060",
+    "type": "流星兰",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030060.png",
+    "iconPath": "17310030060.png"
+  },
+  {
+    "typeId": "17310030061",
+    "type": "幽幽草",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030061.png",
+    "iconPath": "17310030061.png"
+  },
+  {
+    "typeId": "17310030062",
+    "type": "蜜黄菌",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030062.png",
+    "iconPath": "17310030062.png"
+  },
+  {
+    "typeId": "17310030063",
+    "type": "喵喵草",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030063.png",
+    "iconPath": "17310030063.png"
+  },
+  {
+    "typeId": "17310030064",
+    "type": "喷气菇",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030064.png",
+    "iconPath": "17310030064.png"
+  },
+  {
+    "typeId": "17310030065",
+    "type": "伞伞菌",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030065.png",
+    "iconPath": "17310030065.png"
+  },
+  {
+    "typeId": "17310030066",
+    "type": "紫晶菇",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030066.png",
+    "iconPath": "17310030066.png"
+  },
+  {
+    "typeId": "17310030067",
+    "type": "紫雀花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030067.png",
+    "iconPath": "17310030067.png"
+  },
+  {
+    "typeId": "17310030068",
+    "type": "天使草",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030068.png",
+    "iconPath": "17310030068.png"
+  },
+  {
+    "typeId": "17310030069",
+    "type": "向阳花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030069.png",
+    "iconPath": "17310030069.png"
+  },
+  {
+    "typeId": "17310030070",
+    "type": "象牙花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030070.png",
+    "iconPath": "17310030070.png"
+  },
+  {
+    "typeId": "17310030071",
+    "type": "星霜花",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030071.png",
+    "iconPath": "17310030071.png"
+  },
+  {
+    "typeId": "17310030072",
+    "type": "杏黄贝",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030072.png",
+    "iconPath": "17310030072.png"
+  },
+  {
+    "typeId": "17310030073",
+    "type": "荧光兰",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030073.png",
+    "iconPath": "17310030073.png"
+  },
+  {
+    "typeId": "17310030074",
+    "type": "雪菇",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030074.png",
+    "iconPath": "17310030074.png"
+  },
+  {
+    "typeId": "17310030075",
+    "type": "蓝掌",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030075.png",
+    "iconPath": "17310030075.png"
+  },
+  {
+    "typeId": "17310030076",
+    "type": "蜂窝",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030076.png",
+    "iconPath": "17310030076.png"
+  },
+  {
+    "typeId": "17310030077",
+    "type": "骨片",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030077.png",
+    "iconPath": "17310030077.png"
+  },
+  {
+    "typeId": "17310030078",
+    "type": "石耳",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030078.png",
+    "iconPath": "17310030078.png"
+  },
+  {
+    "typeId": "17310030079",
+    "type": "睡铃",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030079.png",
+    "iconPath": "17310030079.png"
+  },
+  {
+    "typeId": "17310030080",
+    "type": "可可果",
+    "groupId": "1731003008",
+    "group": "果树",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030080.png",
+    "iconPath": "17310030080.png"
+  },
+  {
+    "typeId": "17310030081",
+    "type": "魔力果",
+    "groupId": "1731003008",
+    "group": "果树",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030081.png",
+    "iconPath": "17310030081.png"
+  },
+  {
+    "typeId": "17310030082",
+    "type": "无花果",
+    "groupId": "1731003008",
+    "group": "果树",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030082.png",
+    "iconPath": "17310030082.png"
+  },
+  {
+    "typeId": "17310030083",
+    "type": "海珊瑚",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030083.png",
+    "iconPath": "17310030083.png"
+  }
+]

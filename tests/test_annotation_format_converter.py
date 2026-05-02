@@ -5,6 +5,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
+import config
+import tools.annotation_converters.outside_convert.rocopath_convert as rocopath_convert
 from tools.annotation_format_converter import (
     convert_annotation_file,
     convert_old_big_map_annotation_payload,
@@ -100,6 +102,54 @@ class AnnotationFormatConverterTests(unittest.TestCase):
         self.assertTrue(all(point["typeId"] == "17310030083" for point in sea_coral_points))
         self.assertEqual(icon_items["17310030083"]["groupId"], "1731003007")
         self.assertEqual(icon_items["17310030083"]["iconPath"], "17310030083.png")
+
+    def test_sift2_converter_uses_app_root_icons_when_module_is_bundled_internal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app_root = root / "GMT-N"
+            icon_root = app_root / "tools" / "points_icon"
+            icon_root.mkdir(parents=True)
+            (icon_root / "icons.json").write_text(
+                json.dumps(
+                    [
+                        {
+                            "typeId": "17310030043",
+                            "type": "矿石",
+                            "groupId": "1731003004",
+                            "group": "矿石",
+                            "iconPath": "17310030043.png",
+                        }
+                    ],
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            fake_internal_module = (
+                app_root / "_internal" / "tools" / "annotation_converters" / "outside_convert" / "rocopath_convert.py"
+            )
+            old_x, old_y = _old_xy_from_latlng(0.2, -0.3)
+
+            with patch.object(config, "BASE_DIR", str(app_root)), patch.object(
+                rocopath_convert, "__file__", str(fake_internal_module)
+            ):
+                payload = convert_rocopath_resource_points_payload(
+                    {
+                        "items": [
+                            {
+                                "id": "1",
+                                "resource_type_id": "5511",
+                                "resource_title": "矿石",
+                                "x": old_x,
+                                "y": old_y,
+                                "label": "矿石 1",
+                            }
+                        ]
+                    }
+                )
+
+        self.assertEqual(payload["types"][0]["typeId"], "17310030043")
+        self.assertEqual(payload["types"][0]["type"], "矿石")
+        self.assertEqual(payload["pointsByType"]["17310030043"][0]["type"], "矿石")
 
     def test_convert_old_big_map_annotation_payload_converts_points_and_metadata(self) -> None:
         old_x, old_y = _old_xy_from_latlng(0.7, -0.4)
