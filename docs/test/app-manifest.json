@@ -1601,12 +1601,6 @@
       "size": 258560
     },
     {
-      "path": "big_map.png",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/big_map.png",
-      "sha256": "d90e4f90474c2e5ff37fe85aa3854b6a9907f69f57e07e86ccb061e487c373a2",
-      "size": 33595983
-    },
-    {
       "path": "config.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/config.json",
       "sha256": "ef6bbaad88bfa850ba942bc2439dd9581ce07f6c9afbe8c5d8d0eccee5450df8",
@@ -1618,6 +1612,18 @@
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/GMT-N.exe",
       "sha256": "6c4c92ca74730401e63bd1ee8528481e9f90e21b51af3c2c40275ec1ab78c2ac",
       "size": 8587895
+    },
+    {
+      "path": "maps/卡洛西亚大陆/big_map_17173.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/maps/%E5%8D%A1%E6%B4%9B%E8%A5%BF%E4%BA%9A%E5%A4%A7%E9%99%86/big_map_17173.png",
+      "sha256": "6a65fcc08565137c640eb4a62936483bd169afe79bb49fac60983cdbc56d272e",
+      "size": 40207113
+    },
+    {
+      "path": "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/maps/%E5%8D%A1%E6%B4%9B%E8%A5%BF%E4%BA%9A%E5%A4%A7%E9%99%86/big_map_17173%E5%B8%A6%E4%BC%A0%E9%80%81%E5%9B%BE%E6%A0%87.png",
+      "sha256": "3baa83f955e636793b4fb32548bf634829c3dd7b0a639ee7c95b7180b53d9431",
+      "size": 38954419
     },
     {
       "path": "README.md",
@@ -1632,7 +1638,10 @@
       "size": 8521301
     }
   ],
-  "delete": [],
+  "delete": [
+    "tools/points_all",
+    "big_map.png"
+  ],
   "runtime_config": {
     "QUARK_DOWNLOAD_URL": "https://pan.quark.cn/s/cf8e31fecd58?pwd=48wL",
     "ROUTE_RESOURCE_URL": "https://www.mapforge.top/",

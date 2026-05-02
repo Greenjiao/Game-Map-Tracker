@@ -34,6 +34,10 @@ DEFAULT_EXCLUDES = {
     "config.json.bak",
 }
 DEFAULT_DELETE_PATHS: tuple[str, ...] = ()
+DEFAULT_INCLUDE_PATHS: tuple[str, ...] = (
+    "maps/卡洛西亚大陆/big_map_17173.png",
+    "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+)
 RUNTIME_CONFIG_STRING_KEYS = (
     "QUARK_DOWNLOAD_URL",
     "ROUTE_RESOURCE_URL",
@@ -260,7 +264,7 @@ def build_manifest(
         if clean_min_supported_version
         else ""
     )
-    clean_include_paths = set(sanitize_delete_paths(include_paths or []))
+    clean_include_paths = set(sanitize_delete_paths([*DEFAULT_INCLUDE_PATHS, *(include_paths or [])]))
     for path, rel in iter_release_files(root, clean_include_paths):
         item = {
             "path": rel,

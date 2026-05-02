@@ -406,7 +406,7 @@ class AnnotationFormatConverterTests(unittest.TestCase):
             source.write_text(json.dumps({"format_version": 2, "items": []}), encoding="utf-8")
 
             with (
-                patch("config.APP_ENABLE_VERSIONS", ["RocoPath-2"], create=True),
+                patch("config.APP_ENABLE_VERSIONS", ["rocoparh_0.1"], create=True),
                 self.assertRaisesRegex(UnsupportedAnnotationFormatError, "\u6682\u4e0d\u517c\u5bb9\uff1a2"),
             ):
                 convert_outside_annotation_file(source, Path(tmp, "annotations"))
@@ -417,7 +417,7 @@ class AnnotationFormatConverterTests(unittest.TestCase):
             source.write_text(
                 json.dumps(
                     {
-                        "format_version": "RocoPath-2",
+                        "format_version": "rocoparh_0.1",
                         "name": "\u793a\u4f8b\u8d44\u6e90\u70b9",
                         "map_path": "display_map.png",
                         "notes": "\u5907\u6ce8",
@@ -450,14 +450,14 @@ class AnnotationFormatConverterTests(unittest.TestCase):
             )
 
             with (
-                patch("config.APP_ENABLE_VERSIONS", ["RocoPath-2"], create=True),
+                patch("config.APP_ENABLE_VERSIONS", ["rocoparh_0.1"], create=True),
                 patch("tools.route_format_converter.old_big_map_xy_to_17173_xy", side_effect=AssertionError),
             ):
                 report = convert_outside_annotation_file(source, Path(tmp, "annotations"))
 
             payload = json.loads(Path(report.output_path).read_text(encoding="utf-8"))
             self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-            self.assertEqual(payload["origin_format_version"], "RocoPath-2")
+            self.assertEqual(payload["origin_format_version"], "rocoparh_0.1")
             self.assertEqual(payload["target_format_version"], resource_metadata.APP_FORMAT_VERSION)
             datetime.fromisoformat(payload["generatedAt"])
             self.assertNotIn("enable_versions", payload)

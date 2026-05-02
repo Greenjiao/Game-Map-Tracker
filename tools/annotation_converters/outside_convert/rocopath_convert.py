@@ -11,7 +11,7 @@ from pathlib import Path
 from tools.annotation_converters.base import UnsupportedAnnotationFormatError
 from tools.annotation_converters.registry import register_outside_converter
 
-FORMAT_VERSION = "RocoPath-2"
+FORMAT_VERSION = "rocoparh_0.1"
 
 _ROCOPATH_LON_SCALE = 5824.0800
 _ROCOPATH_LON_OFFSET = 7217.5810

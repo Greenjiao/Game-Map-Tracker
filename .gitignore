@@ -13,6 +13,8 @@ env/
 *.jpg
 !docs/test/maps/卡洛西亚大陆/big_map_17173.png
 !docs/test/maps/卡洛西亚大陆/big_map_17173带传送图标.png
+!docs/update/maps/卡洛西亚大陆/big_map_17173.png
+!docs/update/maps/卡洛西亚大陆/big_map_17173带传送图标.png
 !img/    # 但是保留 img 文件夹里的小图标
 
 # 忽略调试生成的图片

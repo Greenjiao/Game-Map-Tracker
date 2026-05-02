@@ -671,6 +671,34 @@ class AppUpdaterTests(unittest.TestCase):
 
         self.assertEqual([item["path"] for item in manifest["files"]], ["maps/custom.png"])
 
+    def test_generate_manifest_includes_bundled_maps_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            map_dir = Path(root, "maps", "卡洛西亚大陆")
+            map_dir.mkdir(parents=True)
+            (map_dir / "big_map_17173.png").write_bytes(b"map")
+            (map_dir / "big_map_17173带传送图标.png").write_bytes(b"map-with-icons")
+            Path(root, "maps", "custom.png").write_bytes(b"user-map")
+
+            manifest = generate_update_manifest.build_manifest(
+                root,
+                version="0.2.0",
+                base_url="https://example.test/update/",
+                notes="",
+                requires_launcher_update=False,
+                prompt_update=False,
+                force_update_prompt=False,
+            )
+
+        paths = [item["path"] for item in manifest["files"]]
+        self.assertEqual(
+            paths,
+            [
+                "maps/卡洛西亚大陆/big_map_17173.png",
+                "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+            ],
+        )
+
     def test_write_default_config_uses_clean_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp, "config.json")

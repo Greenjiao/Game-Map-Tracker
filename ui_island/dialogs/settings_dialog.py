@@ -913,7 +913,7 @@ class AnnotationFormatConverterDialog(StyledDialogBase):
             self._new_file_button.setEnabled(annotation_merge_mode or legacy_merge)
         self._sync_target_version_label()
         if self._start_button is not None:
-            self._start_button.setEnabled(legacy_mode or annotation_merge_mode or self._source_format_is_supported())
+            self._start_button.setEnabled(legacy_mode or annotation_merge_mode or mode == self._MODE_OUTSIDE_FORMAT)
 
     def _sync_merge_ui(self) -> None:
         self._sync_mode_ui()

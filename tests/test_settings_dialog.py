@@ -377,22 +377,31 @@ class SettingsDialogMapTests(unittest.TestCase):
                 config.BASE_DIR = old_base_dir
                 config.ANNOTATION_FILE = old_annotation_file
 
-    def test_annotation_conversion_outside_mode_disables_start_for_unsupported_version(self) -> None:
+    def test_annotation_conversion_outside_mode_reports_unsupported_version_on_start(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp, "source.json")
             source.write_text(json.dumps({"format_version": "unsupported"}), encoding="utf-8")
 
-            with patch("config.APP_ENABLE_VERSIONS", ["supported"], create=True):
+            with (
+                patch("config.APP_ENABLE_VERSIONS", ["supported"], create=True),
+                patch("ui_island.dialogs.settings_dialog.styled_info") as styled_info,
+                patch("tools.annotation_converters.registry.convert_annotation_file") as convert,
+            ):
                 dialog = AnnotationFormatConverterDialog(None)
                 dialog._old_file_editor.setText(str(source))
                 dialog._mode_combo.setCurrentIndex(dialog._mode_combo.findData(dialog._MODE_OUTSIDE_FORMAT))
                 self._app.processEvents()
 
                 self.assertEqual(dialog._source_version_label.text(), "创建格式：unsupported")
-                self.assertFalse(dialog._start_button.isEnabled())
+                self.assertTrue(dialog._start_button.isEnabled())
                 self.assertFalse(dialog._new_file_editor.isEnabled())
                 self.assertTrue(dialog._new_file_row.isHidden())
                 self.assertTrue(dialog._merge_option_row.isHidden())
+
+                dialog._start_conversion()
+
+                styled_info.assert_called_with(dialog, "标注转换", "暂不兼容：unsupported")
+                convert.assert_not_called()
                 dialog.close()
 
     def test_annotation_conversion_outside_mode_accepts_enabled_format_version(self) -> None:
