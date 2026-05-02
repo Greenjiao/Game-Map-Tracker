@@ -9,7 +9,7 @@
   },
   {
     "typeId": "17310030002",
-    "type": "植物（果树）",
+    "type": "果树",
     "groupId": "1731003002",
     "group": "收集",
     "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030002.png",
@@ -489,7 +489,7 @@
   },
   {
     "typeId": "17310030062",
-    "type": "密黄菌",
+    "type": "蜜黄菌",
     "groupId": "1731003007",
     "group": "花草",
     "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030062.png",
@@ -513,7 +513,7 @@
   },
   {
     "typeId": "17310030065",
-    "type": "伞伞菇",
+    "type": "伞伞菌",
     "groupId": "1731003007",
     "group": "花草",
     "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030065.png",
@@ -654,5 +654,13 @@
     "group": "果树",
     "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030082.png",
     "iconPath": "17310030082.png"
+  },
+  {
+    "typeId": "17310030083",
+    "type": "海珊瑚",
+    "groupId": "1731003007",
+    "group": "花草",
+    "iconUrl": "https://ue.17173cdn.com/a/terra/icon/rocom/17310030083.png",
+    "iconPath": "17310030083.png"
   }
 ]

@@ -2,7 +2,7 @@
     "CONFIG_VERSION": 5,
     "MINIMAP": {},
     "WINDOW_GEOMETRY": {
-        "x": 1418,
+        "x": 1415,
         "y": 0,
         "width": 420,
         "height": 360
@@ -19,7 +19,8 @@
     "SIDEBAR_WIDTH": 270,
     "PAUSED_SIDEBAR_WIDTH": 270,
     "VIEW_SIZE": 400,
-    "LOGIC_MAP_PATH": "maps/??????/big_map_17173.png",
+    "MAP_FILE": "",
+    "ANNOTATION_FILE": "",
     "MAX_LOST_FRAMES": 30,
     "SIFT_REFRESH_RATE": 30,
     "SIFT_CLAHE_LIMIT": 3.0,
@@ -50,13 +51,37 @@
     },
     "ROUTE_VISITED_POINT_OPACITY": 1.0,
     "ROUTE_VISITED_ICON_OPACITY": 0.35,
-    "WINDOW_LOCKED_OPACITY": 0.78,
+    "ROUTE_NOTES_DIALOG_WIDTH": 680,
+    "ROUTE_NOTES_NODE_PANEL_WIDTH": 200,
+    "WINDOW_LOCKED_OPACITY": 0.8,
     "WINDOW_NORMAL_OPACITY": 1.0,
     "ROUTE_SECTION_EXPANDED": {},
     "ANNOTATION_TYPE_IDS": [],
+    "ANNOTATION_PRESETS": [
+        {
+            "id": "preset_3e2f22e82cf14888b6830b2da5047a65",
+            "name": "常用传送点",
+            "type_ids": [
+                "17310030024",
+                "17310030025",
+                "17310030038",
+                "17310030039",
+                "17310030040",
+                "17310030041"
+            ]
+        },
+        {
+            "id": "preset_7eab6eb79ce64b529cc749cbbe0fa6c9",
+            "name": "常用采集路线1_只显示矿",
+            "type_ids": [
+                "17310030043",
+                "17310030044",
+                "17310030045",
+                "17310030046"
+            ]
+        }
+    ],
     "ANNOTATION_GROUP_EXPANDED": {},
     "APP_UPDATE_LAST_PROMPTED_VERSION": "",
-    "APP_NOTICE_LAST_ACK_KEY": "",
-    "MAP_FILE": "maps/??????/big_map_17173.png",
-    "ANNOTATION_FILE": "annotations/points.json"
+    "APP_NOTICE_LAST_ACK_KEY": ""
 }
