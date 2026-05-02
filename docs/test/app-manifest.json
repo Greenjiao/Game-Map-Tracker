@@ -1,11 +1,11 @@
 {
   "version": "0.1.5",
-  "notes": "本次更新重要说明：对地图、标注、路线三者进行解耦，请用户自己手动选择地图和标注数据文件，地图文件放到根目录的maps对应地图的文件夹中，标注文件放到根目录的annotations对应地图的文件夹中！！！！！！！！！！！！！！！！！！！！仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明！！！！！！！！！！！！！！！！",
+  "notes": "test",
   "app_status": "notice",
-  "app_status_message": "不会用请看说明，不再回复已经说明的问题",
+  "app_status_message": "看说明",
   "app_notice_force_prompt": false,
-  "min_supported_version": "0.1.3",
-  "min_supported_version_message": "适配兼容处理，请更新至0.1.5，本地更新失败则去网盘下载",
+  "min_supported_version": "",
+  "min_supported_version_message": "",
   "requires_launcher_update": false,
   "prompt_update": true,
   "force_update_prompt": false,
@@ -115,7 +115,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/_internal/base_library.zip",
-      "sha256": "fca87d37360372e1c9665aca516feb43524275a5519c56b6b2e65ae767cb0cf9",
+      "sha256": "ab3a04f2e121900de65e5c5eab2dd82f291420dfcef495be777ff77306813c64",
       "size": 1388164
     },
     {
@@ -1610,8 +1610,26 @@
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/GMT-N.exe",
-      "sha256": "06b69409156351175f299a3c470fcfab1037d52cc64835a1838ca916a4c01196",
+      "sha256": "faaf8f81b9632eb6acbb50b8a30619e715f56cd20e8f8b11daced5c1018ce8a0",
       "size": 8801764
+    },
+    {
+      "path": "maps/README.md",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/maps/README.md",
+      "sha256": "e36127f642f842edb654a72185eab4a982c2946915b2e75e212e42eebfd7b7fa",
+      "size": 458
+    },
+    {
+      "path": "maps/卡洛西亚大陆/big_map_17173.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/maps/%E5%8D%A1%E6%B4%9B%E8%A5%BF%E4%BA%9A%E5%A4%A7%E9%99%86/big_map_17173.png",
+      "sha256": "6a65fcc08565137c640eb4a62936483bd169afe79bb49fac60983cdbc56d272e",
+      "size": 40207113
+    },
+    {
+      "path": "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/maps/%E5%8D%A1%E6%B4%9B%E8%A5%BF%E4%BA%9A%E5%A4%A7%E9%99%86/big_map_17173%E5%B8%A6%E4%BC%A0%E9%80%81%E5%9B%BE%E6%A0%87.png",
+      "sha256": "3baa83f955e636793b4fb32548bf634829c3dd7b0a639ee7c95b7180b53d9431",
+      "size": 38954419
     },
     {
       "path": "README.md",
@@ -1622,26 +1640,11 @@
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/test/updater.exe",
-      "sha256": "d3a09d0acbc44f3f6ab6e280ddbb11ed6f1a3fec492bc25eb3f52b10b5464a93",
-      "size": 8521411
-    },
-        {
-      "path": "maps/卡洛西亚大陆/big_map_17173.png",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/releases/download/v0.1.5/big_map_17173.png",
-      "sha256": "6a65fcc08565137c640eb4a62936483bd169afe79bb49fac60983cdbc56d272e",
-      "size": 40207113
-    },
-    {
-      "path": "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/releases/download/v0.1.5/big_map_17173%E5%B8%A6%E4%BC%A0%E9%80%81%E5%9B%BE%E6%A0%87.png",
-      "sha256": "3baa83f955e636793b4fb32548bf634829c3dd7b0a639ee7c95b7180b53d9431",
-      "size": 38954419
+      "sha256": "562bacef9950bc2a49038a00b1334dfe837512627f0f80f7d3208b52d90bd56d",
+      "size": 8520675
     }
   ],
-  "delete": [
-      "tools/points_all",
-      "big_map.png"
-  ],
+  "delete": [],
   "runtime_config": {
     "QUARK_DOWNLOAD_URL": "https://pan.quark.cn/s/cf8e31fecd58?pwd=48wL",
     "ROUTE_RESOURCE_URL": "https://www.mapforge.top/",
@@ -1660,6 +1663,7 @@
     ],
     "APP_ENABLE_VERSIONS": [
       "GMT-N-0.1.5",
+      "GMT-N-0.1.3",
       "sift2"
     ]
   }
