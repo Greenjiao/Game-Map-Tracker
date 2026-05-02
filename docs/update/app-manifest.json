@@ -2157,7 +2157,7 @@
   "delete": [
     "big_map.png",
     "maps/卡洛西亚大陆/big_map_17173.png",
-    "maps/卡洛西亚大陆/big_map_17173_带传送图标.png"
+    "maps/卡洛西亚大陆/big_map_17173带传送图标.png"
   ],
   "runtime_config": {
     "QUARK_DOWNLOAD_URL": "https://pan.quark.cn/s/cf8e31fecd58?pwd=48wL",
