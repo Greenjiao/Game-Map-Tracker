@@ -1,6 +1,6 @@
 {
   "version": "0.1.5",
-  "notes": "本次更新重要说明：对地图、标注、路线三者进行解耦，请用户自己手动选择地图和标注数据文件，地图文件放到根目录的maps对应地图的文件夹中，标注文件放到根目录的annotations对应地图的文件夹中！！！！！！！！！！！！！！！！！！！！仔细看说明仔细看说明仔细看说明看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看说明仔细看明！！！！！！！！！！更新不正常就直接从夸克下载更新不正常就直接从夸克下载更新不正常就直接从夸克下载更新不正常就直接从夸克下载更新不正常就直接从夸克下载更新不正常就直接从夸克下载更新不正常就直接从夸克下载!!!!!!!!!!优化路线绘制体验，设置窗口内置旧路线和旧标注数据的坐标转换以及自动为路线添加标注的功能",
+  "notes": "5月2日推送的图部分错误，导致定位不稳定，本次更新推送了两张新图在maps",
   "app_status": "normal",
   "app_status_message": "",
   "app_notice_force_prompt": false,
@@ -1626,16 +1626,16 @@
       "size": 458
     },
     {
-      "path": "maps/卡洛西亚大陆/big_map_17173.png",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/releases/download/v0.1.5/big_map_17173.png",
-      "sha256": "6a65fcc08565137c640eb4a62936483bd169afe79bb49fac60983cdbc56d272e",
-      "size": 40207113
+      "path": "maps/卡洛西亚大陆/big_map_new.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/releases/download/v0.1.5/big_map_new.png",
+      "sha256": "b16bbc89c230100de0175d172601526c4bdb1e21091ead8b31b55baddfcf2ab4",
+      "size": 36243184
     },
     {
-      "path": "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/releases/download/v0.1.5/big_map_17173%E5%B8%A6%E4%BC%A0%E9%80%81%E5%9B%BE%E6%A0%87.png",
-      "sha256": "3baa83f955e636793b4fb32548bf634829c3dd7b0a639ee7c95b7180b53d9431",
-      "size": 38954419
+      "path": "maps/卡洛西亚大陆/big_map_new_带图标.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/releases/download/v0.1.5/big_map_new_%E5%B8%A6%E5%9B%BE%E6%A0%87.png",
+      "sha256": "682791352ab4bc5aa0110ba271cfadc0db6161cf29ec38e13000568c394ba17d",
+      "size": 36533618
     },
     {
       "path": "README.md",
@@ -2155,7 +2155,9 @@
     }
   ],
   "delete": [
-    "big_map.png"
+    "big_map.png",
+    "maps/卡洛西亚大陆/big_map_17173.png",
+    "maps/卡洛西亚大陆/big_map_17173_带传送图标.png"
   ],
   "runtime_config": {
     "QUARK_DOWNLOAD_URL": "https://pan.quark.cn/s/cf8e31fecd58?pwd=48wL",
