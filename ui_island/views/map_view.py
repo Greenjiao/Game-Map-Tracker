@@ -777,9 +777,13 @@ class MapView(QWidget):
             super().wheelEvent(event)
             return
 
+        delta = self._wheel_zoom_delta(event)
+        if delta == 0:
+            return
+
         anchor_map = self._widget_to_map(event.position())
         old_zoom = self._zoom
-        if event.angleDelta().y() > 0:
+        if delta > 0:
             self._zoom = min(self._MAX_ZOOM, self._zoom * self._ZOOM_STEP)
         else:
             self._zoom = max(self._min_zoom_for_full_map(), self._zoom / self._ZOOM_STEP)
@@ -802,6 +806,25 @@ class MapView(QWidget):
         self._disable_center_lock()
         self._refresh_from_last_frame()
         event.accept()
+
+    @staticmethod
+    def _wheel_zoom_delta(event) -> int:
+        angle_delta = event.angleDelta()
+        delta = angle_delta.y()
+        if delta != 0:
+            return delta
+
+        alt_pressed = bool(event.modifiers() & Qt.AltModifier)
+        if alt_pressed and angle_delta.x() != 0:
+            return angle_delta.x()
+
+        pixel_delta = event.pixelDelta()
+        delta = pixel_delta.y()
+        if delta != 0:
+            return delta
+        if alt_pressed and pixel_delta.x() != 0:
+            return pixel_delta.x()
+        return 0
 
     def mouseDoubleClickEvent(self, event):
         if self._is_drawing_active():

@@ -4,7 +4,8 @@ import unittest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
-from PySide6.QtCore import QPointF
+from PySide6.QtCore import QPoint, QPointF, Qt
+from PySide6.QtGui import QWheelEvent
 from PySide6.QtWidgets import QApplication
 
 from ui_island.state.tracking import TrackState
@@ -36,6 +37,24 @@ class MapViewRenderingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls._app = QApplication.instance() or QApplication([])
+
+    def _wheel_event(
+        self,
+        angle_delta: QPoint,
+        *,
+        modifiers: Qt.KeyboardModifier | Qt.KeyboardModifiers = Qt.NoModifier,
+    ) -> QWheelEvent:
+        pos = QPointF(100, 100)
+        return QWheelEvent(pos, pos, QPoint(), angle_delta, Qt.NoButton, modifiers, Qt.NoScrollPhase, False)
+
+    def _zoomable_view(self) -> MapView:
+        route_mgr = _RecordingRouteManager()
+        view = MapView(route_mgr)
+        view.resize(200, 200)
+        view.set_map(np.zeros((800, 800, 3), dtype=np.uint8))
+        view.update_frame(TrackState.LOCKED, 400, 400)
+        view._center_locked = False
+        return view
 
     def test_full_map_zoom_renders_to_widget_sized_canvas(self) -> None:
         route_mgr = _RecordingRouteManager()
@@ -111,6 +130,36 @@ class MapViewRenderingTests(unittest.TestCase):
         view.update_frame(TrackState.LOCKED, 900, 900)
 
         self.assertNotEqual(view._view_center, QPointF(900, 900))
+
+    def test_wheel_zoom_uses_vertical_angle_delta(self) -> None:
+        view = self._zoomable_view()
+        start_zoom = view._zoom
+
+        view.wheelEvent(self._wheel_event(QPoint(0, 120)))
+        zoomed_in = view._zoom
+        view.wheelEvent(self._wheel_event(QPoint(0, -120)))
+
+        self.assertGreater(zoomed_in, start_zoom)
+        self.assertTrue(np.isclose(view._zoom, start_zoom))
+
+    def test_alt_wheel_zoom_uses_horizontal_angle_delta_when_vertical_is_empty(self) -> None:
+        view = self._zoomable_view()
+        start_zoom = view._zoom
+
+        view.wheelEvent(self._wheel_event(QPoint(120, 0), modifiers=Qt.AltModifier))
+        zoomed_in = view._zoom
+        view.wheelEvent(self._wheel_event(QPoint(-120, 0), modifiers=Qt.AltModifier))
+
+        self.assertGreater(zoomed_in, start_zoom)
+        self.assertTrue(np.isclose(view._zoom, start_zoom))
+
+    def test_zero_wheel_delta_does_not_zoom(self) -> None:
+        view = self._zoomable_view()
+        start_zoom = view._zoom
+
+        view.wheelEvent(self._wheel_event(QPoint(0, 0), modifiers=Qt.AltModifier))
+
+        self.assertEqual(view._zoom, start_zoom)
 
 
 if __name__ == "__main__":

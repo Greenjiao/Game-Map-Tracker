@@ -276,7 +276,7 @@ def install_update_job(job_path: str | os.PathLike[str]) -> bool:
                 continue
             target = app_dir / relative_path
             target.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(source, target)
+            shutil.move(str(source), str(target))
 
         for relative_path in delete:
             backup_target(app_dir, backup_root, relative_path, backed_up)

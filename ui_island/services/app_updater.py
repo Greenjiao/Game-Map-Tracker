@@ -767,7 +767,7 @@ def install_non_restart_update(plan: AppUpdateCheckResult, staging: Path) -> App
                 continue
             target = _app_path(change.file.path)
             target.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(source, target)
+            shutil.move(str(source), str(target))
             installed_files.append(change.file.path)
 
         for path in plan.delete_files:
