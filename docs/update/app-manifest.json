@@ -2163,16 +2163,12 @@
     "QUARK_DOWNLOAD_URL": "https://pan.quark.cn/s/cf8e31fecd58?pwd=48wL",
     "ROUTE_RESOURCE_URL": "https://www.mapforge.top/",
     "DOCUMENTATION_URL": "https://docs.qq.com/sheet/DR0tiYnBwZ3B1UWJD?tab=BB08J2",
-    "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/11695114",
+    "FEEDBACK_BILIBILI_URL": "https://docs.qq.com/sheet/DR0tiYnBwZ3B1UWJD?tab=BB08J2",
     "FEEDBACK_QQ_GROUP": "311609019",
     "ROUTE_RESOURCE_LINKS": [
       {
         "name": "地图工坊",
         "url": "https://www.mapforge.top/"
-      },
-      {
-        "name": "金山文档路线(需txt和json互转)",
-        "url": "https://www.kdocs.cn/wo/sl/v11cdiqU"
       }
     ],
     "APP_ENABLE_VERSIONS": [
