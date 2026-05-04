@@ -370,7 +370,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             self,
             "资源兼容提醒",
             "\n".join(f"- {message}" for message in messages)
-            + "\n\n若提示路线格式版本不兼容或缺失，请前往设置窗口进行路线转换。",
+            + "\n\n若提示路线不兼容并且点位偏离，请前往设置窗口进行路线转换，若你觉得路线无误，可以对路线分类右键手动进行批量兼容",
         )
 
     def _show_missing_map_notice(self) -> None:
