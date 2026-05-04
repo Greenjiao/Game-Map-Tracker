@@ -3,7 +3,7 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtWidgets import QApplication, QPushButton, QWidget
 
 from ui_island.design import strings, theme
@@ -77,25 +77,131 @@ class AnnotationPanelTests(unittest.TestCase):
         panel = AnnotationPanel()
         label, url = strings.ANNOTATION_SOURCE_LINKS[0]
 
-        self.assertIn(f'<a href="{url}">{label}</a>', panel._hint.text())
+        self.assertEqual(panel._title.text(), "标注")
+        self.assertFalse(panel._hint.isHidden())
+        self.assertEqual(panel._hint.toolTip(), strings.ANNOTATION_ROUTE_HINT)
+        self.assertIn("感谢17173的地图标注工作者们", panel._hint.text())
+        self.assertIn(f'<a href="{url}"', panel._hint.text())
+        self.assertIn(f">{label}</a>", panel._hint.text())
         self.assertEqual(panel._hint.textFormat(), Qt.RichText)
         self.assertTrue(panel._hint.openExternalLinks())
         self.assertTrue(panel._hint.textInteractionFlags() & Qt.LinksAccessibleByMouse)
-        self.assertEqual(panel._hint.toolTip(), strings.ANNOTATION_ROUTE_HINT)
 
-    def test_compact_hint_uses_plain_text(self) -> None:
+    def test_compact_hint_uses_same_title_and_source_link(self) -> None:
         panel = AnnotationPanel()
+        label, url = strings.ANNOTATION_SOURCE_LINKS[0]
 
         panel.set_compact_hint(True)
 
-        self.assertEqual(panel._hint.text(), strings.ANNOTATION_ROUTE_HINT_COMPACT)
-        self.assertEqual(panel._hint.textFormat(), Qt.PlainText)
-        self.assertFalse(panel._hint.openExternalLinks())
+        self.assertEqual(panel._title.text(), "标注")
+        self.assertIn(panel._title, panel._drag_handles)
+        self.assertFalse(panel._hint.isHidden())
+        self.assertNotIn("感谢17173的地图标注工作者们", panel._hint.text())
+        self.assertIn(strings.ANNOTATION_ROUTE_HINT_COMPACT.replace(label, ""), panel._hint.text())
+        self.assertIn(f'<a href="{url}"', panel._hint.text())
+        self.assertIn(f">{label}</a>", panel._hint.text())
+        self.assertEqual(panel._hint.textFormat(), Qt.RichText)
+        self.assertTrue(panel._hint.openExternalLinks())
+        self.assertTrue(panel._hint.textInteractionFlags() & Qt.LinksAccessibleByMouse)
 
-    def test_hint_is_not_a_drag_handle_so_links_can_be_clicked(self) -> None:
+    def test_hint_is_passthrough_drag_handle_so_links_can_be_clicked(self) -> None:
         panel = AnnotationPanel()
 
         self.assertNotIn(panel._hint, panel._drag_handles)
+        self.assertIn(panel._hint, panel._drag_passthrough_handles)
+
+    def test_hint_click_without_drag_is_released_to_link_label(self) -> None:
+        class _MouseEvent:
+            def __init__(self, event_type, global_x: int, global_y: int, button=Qt.LeftButton) -> None:
+                self._event_type = event_type
+                self._global_pos = QPointF(global_x, global_y)
+                self._button = button
+                self.accepted = False
+
+            def type(self):
+                return self._event_type
+
+            def button(self):
+                return self._button
+
+            def globalPosition(self):
+                return self._global_pos
+
+            def accept(self) -> None:
+                self.accepted = True
+
+        panel = AnnotationPanel()
+
+        pressed = panel.eventFilter(panel._hint, _MouseEvent(QEvent.MouseButtonPress, 15, 15))
+        released = panel.eventFilter(panel._hint, _MouseEvent(QEvent.MouseButtonRelease, 15, 15))
+
+        self.assertFalse(pressed)
+        self.assertFalse(released)
+
+    def test_hint_drag_moves_panel_and_consumes_release(self) -> None:
+        class _MouseEvent:
+            def __init__(self, event_type, global_x: int, global_y: int, button=Qt.LeftButton) -> None:
+                self._event_type = event_type
+                self._global_pos = QPointF(global_x, global_y)
+                self._button = button
+                self.accepted = False
+
+            def type(self):
+                return self._event_type
+
+            def button(self):
+                return self._button
+
+            def globalPosition(self):
+                return self._global_pos
+
+            def accept(self) -> None:
+                self.accepted = True
+
+        panel = AnnotationPanel()
+        panel.move(10, 10)
+        emitted: list[tuple[int, int]] = []
+        panel.drag_finished.connect(lambda x, y: emitted.append((x, y)))
+
+        pressed = panel.eventFilter(panel._hint, _MouseEvent(QEvent.MouseButtonPress, 15, 15))
+        moved = panel.eventFilter(panel._hint, _MouseEvent(QEvent.MouseMove, 35, 45, Qt.NoButton))
+        released = panel.eventFilter(panel._hint, _MouseEvent(QEvent.MouseButtonRelease, 35, 45))
+
+        self.assertFalse(pressed)
+        self.assertTrue(moved)
+        self.assertTrue(released)
+        self.assertEqual(emitted, [(30, 40)])
+
+    def test_dragging_header_emits_final_position_on_release(self) -> None:
+        class _MouseEvent:
+            def __init__(self, event_type, global_x: int, global_y: int, button=Qt.LeftButton) -> None:
+                self._event_type = event_type
+                self._global_pos = QPointF(global_x, global_y)
+                self._button = button
+                self.accepted = False
+
+            def type(self):
+                return self._event_type
+
+            def button(self):
+                return self._button
+
+            def globalPosition(self):
+                return self._global_pos
+
+            def accept(self) -> None:
+                self.accepted = True
+
+        panel = AnnotationPanel()
+        panel.move(10, 10)
+        emitted: list[tuple[int, int]] = []
+        panel.drag_finished.connect(lambda x, y: emitted.append((x, y)))
+
+        panel.eventFilter(panel._header, _MouseEvent(QEvent.MouseButtonPress, 15, 15))
+        panel.eventFilter(panel._header, _MouseEvent(QEvent.MouseMove, 35, 45, Qt.NoButton))
+        panel.eventFilter(panel._header, _MouseEvent(QEvent.MouseButtonRelease, 35, 45))
+
+        self.assertEqual(emitted, [(30, 40)])
 
     def test_scroll_height_tracks_small_content_when_custom_section_is_empty(self) -> None:
         panel = self._panel_with_types()

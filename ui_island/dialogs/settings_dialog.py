@@ -354,7 +354,7 @@ class RouteFormatConverterDialog(StyledDialogBase):
             if annotate:
                 placeholder = "转换日志：会按当前标注文件为路线节点自动补齐 type、typeId 和 node_type"
             else:
-                placeholder = "转换日志：会转换坐标并补齐 id，保留 format_version，已有 enable_versions 时追加当前版本"
+                placeholder = "转换日志：会转换坐标并补齐 id，保留 format_version，并确保 enable_versions 包含当前版本"
             self._log.setPlaceholderText(placeholder)
         if annotate:
             self._ensure_annotation_type_defaults()
@@ -624,7 +624,7 @@ class RouteFormatConverterDialog(StyledDialogBase):
                     confirmed = styled_confirm(
                         self,
                         "覆盖转换路线",
-                        "此操作会把旧路线坐标转换为新路线坐标，补齐 id，保留 format_version，已有 enable_versions 时追加当前版本，并直接覆盖源路线文件。\n\n"
+                        "此操作会把旧路线坐标转换为新路线坐标，补齐 id，保留 format_version，确保 enable_versions 包含当前版本，并直接覆盖源路线文件。\n\n"
                         "正式执行前请先备份原路线文件。确定继续吗？",
                         confirm_text="已备份，开始转换",
                         cancel_text="取消",
@@ -1032,13 +1032,12 @@ class SettingsDialog(QDialog):
         "检查更新": "↻",
         "夸克网盘": "☁",
         "路线资源": "◇",
-        "更新文档": "▤",
         "问题反馈": "?",
         "标注转换": "⌖",
         "路线转换": "⤳",
     }
     _TOOL_BUTTON_GROUPS = (
-        ("常用入口", ("夸克网盘", "路线资源", "更新文档", "问题反馈")),
+        ("常用入口", ("夸克网盘", "路线资源", "问题反馈")),
         ("数据转换", ("标注转换", "路线转换")),
     )
     _TITLE_BAR_TOOL_NAMES = {"检查更新"}
@@ -1064,6 +1063,12 @@ class SettingsDialog(QDialog):
         self._route_multi_color_checkbox: QCheckBox | None = None
         self._route_special_lines_follow_checkbox: QCheckBox | None = None
         self._route_strict_guide_checkbox: QCheckBox | None = None
+        self._route_node_order_visible_checkbox: QCheckBox | None = None
+        self._route_guide_disable_node_drag_checkbox: QCheckBox | None = None
+        self._window_lock_follows_guide_checkbox: QCheckBox | None = None
+        self._route_node_icon_size_spin: QSpinBox | None = None
+        self._annotation_icon_size_spin: QSpinBox | None = None
+        self._route_node_dot_size_spin: QSpinBox | None = None
         self._route_color_buttons: dict[str, QPushButton] = {}
         self._route_colors = {
             key: self._normalize_route_color(getattr(config, key, default), default)
@@ -1072,6 +1077,7 @@ class SettingsDialog(QDialog):
         self._route_pointer_arrow_visible = bool(getattr(config, "ROUTE_POINTER_ARROW_VISIBLE", True))
         self._route_color_button: QPushButton | None = None
         self._hotkey_editor: QKeySequenceEdit | None = None
+        self._annotation_panel_follow_checkbox: QCheckBox | None = None
         self._route_default_color = self._route_colors["ROUTE_DEFAULT_COLOR"]
         self._opacity_editors: dict[str, QLineEdit] = {}
         self._update_check_button: QPushButton | None = None
@@ -1135,7 +1141,10 @@ class SettingsDialog(QDialog):
         annotation_file_row = self._build_annotation_file_row()
         minimap_row = self._build_minimap_row()
         route_color_row = self._build_route_color_row()
+        route_display_row = self._build_route_display_row()
         hotkey_row = self._build_hotkey_row()
+        lock_follows_guide_row = self._build_lock_follows_guide_row()
+        annotation_panel_follow_row = self._build_annotation_panel_follow_row()
         opacity_row = self._build_opacity_row()
         tools_section = self._build_tools_section()
 
@@ -1171,8 +1180,8 @@ class SettingsDialog(QDialog):
         bottom_section_height = 313
         common_section = self._build_common_tabbed_section(
             resource_rows=(map_file_row, annotation_file_row, minimap_row),
-            route_rows=(route_color_row, opacity_row),
-            interaction_rows=(hotkey_row,),
+            route_rows=(route_color_row, route_display_row, opacity_row),
+            interaction_rows=(hotkey_row, lock_follows_guide_row, annotation_panel_follow_row),
             param_fields=COMMON_FIELDS,
             section_height=bottom_section_height,
         )
@@ -1339,7 +1348,7 @@ class SettingsDialog(QDialog):
 
         _add_tab("资源", self._build_common_tab_page(resource_rows))
         _add_tab("路线与颜色", self._build_common_tab_page(route_rows))
-        _add_tab("快捷键", self._build_common_tab_page(interaction_rows))
+        _add_tab("交互", self._build_common_tab_page(interaction_rows))
         _add_tab("参数", self._build_common_tab_page_fields(param_fields))
 
         tab_bar_layout.addStretch(1)
@@ -1527,6 +1536,64 @@ class SettingsDialog(QDialog):
         layout.addWidget(color_row)
         return row
 
+    def _build_route_display_row(self) -> QWidget:
+        row = QWidget()
+        layout = QVBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(6)
+
+        toggle_row = QWidget()
+        toggle_layout = QHBoxLayout(toggle_row)
+        toggle_layout.setContentsMargins(0, 0, 0, 0)
+        toggle_layout.setSpacing(8)
+
+        order_checkbox = QCheckBox("显示节点顺序")
+        order_checkbox.setChecked(bool(getattr(config, "ROUTE_NODE_ORDER_VISIBLE", True)))
+        order_checkbox.setToolTip("关闭后路线节点旁的顺序数字（1、2、3 …）不再显示。")
+        self._route_node_order_visible_checkbox = order_checkbox
+        toggle_layout.addWidget(order_checkbox)
+
+        disable_drag_checkbox = QCheckBox("导航中禁止拖动节点")
+        disable_drag_checkbox.setChecked(bool(getattr(config, "ROUTE_GUIDE_DISABLE_NODE_DRAG", True)))
+        disable_drag_checkbox.setToolTip("开启后处于导航激活状态时禁止拖动路线节点，避免误操作。")
+        self._route_guide_disable_node_drag_checkbox = disable_drag_checkbox
+        toggle_layout.addWidget(disable_drag_checkbox)
+
+        toggle_layout.addStretch()
+        layout.addWidget(toggle_row)
+
+        size_row = QWidget()
+        size_layout = QHBoxLayout(size_row)
+        size_layout.setContentsMargins(0, 0, 0, 0)
+        size_layout.setSpacing(6)
+
+        size_title = QLabel("图标大小")
+        size_title.setObjectName("FieldLabel")
+        size_layout.addWidget(size_title)
+
+        for attr_name, sub_title, key, value_min, value_max, default in (
+            ("_route_node_icon_size_spin", "节点", "ROUTE_NODE_ICON_SIZE", 12, 48, 24),
+            ("_annotation_icon_size_spin", "标注", "ANNOTATION_ICON_SIZE", 10, 40, 20),
+            ("_route_node_dot_size_spin", "空点位", "ROUTE_NODE_DOT_SIZE", 3, 12, 5),
+        ):
+            sub_label = QLabel(sub_title)
+            sub_label.setObjectName("StatLabel")
+            size_layout.addWidget(sub_label)
+
+            spin = QSpinBox()
+            spin.setRange(value_min, value_max)
+            spin.setMinimumHeight(28)
+            spin.setFixedWidth(72)
+            spin.setAlignment(Qt.AlignRight)
+            spin.setValue(int(getattr(config, key, default) or default))
+            spin.setToolTip(f"{value_min}~{value_max} px")
+            setattr(self, attr_name, spin)
+            size_layout.addWidget(spin)
+
+        size_layout.addStretch()
+        layout.addWidget(size_row)
+        return row
+
     def _build_hotkey_row(self) -> QWidget:
         row = QWidget()
         layout = QHBoxLayout(row)
@@ -1568,6 +1635,34 @@ class SettingsDialog(QDialog):
             text = "按下快捷键"
         width = self._hotkey_editor.fontMetrics().horizontalAdvance(text) + 36
         self._hotkey_editor.setFixedWidth(max(92, min(240, width)))
+
+    def _build_annotation_panel_follow_row(self) -> QWidget:
+        row = QWidget()
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(8)
+
+        checkbox = QCheckBox("标注栏跟随主窗口")
+        checkbox.setChecked(bool(getattr(config, "ANNOTATION_PANEL_FOLLOW_WINDOW", True)))
+        checkbox.setToolTip("开启后标注栏随主窗口移动；关闭后按上次拖动到的屏幕位置打开。")
+        self._annotation_panel_follow_checkbox = checkbox
+        layout.addWidget(checkbox)
+        layout.addStretch()
+        return row
+
+    def _build_lock_follows_guide_row(self) -> QWidget:
+        row = QWidget()
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(8)
+
+        checkbox = QCheckBox("锁定跟随导航")
+        checkbox.setChecked(bool(getattr(config, "WINDOW_LOCK_FOLLOWS_GUIDE", False)))
+        checkbox.setToolTip("开启后进入或退出导航时锁定状态保持不变，不再随导航生命周期切换。")
+        self._window_lock_follows_guide_checkbox = checkbox
+        layout.addWidget(checkbox)
+        layout.addStretch()
+        return row
 
     def _build_opacity_row(self) -> QWidget:
         row = QWidget()
@@ -2143,9 +2238,6 @@ class SettingsDialog(QDialog):
         elif name == "路线资源":
             btn.setToolTip("使用默认浏览器打开 config.json 中配置的路线资源链接")
             btn.clicked.connect(self._on_route_resource_clicked)
-        elif name == "更新文档":
-            btn.setToolTip("使用默认浏览器打开更新文档链接")
-            btn.clicked.connect(self._on_documentation_clicked)
         elif name == "问题反馈":
             btn.setToolTip("查看问题反馈与交流方式")
             btn.clicked.connect(self._on_feedback_clicked)
@@ -2275,48 +2367,55 @@ class SettingsDialog(QDialog):
             return ""
         return qurl.toString()
 
-    def _on_documentation_clicked(self) -> None:
-        url = str(getattr(config, "DOCUMENTATION_URL", "") or "").strip()
-        if not url:
-            styled_info(
-                self,
-                "更新文档",
-                "暂未从更新源获取到更新文档链接，请稍后再试或检查更新源配置。",
-            )
-            return
-
-        qurl = QUrl.fromUserInput(url)
-        if not qurl.isValid() or qurl.scheme() not in {"http", "https"}:
-            styled_info(
-                self,
-                "更新文档",
-                "更新源下发的更新文档链接无效，请检查 runtime_config.json 中的配置。",
-            )
-            return
-
-        if not QDesktopServices.openUrl(qurl):
-            styled_info(self, "更新文档", "无法打开更新文档链接，请检查系统默认浏览器设置。")
-
     def _on_feedback_clicked(self) -> None:
-        bilibili_url = str(getattr(config, "FEEDBACK_BILIBILI_URL", "") or "").strip()
-        qq_group = str(getattr(config, "FEEDBACK_QQ_GROUP", "") or "").strip()
+        links, had_configured_links = self._configured_feedback_links()
+        if links:
+            body = "<br>".join(
+                f'<a href="{escape(url, quote=True)}">{escape(name)}</a>'
+                for name, url in links
+            )
+            styled_info(
+                self,
+                "问题反馈",
+                "可用反馈入口：<br><br>" + body,
+                allow_links=True,
+            )
+            return
 
-        if bilibili_url:
-            qurl = QUrl.fromUserInput(bilibili_url)
-            if qurl.isValid() and qurl.scheme() in {"http", "https"}:
-                bilibili_text = f'<a href="{escape(qurl.toString(), quote=True)}">{escape(bilibili_url)}</a>'
-            else:
-                bilibili_text = escape(bilibili_url)
-        else:
-            bilibili_text = "未配置"
+        if had_configured_links:
+            styled_info(
+                self,
+                "问题反馈",
+                "更新源下发的问题反馈链接无效，请检查 runtime_config.json 中的配置。",
+            )
+            return
 
-        qq_text = escape(qq_group) if qq_group else "未配置"
         styled_info(
             self,
             "问题反馈",
-            f"B站链接：{bilibili_text}<br>GMT-N交流QQ群：{qq_text}",
-            allow_links=True,
+            "暂未从更新源获取到问题反馈链接，请稍后再试或检查更新源配置。",
         )
+
+    @staticmethod
+    def _configured_feedback_links() -> tuple[list[tuple[str, str]], bool]:
+        raw_links = getattr(config, "FEEDBACK_LINKS", None)
+        configured_links: list[tuple[str, str]] = []
+        if isinstance(raw_links, list):
+            for item in raw_links:
+                if not isinstance(item, dict):
+                    continue
+                name = str(item.get("name") or "").strip()
+                url = str(item.get("url") or "").strip()
+                if name and url:
+                    configured_links.append((name, url))
+
+        links = [
+            (name, clean_url)
+            for name, url in configured_links
+            for clean_url in [SettingsDialog._valid_http_url(url)]
+            if clean_url
+        ]
+        return links, bool(configured_links)
 
     def _on_check_update_clicked(self) -> None:
         if self._update_check_running:
@@ -2637,6 +2736,20 @@ class SettingsDialog(QDialog):
             result["ROUTE_SPECIAL_LINES_FOLLOW_ROUTE_COLOR"] = self._route_special_lines_follow_checkbox.isChecked()
         if self._route_strict_guide_checkbox is not None:
             result["ROUTE_STRICT_GUIDE_MODE"] = self._route_strict_guide_checkbox.isChecked()
+        if self._annotation_panel_follow_checkbox is not None:
+            result["ANNOTATION_PANEL_FOLLOW_WINDOW"] = self._annotation_panel_follow_checkbox.isChecked()
+        if self._route_node_order_visible_checkbox is not None:
+            result["ROUTE_NODE_ORDER_VISIBLE"] = self._route_node_order_visible_checkbox.isChecked()
+        if self._route_guide_disable_node_drag_checkbox is not None:
+            result["ROUTE_GUIDE_DISABLE_NODE_DRAG"] = self._route_guide_disable_node_drag_checkbox.isChecked()
+        if self._window_lock_follows_guide_checkbox is not None:
+            result["WINDOW_LOCK_FOLLOWS_GUIDE"] = self._window_lock_follows_guide_checkbox.isChecked()
+        if self._route_node_icon_size_spin is not None:
+            result["ROUTE_NODE_ICON_SIZE"] = int(self._route_node_icon_size_spin.value())
+        if self._annotation_icon_size_spin is not None:
+            result["ANNOTATION_ICON_SIZE"] = int(self._annotation_icon_size_spin.value())
+        if self._route_node_dot_size_spin is not None:
+            result["ROUTE_NODE_DOT_SIZE"] = int(self._route_node_dot_size_spin.value())
         result["ROUTE_POINTER_ARROW_VISIBLE"] = bool(self._route_pointer_arrow_visible)
         for key, _label, default in _ROUTE_COLOR_FIELDS:
             self._route_colors[key] = self._normalize_route_color(self._route_colors.get(key), default)
@@ -2743,6 +2856,28 @@ class SettingsDialog(QDialog):
             self._route_strict_guide_checkbox.setChecked(
                 bool(config.DEFAULT_CONFIG.get("ROUTE_STRICT_GUIDE_MODE", False))
             )
+        if self._annotation_panel_follow_checkbox is not None:
+            self._annotation_panel_follow_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("ANNOTATION_PANEL_FOLLOW_WINDOW", True))
+            )
+        if self._route_node_order_visible_checkbox is not None:
+            self._route_node_order_visible_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("ROUTE_NODE_ORDER_VISIBLE", True))
+            )
+        if self._route_guide_disable_node_drag_checkbox is not None:
+            self._route_guide_disable_node_drag_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("ROUTE_GUIDE_DISABLE_NODE_DRAG", True))
+            )
+        if self._window_lock_follows_guide_checkbox is not None:
+            self._window_lock_follows_guide_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("WINDOW_LOCK_FOLLOWS_GUIDE", False))
+            )
+        if self._route_node_icon_size_spin is not None:
+            self._route_node_icon_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ROUTE_NODE_ICON_SIZE", 24)))
+        if self._annotation_icon_size_spin is not None:
+            self._annotation_icon_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ANNOTATION_ICON_SIZE", 20)))
+        if self._route_node_dot_size_spin is not None:
+            self._route_node_dot_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ROUTE_NODE_DOT_SIZE", 5)))
         self._route_pointer_arrow_visible = bool(config.DEFAULT_CONFIG.get("ROUTE_POINTER_ARROW_VISIBLE", True))
         for key, _label, default in _ROUTE_COLOR_FIELDS:
             self._route_colors[key] = self._normalize_route_color(config.DEFAULT_CONFIG.get(key, default), default)

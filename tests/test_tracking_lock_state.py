@@ -127,7 +127,7 @@ class _FakeWindow:
 
 
 class TrackingLockStateTests(unittest.TestCase):
-    def test_pause_from_lost_stays_unlocked_and_does_not_restore_saved_lock(self) -> None:
+    def test_lost_mode_keeps_locked_state(self) -> None:
         window = _FakeWindow(
             mode=WindowMode.TRACKING_STABLE,
             locked=True,
@@ -136,36 +136,36 @@ class TrackingLockStateTests(unittest.TestCase):
 
         window.tracking_controller.enter_lost_mode()
         self.assertEqual(window._mode, WindowMode.TRACKING_LOST)
-        self.assertFalse(window._locked)
+        self.assertTrue(window._locked)
         self.assertTrue(window._preferred_locked)
         self.assertTrue(window._lock_state_before_lost)
+        self.assertNotIn(False, window.lock_changes)
 
         window.tracking_controller.pause_navigation()
         self.assertEqual(window._mode, WindowMode.PAUSED)
-        self.assertFalse(window._locked)
+        self.assertTrue(window._locked)
         self.assertTrue(window._preferred_locked)
         self.assertIsNone(window._lock_state_before_lost)
 
         window.tracking_controller.apply_state_feedback(TrackState.SEARCHING)
-        self.assertFalse(window._locked)
-        self.assertTrue(window._preferred_locked)
+        self.assertTrue(window._locked)
         self.assertIsNone(window._lock_state_before_lost)
-        self.assertNotIn(True, window.lock_changes[1:])
+        self.assertNotIn(False, window.lock_changes)
 
-    def test_paused_feedback_clears_stale_lost_lock_without_restoring_it(self) -> None:
+    def test_paused_feedback_does_not_force_unlock(self) -> None:
         window = _FakeWindow(
             mode=WindowMode.PAUSED,
-            locked=False,
+            locked=True,
             preferred_locked=True,
         )
         window._lock_state_before_lost = True
 
         window.tracking_controller.apply_state_feedback(TrackState.SEARCHING)
 
-        self.assertFalse(window._locked)
+        self.assertTrue(window._locked)
         self.assertTrue(window._preferred_locked)
         self.assertIsNone(window._lock_state_before_lost)
-        self.assertNotIn(True, window.lock_changes)
+        self.assertNotIn(False, window.lock_changes)
 
     def test_start_navigation_applies_saved_locked_preference(self) -> None:
         window = _FakeWindow(
@@ -194,20 +194,19 @@ class TrackingLockStateTests(unittest.TestCase):
         self.assertFalse(window._locked)
         self.assertNotIn(True, window.lock_changes)
 
-    def test_non_tracking_modes_force_unlock_as_hotkey_fallback(self) -> None:
+    def test_non_tracking_modes_can_toggle_lock_freely(self) -> None:
         for mode in (WindowMode.PAUSED, WindowMode.MAXIMIZED, WindowMode.TRACKING_LOST):
             with self.subTest(mode=mode):
-                unlocked = _FakeWindow(mode=mode, locked=False, preferred_locked=True)
+                unlocked = _FakeWindow(mode=mode, locked=False, preferred_locked=False)
                 self.assertTrue(unlocked._can_toggle_lock())
                 unlocked.toggle_lock()
-                self.assertFalse(unlocked._locked)
-                self.assertFalse(unlocked._preferred_locked)
-                self.assertEqual(unlocked.lock_changes, [False])
+                self.assertTrue(unlocked._locked)
+                self.assertTrue(unlocked._preferred_locked)
+                self.assertEqual(unlocked.lock_changes, [True])
 
                 locked = _FakeWindow(mode=mode, locked=True, preferred_locked=True)
                 self.assertTrue(locked._can_toggle_lock())
                 locked.toggle_lock()
-
                 self.assertFalse(locked._locked)
                 self.assertFalse(locked._preferred_locked)
                 self.assertEqual(locked.lock_changes, [False])

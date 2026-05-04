@@ -165,6 +165,13 @@ def _config_int(name: str, default: int, minimum: int = 0) -> int:
         return max(minimum, default)
 
 
+def _config_bool(name: str, default: bool) -> bool:
+    value = getattr(config, name, default)
+    if value is None:
+        return bool(default)
+    return bool(value)
+
+
 def _clamp_opacity(value: object, default: float) -> float:
     try:
         opacity = float(value)
@@ -1026,8 +1033,11 @@ class RouteManager:
     def _validate_route_metadata(self, route: dict, display_name: str) -> None:
         if not isinstance(route, dict):
             return
-        format_version = str(route.get("format_version") or "").strip()
-        if not format_version or format_version not in resource_metadata.default_enable_versions():
+        raw_enable_versions = route.get("enable_versions")
+        enable_versions = resource_metadata.normalize_enable_versions(
+            raw_enable_versions if isinstance(raw_enable_versions, list) else []
+        )
+        if resource_metadata.APP_FORMAT_VERSION not in enable_versions:
             self._record_resource_warning("route_incompatible_version", display_name)
 
 
@@ -1103,7 +1113,8 @@ class RouteManager:
         if path and os.path.exists(path):
             icon = imread_unicode(path, cv2.IMREAD_UNCHANGED)
             if icon is not None:
-                icon = cv2.resize(icon, (_POINT_ICON_SIZE, _POINT_ICON_SIZE), interpolation=cv2.INTER_AREA)
+                size = _config_int("ROUTE_NODE_ICON_SIZE", _POINT_ICON_SIZE, 4)
+                icon = cv2.resize(icon, (size, size), interpolation=cv2.INTER_AREA)
         self._point_icon_cache[key] = icon
         return icon
 
@@ -1123,10 +1134,11 @@ class RouteManager:
         if key in self._annotation_icon_cache:
             return self._annotation_icon_cache[key]
         icon = self.point_icon_for(key)
-        if icon is None or icon.shape[0] == _ANNOTATION_ICON_SIZE:
+        size = _config_int("ANNOTATION_ICON_SIZE", _ANNOTATION_ICON_SIZE, 4)
+        if icon is None or icon.shape[0] == size:
             self._annotation_icon_cache[key] = icon
             return icon
-        resized = cv2.resize(icon, (_ANNOTATION_ICON_SIZE, _ANNOTATION_ICON_SIZE), interpolation=cv2.INTER_AREA)
+        resized = cv2.resize(icon, (size, size), interpolation=cv2.INTER_AREA)
         self._annotation_icon_cache[key] = resized
         return resized
 
@@ -2424,6 +2436,39 @@ class RouteManager:
             return False
         return True
 
+    def add_current_route_enable_version(self, route_ref: str) -> bool:
+        route_id = self.resolve_route_id(route_ref)
+        route = self.route_for_id(route_id) if route_id is not None else None
+        category = self.category_for_route_id(route_id) if route_id is not None else None
+        if route is None or category is None:
+            return False
+
+        current = resource_metadata.APP_FORMAT_VERSION
+        had_enable_versions = "enable_versions" in route
+        old_enable_versions = route.get("enable_versions", None)
+        enable_versions = resource_metadata.normalize_enable_versions(
+            old_enable_versions if isinstance(old_enable_versions, list) else []
+        )
+        if current in enable_versions:
+            return True
+
+        route["enable_versions"] = [*enable_versions, current]
+        try:
+            self._write_route_file(
+                category,
+                route.get("display_name", ""),
+                route,
+                preserve_manual_enable_versions=True,
+            )
+        except Exception as e:
+            if had_enable_versions:
+                route["enable_versions"] = old_enable_versions
+            else:
+                route.pop("enable_versions", None)
+            print(f"Save route current enable_version failed route_id={route_id}: {e}")
+            return False
+        return True
+
     def route_color_override(self, route_ref: str) -> str:
         route_id = self.resolve_route_id(route_ref)
         if route_id is None:
@@ -2662,8 +2707,12 @@ class RouteManager:
                     )
                 else:
                     opacity = visited_point_opacity if visited else 1.0
-                    _draw_circle_with_opacity(canvas, local_point, 5, dot_color, -1, opacity)
-                    _draw_circle_with_opacity(canvas, local_point, 5, border_color, 1, opacity)
+                    dot_radius = _config_int("ROUTE_NODE_DOT_SIZE", 5, 1)
+                    _draw_circle_with_opacity(canvas, local_point, dot_radius, dot_color, -1, opacity)
+                    _draw_circle_with_opacity(canvas, local_point, dot_radius, border_color, 1, opacity)
+
+                if not _config_bool("ROUTE_NODE_ORDER_VISIBLE", True):
+                    continue
 
                 label = str(index + 1)
                 text_x = local_point[0] + (10 if point_icon is not None else 7)

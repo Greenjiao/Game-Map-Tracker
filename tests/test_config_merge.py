@@ -2,8 +2,10 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import config
+from ui_island.services.settings_gateway import SettingsGateway
 
 
 class ConfigMergeTests(unittest.TestCase):
@@ -205,6 +207,40 @@ class ConfigMergeTests(unittest.TestCase):
         self.assertEqual(merged["ANNOTATION_GROUP_EXPANDED"], {})
         self.assertIn("ANNOTATION_GROUP_EXPANDED", repaired)
 
+    def test_annotation_panel_position_settings_are_merged_and_read(self) -> None:
+        merged, _repaired = config.merge_config_payload(config.DEFAULT_CONFIG, {"CONFIG_VERSION": 2})
+
+        self.assertEqual(merged["ANNOTATION_PANEL_FOLLOW_WINDOW"], True)
+        self.assertEqual(merged["ANNOTATION_PANEL_OFFSET"], {})
+        self.assertEqual(merged["ANNOTATION_PANEL_MAXIMIZED_OFFSET"], {})
+        self.assertEqual(merged["ANNOTATION_PANEL_POSITION"], {})
+        self.assertEqual(merged["ANNOTATION_PANEL_MAXIMIZED_POSITION"], {})
+
+        user = {
+            "CONFIG_VERSION": 2,
+            "ANNOTATION_PANEL_FOLLOW_WINDOW": False,
+            "ANNOTATION_PANEL_OFFSET": {"x": 11, "y": 22},
+            "ANNOTATION_PANEL_MAXIMIZED_OFFSET": {"x": -3, "y": 4},
+            "ANNOTATION_PANEL_POSITION": {"x": 333, "y": 444},
+            "ANNOTATION_PANEL_MAXIMIZED_POSITION": {"x": 555, "y": 666},
+        }
+        merged, repaired = config.merge_config_payload(config.DEFAULT_CONFIG, user)
+
+        self.assertEqual(repaired, [])
+        self.assertEqual(merged["ANNOTATION_PANEL_FOLLOW_WINDOW"], False)
+        self.assertEqual(merged["ANNOTATION_PANEL_OFFSET"], {"x": 11, "y": 22})
+        self.assertEqual(merged["ANNOTATION_PANEL_MAXIMIZED_OFFSET"], {"x": -3, "y": 4})
+        self.assertEqual(merged["ANNOTATION_PANEL_POSITION"], {"x": 333, "y": 444})
+        self.assertEqual(merged["ANNOTATION_PANEL_MAXIMIZED_POSITION"], {"x": 555, "y": 666})
+
+        gateway = SettingsGateway()
+        with patch.object(config, "ANNOTATION_PANEL_OFFSET", {"x": "7", "y": 8}, create=True):
+            self.assertEqual(gateway.get_annotation_panel_offset(), {"x": 7, "y": 8})
+        with patch.object(config, "ANNOTATION_PANEL_OFFSET", {"x": 7}, create=True):
+            self.assertIsNone(gateway.get_annotation_panel_offset())
+        with patch.object(config, "ANNOTATION_PANEL_OFFSET", [], create=True):
+            self.assertIsNone(gateway.get_annotation_panel_offset())
+
     def test_annotation_presets_are_merged_and_repaired(self) -> None:
         preset = {"id": "preset_1", "name": "矿物", "type_ids": ["ore", "flower"]}
         merged, repaired = config.merge_config_payload(
@@ -229,9 +265,9 @@ class ConfigMergeTests(unittest.TestCase):
             "QUARK_DOWNLOAD_URL": "https://example.com/quark",
             "ROUTE_RESOURCE_URL": "https://example.com/routes",
             "ROUTE_RESOURCE_LINKS": [{"name": "Routes", "url": "https://example.com/routes"}],
-            "DOCUMENTATION_URL": "https://example.com/docs",
             "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/example",
             "FEEDBACK_QQ_GROUP": "123456789",
+            "FEEDBACK_LINKS": [{"name": "Feedback", "url": "https://example.com/feedback"}],
             "APP_UPDATE_MANIFEST_URL": "https://example.com/app-manifest.json",
             "APP_UPDATE_MANIFEST_URLS": ["https://example.com/app-manifest.json"],
         }
@@ -240,17 +276,17 @@ class ConfigMergeTests(unittest.TestCase):
         self.assertNotIn("QUARK_DOWNLOAD_URL", merged)
         self.assertNotIn("ROUTE_RESOURCE_URL", merged)
         self.assertNotIn("ROUTE_RESOURCE_LINKS", merged)
-        self.assertNotIn("DOCUMENTATION_URL", merged)
         self.assertNotIn("FEEDBACK_BILIBILI_URL", merged)
         self.assertNotIn("FEEDBACK_QQ_GROUP", merged)
+        self.assertNotIn("FEEDBACK_LINKS", merged)
         self.assertNotIn("APP_UPDATE_MANIFEST_URL", merged)
         self.assertNotIn("APP_UPDATE_MANIFEST_URLS", merged)
         self.assertIn("QUARK_DOWNLOAD_URL", repaired)
         self.assertIn("ROUTE_RESOURCE_URL", repaired)
         self.assertIn("ROUTE_RESOURCE_LINKS", repaired)
-        self.assertIn("DOCUMENTATION_URL", repaired)
         self.assertIn("FEEDBACK_BILIBILI_URL", repaired)
         self.assertIn("FEEDBACK_QQ_GROUP", repaired)
+        self.assertIn("FEEDBACK_LINKS", repaired)
         self.assertIn("APP_UPDATE_MANIFEST_URL", repaired)
         self.assertIn("APP_UPDATE_MANIFEST_URLS", repaired)
 

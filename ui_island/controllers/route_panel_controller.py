@@ -280,6 +280,10 @@ QCheckBox::indicator:checked:hover {{
             [
                 ContextMenuItem(strings.ROUTE_CATEGORY_RENAME, lambda: self.rename_category(category)),
                 ContextMenuItem(strings.ROUTE_CATEGORY_DELETE, lambda: self.delete_category(category)),
+                ContextMenuItem(
+                    strings.ROUTE_CATEGORY_MARK_COMPATIBLE,
+                    lambda: self.mark_category_routes_compatible(category),
+                ),
                 ContextMenuItem.separator_item(),
                 ContextMenuItem(
                     strings.ROUTE_CATEGORY_OPEN_FILE_LOCATION,
@@ -1929,6 +1933,46 @@ QCheckBox::indicator:checked:hover {{
         self.window._route_section_expanded.pop(category, None)
         self.cancel_active_route_rename()
         self.reload_route_list()
+
+    def mark_category_routes_compatible(self, category: str) -> None:
+        if not self.confirm_exit_route_drawing():
+            return
+        route_widgets = self.window._route_widgets_by_category.get(category, [])
+        current_version = resource_metadata.APP_FORMAT_VERSION
+        changed_count = 0
+        failed_count = 0
+
+        for route_id, _route_name, _route_item in route_widgets:
+            if not route_id:
+                continue
+            route = self.window.route_mgr.route_for_id(route_id)
+            enable_versions = resource_metadata.normalize_enable_versions(
+                route.get("enable_versions") if isinstance(route, dict) else []
+            )
+            if current_version in enable_versions:
+                continue
+            if self.window.route_mgr.add_current_route_enable_version(route_id):
+                changed_count += 1
+            else:
+                failed_count += 1
+
+        if failed_count:
+            styled_info(
+                self.window,
+                strings.ROUTE_CATEGORY_MARK_COMPATIBLE_FAILED_TITLE,
+                strings.ROUTE_CATEGORY_MARK_COMPATIBLE_FAILED_BODY_FMT.format(count=failed_count),
+            )
+        if changed_count:
+            toast(
+                self.window,
+                strings.ROUTE_CATEGORY_MARK_COMPATIBLE_SUCCESS_FMT.format(name=category, count=changed_count),
+            )
+            return
+        if not failed_count:
+            toast(
+                self.window,
+                strings.ROUTE_CATEGORY_MARK_COMPATIBLE_NOOP_FMT.format(name=category),
+            )
 
     def open_route_file_location(self, category: str, name: str) -> None:
         path = self.window.route_mgr.route_file_path(category, name)

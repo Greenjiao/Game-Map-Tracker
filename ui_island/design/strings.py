@@ -35,9 +35,9 @@ ROUTE_TRACKED_JUMP_TO_NODE_FMT = "已跳转到第 {index} 个节点"
 ROUTE_TRACKED_JUMP_COMPLETED_FMT = "路线已完成，已显示第 {index} 个节点"
 ROUTE_EMPTY_TRACKED = "暂无已选择路线"
 ANNOTATION_ROUTE_HINT = "内置标注数据来源于17173地图,感谢17173的地图标注工作者们"
+ANNOTATION_ROUTE_HINT_COMPACT = "内置标注数据来源于17173地图"
 ANNOTATION_SOURCE_LINKS = (("17173地图", "https://map.17173.com/rocom/maps/shijie"),)
 ANNOTATION_SOURCE_LINK_COLOR = "#bde9ff"
-ANNOTATION_ROUTE_HINT_COMPACT = "右键标注规划不代表实际最优"
 ANNOTATION_PLAN_ROUTE = "生成点位最优路线"
 ANNOTATION_PLAN_ROUTE_SUCCESS_FMT = "已生成路线“{name}”"
 ANNOTATION_PLAN_ROUTE_EMPTY_TITLE = "无法生成路线"
@@ -90,6 +90,11 @@ ROUTE_CATEGORY_INVALID = "名称不能包含 / 或 \\"
 ROUTE_CATEGORY_RENAME = "重命名分类"
 ROUTE_CATEGORY_DELETE = "删除分类"
 ROUTE_CATEGORY_OPEN_FILE_LOCATION = "打开分类文件位置"
+ROUTE_CATEGORY_MARK_COMPATIBLE = "批量设置兼容当前版本"
+ROUTE_CATEGORY_MARK_COMPATIBLE_SUCCESS_FMT = "已将当前版本写入分类“{name}”的 {count} 条路线"
+ROUTE_CATEGORY_MARK_COMPATIBLE_NOOP_FMT = "分类“{name}”中的路线已兼容当前版本"
+ROUTE_CATEGORY_MARK_COMPATIBLE_FAILED_TITLE = "批量设置兼容失败"
+ROUTE_CATEGORY_MARK_COMPATIBLE_FAILED_BODY_FMT = "有 {count} 条路线未能写入兼容版本，请检查文件权限或日志。"
 ROUTE_CATEGORY_RENAME_TITLE = "重命名分类"
 ROUTE_CATEGORY_RENAME_PLACEHOLDER = "输入分类名称..."
 ROUTE_CATEGORY_RENAME_CONFIRM = "确认重命名"
@@ -280,8 +285,8 @@ UPDATE_ERROR_UPDATER_MISSING_FMT = "未找到更新器：{path}"
 UPDATE_ERROR_UPDATER_START_FAILED_FMT = "启动更新器失败：{error}"
 
 
-def annotation_route_hint_html() -> str:
-    text = escape(ANNOTATION_ROUTE_HINT)
+def _annotation_source_links_html(source_text: str) -> str:
+    text = escape(source_text)
     for label, url in ANNOTATION_SOURCE_LINKS:
         safe_label = escape(str(label))
         if not safe_label:
@@ -292,6 +297,14 @@ def annotation_route_hint_html() -> str:
             f'<a href="{safe_url}" style="color:{ANNOTATION_SOURCE_LINK_COLOR};">{safe_label}</a>',
         )
     return text
+
+
+def annotation_route_hint_html() -> str:
+    return _annotation_source_links_html(ANNOTATION_ROUTE_HINT)
+
+
+def annotation_route_hint_compact_html() -> str:
+    return _annotation_source_links_html(ANNOTATION_ROUTE_HINT_COMPACT)
 
 
 def with_update_error_hint(message: str) -> str:

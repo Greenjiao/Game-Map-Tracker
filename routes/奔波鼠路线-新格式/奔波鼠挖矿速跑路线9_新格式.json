@@ -1,0 +1,390 @@
+{
+  "id": "575e43f09c004075ba96b3ff48ad58b8",
+  "format_version": 2,
+  "enable_versions": [
+    "GMT-N-0.1.5"
+  ],
+  "name": "奔波鼠挖矿速跑路线9",
+  "notes": "路线坐标基于地图像素坐标，仅用于截图识别导航，不涉及任何游戏内存读取。",
+  "loop": false,
+  "points": [
+    {
+      "x": 5614,
+      "y": 4754,
+      "label": "节点 1",
+      "radius": 30
+    },
+    {
+      "x": 5604,
+      "y": 4721,
+      "label": "节点 2",
+      "radius": 30
+    },
+    {
+      "x": 5663,
+      "y": 4696,
+      "label": "节点 3",
+      "radius": 30
+    },
+    {
+      "x": 5684,
+      "y": 4703,
+      "label": "节点 4",
+      "radius": 30
+    },
+    {
+      "x": 5730,
+      "y": 4881,
+      "label": "节点 5",
+      "radius": 30
+    },
+    {
+      "x": 5831,
+      "y": 5023,
+      "label": "节点 6",
+      "radius": 30
+    },
+    {
+      "x": 5906,
+      "y": 5083,
+      "label": "节点 7",
+      "radius": 30
+    },
+    {
+      "x": 5962,
+      "y": 4996,
+      "label": "节点 8",
+      "radius": 30
+    },
+    {
+      "x": 6074,
+      "y": 4954,
+      "label": "节点 9",
+      "radius": 30
+    },
+    {
+      "x": 6126,
+      "y": 4862,
+      "label": "节点 10",
+      "radius": 30
+    },
+    {
+      "x": 6129,
+      "y": 4796,
+      "label": "节点 11",
+      "radius": 30
+    },
+    {
+      "x": 6167,
+      "y": 4782,
+      "label": "节点 12",
+      "radius": 30
+    },
+    {
+      "x": 6159,
+      "y": 4738,
+      "label": "节点 13",
+      "radius": 30
+    },
+    {
+      "x": 6213,
+      "y": 4699,
+      "label": "节点 14",
+      "radius": 30
+    },
+    {
+      "x": 6207,
+      "y": 4667,
+      "label": "节点 15",
+      "radius": 30
+    },
+    {
+      "x": 6153,
+      "y": 4656,
+      "label": "节点 16",
+      "radius": 30
+    },
+    {
+      "x": 6071,
+      "y": 4696,
+      "label": "节点 17",
+      "radius": 30
+    },
+    {
+      "x": 6034,
+      "y": 4653,
+      "label": "节点 18",
+      "radius": 30
+    },
+    {
+      "x": 5996,
+      "y": 4653,
+      "label": "节点 19",
+      "radius": 30
+    }
+  ],
+  "nodes": [
+    {
+      "id": "66715af477f64deeb94220b67e9aec77",
+      "x": 5614,
+      "y": 4754,
+      "label": "节点 1",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "3d1effa16f0f42b78d2f423d4d0b16f5",
+      "x": 5604,
+      "y": 4721,
+      "label": "节点 2",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "f8e4d7693cf64fd1916715cc623c22fa",
+      "x": 5663,
+      "y": 4696,
+      "label": "节点 3",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "aa60e52dd3cf47308da14511b7a84f58",
+      "x": 5684,
+      "y": 4703,
+      "label": "节点 4",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "976ddbafa86c4514901c0fc89adcfe4e",
+      "x": 5730,
+      "y": 4881,
+      "label": "节点 5",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "005e4c6a1762438ba2899b505e012a86",
+      "x": 5831,
+      "y": 5023,
+      "label": "节点 6",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "9a00927f697a46b3b62cf8155ecb561c",
+      "x": 5906,
+      "y": 5083,
+      "label": "节点 7",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "c1433343a70c45e28083e7c363194beb",
+      "x": 5962,
+      "y": 4996,
+      "label": "节点 8",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "feffaa5ea07e422db4bbaca7fd5e6578",
+      "x": 6074,
+      "y": 4954,
+      "label": "节点 9",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "5ce984f9f2704eb799a6fbc18dcf4cf0",
+      "x": 6126,
+      "y": 4862,
+      "label": "节点 10",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "5a0965dce1a0480b8fbeb20fc958c61a",
+      "x": 6129,
+      "y": 4796,
+      "label": "节点 11",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "e081ed0c5df0462ea08c85ba548f4338",
+      "x": 6167,
+      "y": 4782,
+      "label": "节点 12",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "d623fa29658848b0a923478698d3e718",
+      "x": 6159,
+      "y": 4738,
+      "label": "节点 13",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "456a3c6d985c4e9992348729d0f349ae",
+      "x": 6213,
+      "y": 4699,
+      "label": "节点 14",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "57b03f27a1d145768ac60232a3cf3d54",
+      "x": 6207,
+      "y": 4667,
+      "label": "节点 15",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "4416020088da40e985afba2b586d9258",
+      "x": 6153,
+      "y": 4656,
+      "label": "节点 16",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "1aba35c295c24e26a7a1900dc4e0a3b6",
+      "x": 6071,
+      "y": 4696,
+      "label": "节点 17",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "f4317c0d5b6f4576912089d478e864c2",
+      "x": 6034,
+      "y": 4653,
+      "label": "节点 18",
+      "radius": 30,
+      "node_type": "collect"
+    },
+    {
+      "id": "647499c9841f4890b7abe2b0cd31a852",
+      "x": 5996,
+      "y": 4653,
+      "label": "节点 19",
+      "radius": 30,
+      "node_type": "collect"
+    }
+  ],
+  "edges": [
+    {
+      "id": "761d37320cd449b2b8ca9ff6e186f860",
+      "from": "66715af477f64deeb94220b67e9aec77",
+      "to": "3d1effa16f0f42b78d2f423d4d0b16f5",
+      "edge_type": "normal"
+    },
+    {
+      "id": "e3ae8370e2e3433299ae878bab3e590d",
+      "from": "3d1effa16f0f42b78d2f423d4d0b16f5",
+      "to": "f8e4d7693cf64fd1916715cc623c22fa",
+      "edge_type": "normal"
+    },
+    {
+      "id": "9fc98dea45d54f26ae461c9bd474c040",
+      "from": "f8e4d7693cf64fd1916715cc623c22fa",
+      "to": "aa60e52dd3cf47308da14511b7a84f58",
+      "edge_type": "normal"
+    },
+    {
+      "id": "c519914a3256412fa7f0f955b8b8baa2",
+      "from": "aa60e52dd3cf47308da14511b7a84f58",
+      "to": "976ddbafa86c4514901c0fc89adcfe4e",
+      "edge_type": "normal"
+    },
+    {
+      "id": "16acfa5b899b49069385f7197e9c74a3",
+      "from": "976ddbafa86c4514901c0fc89adcfe4e",
+      "to": "005e4c6a1762438ba2899b505e012a86",
+      "edge_type": "normal"
+    },
+    {
+      "id": "79d77ecbc2f24a298d6acff1c9580481",
+      "from": "005e4c6a1762438ba2899b505e012a86",
+      "to": "9a00927f697a46b3b62cf8155ecb561c",
+      "edge_type": "normal"
+    },
+    {
+      "id": "d68e5be1634f4912882e9f64f1dee9a8",
+      "from": "9a00927f697a46b3b62cf8155ecb561c",
+      "to": "c1433343a70c45e28083e7c363194beb",
+      "edge_type": "normal"
+    },
+    {
+      "id": "b20948861657404d8e5748b47e63c4b7",
+      "from": "c1433343a70c45e28083e7c363194beb",
+      "to": "feffaa5ea07e422db4bbaca7fd5e6578",
+      "edge_type": "normal"
+    },
+    {
+      "id": "d279c32746ca43ee9e7fcff2fbc1e1fe",
+      "from": "feffaa5ea07e422db4bbaca7fd5e6578",
+      "to": "5ce984f9f2704eb799a6fbc18dcf4cf0",
+      "edge_type": "normal"
+    },
+    {
+      "id": "73edb5ee9e0f46879bbc2560b8858070",
+      "from": "5ce984f9f2704eb799a6fbc18dcf4cf0",
+      "to": "5a0965dce1a0480b8fbeb20fc958c61a",
+      "edge_type": "normal"
+    },
+    {
+      "id": "2779a5a77744478cb3253849cbf2cf9c",
+      "from": "5a0965dce1a0480b8fbeb20fc958c61a",
+      "to": "e081ed0c5df0462ea08c85ba548f4338",
+      "edge_type": "normal"
+    },
+    {
+      "id": "fa04cbdcbf4f4698b0233f428232b5f0",
+      "from": "e081ed0c5df0462ea08c85ba548f4338",
+      "to": "d623fa29658848b0a923478698d3e718",
+      "edge_type": "normal"
+    },
+    {
+      "id": "cc45df0993374c499c156903d249f046",
+      "from": "d623fa29658848b0a923478698d3e718",
+      "to": "456a3c6d985c4e9992348729d0f349ae",
+      "edge_type": "normal"
+    },
+    {
+      "id": "ffbd5452aaad4a43868f77af77a0baa5",
+      "from": "456a3c6d985c4e9992348729d0f349ae",
+      "to": "57b03f27a1d145768ac60232a3cf3d54",
+      "edge_type": "normal"
+    },
+    {
+      "id": "7861ef685b6b4d6f923479834066342a",
+      "from": "57b03f27a1d145768ac60232a3cf3d54",
+      "to": "4416020088da40e985afba2b586d9258",
+      "edge_type": "normal"
+    },
+    {
+      "id": "3b471f4fcd0c4d0a81bfa6ee55f83589",
+      "from": "4416020088da40e985afba2b586d9258",
+      "to": "1aba35c295c24e26a7a1900dc4e0a3b6",
+      "edge_type": "normal"
+    },
+    {
+      "id": "a0166051ef014141ae23e8ff78821067",
+      "from": "1aba35c295c24e26a7a1900dc4e0a3b6",
+      "to": "f4317c0d5b6f4576912089d478e864c2",
+      "edge_type": "normal"
+    },
+    {
+      "id": "da66bdfb8df3488fb730aa98db425172",
+      "from": "f4317c0d5b6f4576912089d478e864c2",
+      "to": "647499c9841f4890b7abe2b0cd31a852",
+      "edge_type": "normal"
+    }
+  ]
+}

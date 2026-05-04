@@ -106,7 +106,7 @@ try {
     }
     $BundledMapSource = Join-Path $Root "maps\卡洛西亚大陆"
     $BundledMapDist = Join-Path $MapsDist "卡洛西亚大陆"
-    foreach ($mapFile in @("big_map_17173.png", "big_map_17173带传送图标.png")) {
+    foreach ($mapFile in @("big_map_new.png")) {
         $source = Join-Path $BundledMapSource $mapFile
         if (Test-Path $source) {
             New-Item -ItemType Directory -Force -Path $BundledMapDist | Out-Null

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QPushButton, QWidget
 from ui_island.controllers.route_panel_controller import RoutePanelController
 from ui_island.design import strings
 from ui_island.dialogs.route_notes_dialog import _NODE_ICON_SIZE
+from ui_island.services import resource_metadata
 from ui_island.services.route_manager import NODE_TYPE_COLLECT, NODE_TYPE_TELEPORT, NODE_TYPE_VIRTUAL
 from ui_island.state import RouteDrawingState
 
@@ -271,6 +272,23 @@ class _FakeRouteManager:
             route["enable_versions"] = cleaned
         else:
             route.pop("enable_versions", None)
+        self.saved_enable_versions_calls.append((route_id, cleaned))
+        return True
+
+    def add_current_route_enable_version(self, route_id: str) -> bool:
+        route = self.routes.get(route_id)
+        if route is None:
+            return False
+        current = resource_metadata.APP_FORMAT_VERSION
+        raw_versions = route.get("enable_versions")
+        cleaned = []
+        for item in raw_versions if isinstance(raw_versions, list) else []:
+            value = str(item or "").strip()
+            if value and value not in cleaned:
+                cleaned.append(value)
+        if current not in cleaned:
+            cleaned.append(current)
+        route["enable_versions"] = cleaned
         self.saved_enable_versions_calls.append((route_id, cleaned))
         return True
 
@@ -578,6 +596,74 @@ class RoutePanelFilterTests(unittest.TestCase):
         self.assertEqual(window.route_mgr.routes["route-1"]["enable_versions"], ["old-format"])
         self.assertEqual(window.map_view.refresh_count, 1)
 
+
+    def test_category_context_menu_includes_batch_compatibility_action(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        captured: dict[str, object] = {}
+
+        def capture_menu(parent, global_pos, items, *, object_name=""):
+            captured["texts"] = [item.text for item in items if not item.separator]
+            captured["object_name"] = object_name
+
+        with patch("ui_island.controllers.route_panel_controller.show_context_menu", side_effect=capture_menu):
+            controller.show_category_context_menu("cat-a", object())
+
+        self.assertIn(strings.ROUTE_CATEGORY_MARK_COMPATIBLE, captured["texts"])
+        self.assertEqual(captured["object_name"], "RouteListContextMenu")
+
+    def test_category_batch_compatibility_adds_current_version_only_where_needed(self) -> None:
+        current = resource_metadata.APP_FORMAT_VERSION
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "missing": {
+                "id": "missing",
+                "category": "cat-a",
+                "display_name": "Missing",
+                "format_version": "old-format",
+                "points": [],
+            },
+            "existing": {
+                "id": "existing",
+                "category": "cat-a",
+                "display_name": "Existing",
+                "enable_versions": ["old-format"],
+                "points": [],
+            },
+            "ready": {
+                "id": "ready",
+                "category": "cat-a",
+                "display_name": "Ready",
+                "enable_versions": [current],
+                "points": [],
+            },
+        })
+        window._route_widgets_by_category = {
+            "cat-a": [
+                ("missing", "Missing", _FakeRouteItem()),
+                ("existing", "Existing", _FakeRouteItem()),
+                ("ready", "Ready", _FakeRouteItem()),
+            ]
+        }
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.toast") as toast_mock:
+            controller.mark_category_routes_compatible("cat-a")
+
+        self.assertEqual(window.route_mgr.routes["missing"]["enable_versions"], [current])
+        self.assertEqual(window.route_mgr.routes["existing"]["enable_versions"], ["old-format", current])
+        self.assertEqual(window.route_mgr.routes["ready"]["enable_versions"], [current])
+        self.assertEqual(
+            window.route_mgr.saved_enable_versions_calls,
+            [
+                ("missing", [current]),
+                ("existing", ["old-format", current]),
+            ],
+        )
+        toast_mock.assert_called_once_with(
+            window,
+            strings.ROUTE_CATEGORY_MARK_COMPATIBLE_SUCCESS_FMT.format(name="cat-a", count=2),
+        )
 
     def test_category_select_all_selects_only_category_and_saves_once(self) -> None:
         window = _FakeWindow("")

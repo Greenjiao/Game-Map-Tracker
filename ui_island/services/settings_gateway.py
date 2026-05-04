@@ -70,5 +70,30 @@ class SettingsGateway:
             return {}
         return {str(name): bool(expanded) for name, expanded in raw.items()}
 
+    def get_annotation_panel_follow_window(self) -> bool:
+        return bool(getattr(config, "ANNOTATION_PANEL_FOLLOW_WINDOW", True))
+
+    @staticmethod
+    def _point_payload(name: str) -> dict | None:
+        raw = getattr(config, name, None)
+        if not isinstance(raw, dict):
+            return None
+        try:
+            return {"x": int(raw["x"]), "y": int(raw["y"])}
+        except (KeyError, TypeError, ValueError):
+            return None
+
+    def get_annotation_panel_offset(self) -> dict | None:
+        return self._point_payload("ANNOTATION_PANEL_OFFSET")
+
+    def get_annotation_panel_maximized_offset(self) -> dict | None:
+        return self._point_payload("ANNOTATION_PANEL_MAXIMIZED_OFFSET")
+
+    def get_annotation_panel_position(self) -> dict | None:
+        return self._point_payload("ANNOTATION_PANEL_POSITION")
+
+    def get_annotation_panel_maximized_position(self) -> dict | None:
+        return self._point_payload("ANNOTATION_PANEL_MAXIMIZED_POSITION")
+
     def get_tracker_refresh_rate(self, tracker) -> int:
         return int(config.SIFT_REFRESH_RATE)

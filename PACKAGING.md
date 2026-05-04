@@ -33,7 +33,7 @@ PyInstaller 配置文件放在 `packaging/` 下；请通过 `scripts/build_windo
 
 这些数据文件需要保持和 exe 在同一个发布文件夹里，因为程序会把窗口设置、路线进度、标注数据写回这里。
 
-不要把根目录 `big_map.png` 或 `big_map_17173.png` 打进发布包。程序默认不预置、不预选底图或标注文件，用户需要把底图放入 `maps/`、把标注文件放入 `annotations/` 或在设置中导入后自行选择。更新清单默认保护 `maps/`、`annotations/`、`routes/`、`tools/`，如需发布一次性资源可通过 `--include` 显式加入；如需清理旧版本根目录底图，可用 `--delete big_map.png` 显式推送删除。
+不要把根目录 `big_map.png` 或 `big_map_17173.png` 打进发布包。程序默认不预选底图或标注文件，用户需要把底图放入 `maps/`、把标注文件放入 `annotations/` 或在设置中导入后自行选择。更新清单默认保护 `maps/`、`annotations/`、`routes/`、`tools/`，只默认发布 `maps/卡洛西亚大陆/big_map_new.png`；如需发布一次性资源可通过 `--include` 显式加入。更新清单会默认推送删除旧版根目录底图和 17173 旧底图。
 
 ## 用户使用方式
 

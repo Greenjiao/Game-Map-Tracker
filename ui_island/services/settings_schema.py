@@ -31,7 +31,7 @@ COMMON_FIELDS: list[Field] = [
     Field("ROUTE_GUIDE_POINTER_SPACING", "导航指针间隔", int, "12~80 px"),
 ]
 
-TOOL_BUTTONS: list[str] = ["检查更新", "夸克网盘", "路线资源", "更新文档", "问题反馈", "标注转换", "路线转换"]
+TOOL_BUTTONS: list[str] = ["检查更新", "夸克网盘", "路线资源", "问题反馈", "标注转换", "路线转换"]
 
 ALL_FIELDS: list[Field] = SIFT_FIELDS + COMMON_FIELDS
 FIELD_INDEX: dict[str, Field] = {field.key: field for field in ALL_FIELDS}

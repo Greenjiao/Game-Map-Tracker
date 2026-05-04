@@ -1,7 +1,45 @@
 """Theme constants for the island overlay UI."""
 
+import os
+import tempfile
+
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QWidget
+
+
+def _write_arrow_asset(name: str, svg: str) -> str:
+    asset_dir = os.path.join(tempfile.gettempdir(), "gmt_island_assets")
+    os.makedirs(asset_dir, exist_ok=True)
+    path = os.path.join(asset_dir, name)
+    try:
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(svg)
+    except OSError:
+        pass
+    return path.replace("\\", "/")
+
+
+_ARROW_UP_SVG = (
+    "<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'>"
+    "<polygon points='4,0 8,5 0,5' fill='#f2f2f7'/></svg>"
+)
+_ARROW_DOWN_SVG = (
+    "<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'>"
+    "<polygon points='0,0 8,0 4,5' fill='#f2f2f7'/></svg>"
+)
+_ARROW_UP_DISABLED_SVG = (
+    "<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'>"
+    "<polygon points='4,0 8,5 0,5' fill='#404040'/></svg>"
+)
+_ARROW_DOWN_DISABLED_SVG = (
+    "<svg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'>"
+    "<polygon points='0,0 8,0 4,5' fill='#404040'/></svg>"
+)
+
+ARROW_UP_PATH = _write_arrow_asset("spin_arrow_up.svg", _ARROW_UP_SVG)
+ARROW_DOWN_PATH = _write_arrow_asset("spin_arrow_down.svg", _ARROW_DOWN_SVG)
+ARROW_UP_DISABLED_PATH = _write_arrow_asset("spin_arrow_up_disabled.svg", _ARROW_UP_DISABLED_SVG)
+ARROW_DOWN_DISABLED_PATH = _write_arrow_asset("spin_arrow_down_disabled.svg", _ARROW_DOWN_DISABLED_SVG)
 
 COLLAPSED_W = 280
 COLLAPSED_H = 44
@@ -534,6 +572,64 @@ QLineEdit[routePanelInput="true"] {{
 QLineEdit:focus {{
     border: 1px solid rgba(10, 132, 255, 0.65);
     background: {ACCENT_SOFT};
+}}
+QSpinBox, QDoubleSpinBox {{
+    background: rgba(255, 255, 255, 0.08);
+    color: {FG};
+    border: 1px solid {BORDER};
+    border-radius: 10px;
+    padding: 5px 8px;
+    font-size: 11px;
+    selection-background-color: {ACCENT};
+}}
+QSpinBox:focus, QDoubleSpinBox:focus {{
+    border: 1px solid rgba(10, 132, 255, 0.65);
+    background: {ACCENT_SOFT};
+}}
+QSpinBox:disabled, QDoubleSpinBox:disabled {{
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button,
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    subcontrol-origin: border;
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    width: 16px;
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button {{
+    subcontrol-position: top right;
+    border-top-right-radius: 9px;
+}}
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    subcontrol-position: bottom right;
+    border-bottom-right-radius: 9px;
+}}
+QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+    background: rgba(255, 255, 255, 0.16);
+}}
+QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed,
+QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{
+    background: rgba(255, 255, 255, 0.24);
+}}
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
+    image: url("{ARROW_UP_PATH}");
+    width: 8px;
+    height: 5px;
+}}
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
+    image: url("{ARROW_DOWN_PATH}");
+    width: 8px;
+    height: 5px;
+}}
+QSpinBox::up-arrow:disabled, QSpinBox::up-arrow:off,
+QDoubleSpinBox::up-arrow:disabled, QDoubleSpinBox::up-arrow:off {{
+    image: url("{ARROW_UP_DISABLED_PATH}");
+}}
+QSpinBox::down-arrow:disabled, QSpinBox::down-arrow:off,
+QDoubleSpinBox::down-arrow:disabled, QDoubleSpinBox::down-arrow:off {{
+    image: url("{ARROW_DOWN_DISABLED_PATH}");
 }}
 QSlider[compactSlider="true"] {{
     min-height: 18px;

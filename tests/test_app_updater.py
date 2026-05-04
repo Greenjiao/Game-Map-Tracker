@@ -317,9 +317,10 @@ class AppUpdaterTests(unittest.TestCase):
                                 {"name": "Routes", "url": "https://example.test/routes"},
                                 {"name": "Backup", "url": "https://example.test/backup"},
                             ],
-                            "DOCUMENTATION_URL": "https://example.test/docs",
-                            "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/example",
-                            "FEEDBACK_QQ_GROUP": "123456789",
+                            "FEEDBACK_LINKS": [
+                                {"name": "Bilibili", "url": "https://space.bilibili.com/example"},
+                                {"name": "QQ Group", "url": "https://qm.qq.com/q/example"},
+                            ],
                             "APP_ENABLE_VERSIONS": ["GMT-N-0.1.2", "GMT-N-0.1.3", "GMT-N-0.1.3", ""],
                             "APP_UPDATE_MANIFEST_URL": "https://legacy.test/app-manifest.json",
                             "APP_UPDATE_MANIFEST_URLS": [
@@ -335,11 +336,7 @@ class AppUpdaterTests(unittest.TestCase):
         with patch.object(config, "QUARK_DOWNLOAD_URL", ""), patch.object(
             config, "ROUTE_RESOURCE_URL", ""
         ), patch.object(config, "ROUTE_RESOURCE_LINKS", []), patch.object(
-            config, "FEEDBACK_BILIBILI_URL", ""
-        ), patch.object(
-            config, "FEEDBACK_QQ_GROUP", ""
-        ), patch.object(
-            config, "DOCUMENTATION_URL", ""
+            config, "FEEDBACK_LINKS", []
         ), patch.object(config, "APP_UPDATE_MANIFEST_URLS", []), patch.object(
             config, "save_config"
         ) as save_config:
@@ -358,9 +355,13 @@ class AppUpdaterTests(unittest.TestCase):
                     {"name": "Backup", "url": "https://example.test/backup"},
                 ],
             )
-            self.assertEqual(config.DOCUMENTATION_URL, "https://example.test/docs")
-            self.assertEqual(config.FEEDBACK_BILIBILI_URL, "https://space.bilibili.com/example")
-            self.assertEqual(config.FEEDBACK_QQ_GROUP, "123456789")
+            self.assertEqual(
+                config.FEEDBACK_LINKS,
+                [
+                    {"name": "Bilibili", "url": "https://space.bilibili.com/example"},
+                    {"name": "QQ Group", "url": "https://qm.qq.com/q/example"},
+                ],
+            )
             self.assertEqual(config.APP_ENABLE_VERSIONS, ["GMT-N-0.1.2", "GMT-N-0.1.3"])
             self.assertEqual(
                 config.APP_UPDATE_MANIFEST_URLS,
@@ -611,6 +612,10 @@ class AppUpdaterTests(unittest.TestCase):
             maps_dir.mkdir()
             Path(maps_dir, "README.md").write_text("maps go here", encoding="utf-8")
             Path(maps_dir, "custom.png").write_bytes(b"user-map")
+            bundled_map_dir = maps_dir / "卡洛西亚大陆"
+            bundled_map_dir.mkdir()
+            (bundled_map_dir / "big_map_17173.png").write_bytes(b"legacy-bundled-map")
+            (bundled_map_dir / "big_map_17173带传送图标.png").write_bytes(b"legacy-bundled-map-with-icons")
 
             manifest = generate_update_manifest.build_manifest(
                 root,
@@ -628,7 +633,9 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertNotIn("big_map_17173.png", paths)
         self.assertNotIn("maps/README.md", paths)
         self.assertNotIn("maps/custom.png", paths)
-        self.assertEqual(manifest["delete"], [])
+        self.assertNotIn("maps/卡洛西亚大陆/big_map_17173.png", paths)
+        self.assertNotIn("maps/卡洛西亚大陆/big_map_17173带传送图标.png", paths)
+        self.assertEqual(manifest["delete"], list(generate_update_manifest.DEFAULT_DELETE_PATHS))
 
     def test_generate_manifest_can_force_delete_legacy_root_big_map(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -649,7 +656,7 @@ class AppUpdaterTests(unittest.TestCase):
         paths = {item["path"] for item in manifest["files"]}
         self.assertIn("demo.txt", paths)
         self.assertNotIn("big_map.png", paths)
-        self.assertEqual(manifest["delete"], ["big_map.png"])
+        self.assertEqual(manifest["delete"], list(generate_update_manifest.DEFAULT_DELETE_PATHS))
 
     def test_generate_manifest_can_explicitly_include_protected_map_once(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -671,13 +678,15 @@ class AppUpdaterTests(unittest.TestCase):
 
         self.assertEqual([item["path"] for item in manifest["files"]], ["maps/custom.png"])
 
-    def test_generate_manifest_includes_bundled_maps_by_default(self) -> None:
+    def test_generate_manifest_includes_new_bundled_map_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             map_dir = Path(root, "maps", "卡洛西亚大陆")
             map_dir.mkdir(parents=True)
             (map_dir / "big_map_17173.png").write_bytes(b"map")
             (map_dir / "big_map_17173带传送图标.png").write_bytes(b"map-with-icons")
+            (map_dir / "big_map_17173带传送点图标.png").write_bytes(b"map-with-teleport-icons")
+            (map_dir / "big_map_new.png").write_bytes(b"new-map")
             Path(root, "maps", "custom.png").write_bytes(b"user-map")
 
             manifest = generate_update_manifest.build_manifest(
@@ -694,10 +703,10 @@ class AppUpdaterTests(unittest.TestCase):
         self.assertEqual(
             paths,
             [
-                "maps/卡洛西亚大陆/big_map_17173.png",
-                "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+                "maps/卡洛西亚大陆/big_map_new.png",
             ],
         )
+        self.assertEqual(manifest["delete"], list(generate_update_manifest.DEFAULT_DELETE_PATHS))
 
     def test_write_default_config_uses_clean_defaults(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -728,9 +737,13 @@ class AppUpdaterTests(unittest.TestCase):
                             {"name": "Missing URL"},
                             "https://wrong.example/routes",
                         ],
-                        "DOCUMENTATION_URL": "https://example.test/docs",
-                        "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/example",
-                        "FEEDBACK_QQ_GROUP": "123456789",
+                        "FEEDBACK_LINKS": [
+                            {"name": " Bilibili ", "url": " https://space.bilibili.com/example "},
+                            {"name": "Bilibili", "url": "https://space.bilibili.com/example"},
+                            {"name": "QQ Group", "url": "https://qm.qq.com/q/example"},
+                            {"name": "", "url": "https://wrong.example/empty-name"},
+                            {"name": "Missing URL"},
+                        ],
                         "APP_UPDATE_MANIFEST_URL": "https://gitee.test/app-manifest.json",
                         "APP_UPDATE_MANIFEST_URLS": [
                             "https://gitee.test/app-manifest.json",
@@ -766,9 +779,10 @@ class AppUpdaterTests(unittest.TestCase):
                     {"name": "Routes", "url": "https://example.test/routes"},
                     {"name": "Backup", "url": "https://example.test/backup"},
                 ],
-                "DOCUMENTATION_URL": "https://example.test/docs",
-                "FEEDBACK_BILIBILI_URL": "https://space.bilibili.com/example",
-                "FEEDBACK_QQ_GROUP": "123456789",
+                "FEEDBACK_LINKS": [
+                    {"name": "Bilibili", "url": "https://space.bilibili.com/example"},
+                    {"name": "QQ Group", "url": "https://qm.qq.com/q/example"},
+                ],
                 "APP_UPDATE_MANIFEST_URLS": [
                     "https://gitee.test/app-manifest.json",
                     "https://github.test/app-manifest.json",
@@ -806,9 +820,11 @@ class AppUpdaterTests(unittest.TestCase):
                             {"name": "Missing URL"},
                             "https://wrong.example/routes",
                         ],
-                        "DOCUMENTATION_URL": ["https://wrong.example/docs"],
-                        "FEEDBACK_BILIBILI_URL": None,
-                        "FEEDBACK_QQ_GROUP": {},
+                        "FEEDBACK_LINKS": [
+                            {"name": "", "url": "https://wrong.example/feedback"},
+                            {"name": "Missing URL"},
+                            "https://wrong.example/feedback",
+                        ],
                         "APP_UPDATE_MANIFEST_URL": False,
                         "APP_UPDATE_MANIFEST_URLS": "https://wrong.example",
                     }

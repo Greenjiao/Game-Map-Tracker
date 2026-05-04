@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Callable
 
-from PySide6.QtCore import QEvent, Qt, Signal
+from PySide6.QtCore import QEvent, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -31,6 +31,7 @@ class AnnotationPanel(QFrame):
     preset_delete_requested = Signal(str)
     plan_route_requested = Signal(str, str)
     panel_hidden = Signal()
+    drag_finished = Signal(int, int)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -47,7 +48,12 @@ class AnnotationPanel(QFrame):
         self._group_expanded_changed: Callable[[dict[str, bool]], None] | None = None
         self._dragging = False
         self._drag_offset = None
+        self._drag_start_pos = None
         self._drag_handles: list[QWidget] = []
+        self._drag_passthrough_handles: list[QWidget] = []
+        self._drag_press_global = None
+        self._compact_hint: bool | None = None
+        self._height_fit_pending = False
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -61,14 +67,18 @@ class AnnotationPanel(QFrame):
 
         self._header = QWidget()
         self._header.setObjectName("AnnotationPanelHeader")
+        self._header.setFixedHeight(28)
+        self._header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         header = QHBoxLayout(self._header)
-        header.setContentsMargins(0, 0, 0, 0)
+        header.setContentsMargins(4, 2, 0, 2)
+        header.setSpacing(6)
         self._title = QLabel("标注")
         self._title.setObjectName("AnnotationPanelTitle")
+        self._title.setCursor(Qt.SizeAllCursor)
         header.addWidget(self._title)
         self._hint = QLabel()
         self._hint.setObjectName("AnnotationPanelHint")
-        self._hint.setWordWrap(True)
+        self._hint.setWordWrap(False)
         self._hint.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self._set_hint_compact(False)
         header.addWidget(self._hint, stretch=1)
@@ -86,8 +96,10 @@ class AnnotationPanel(QFrame):
         self._close_btn.clicked.connect(self.hide)
         header.addWidget(self._close_btn)
         root.addWidget(self._header)
+        self._header.setCursor(Qt.SizeAllCursor)
         self._install_drag_handle(self._header)
         self._install_drag_handle(self._title)
+        self._install_drag_handle(self._hint, passthrough_click=True)
 
         self._message = QLabel("")
         self._message.setObjectName("AnnotationPanelMessage")
@@ -162,7 +174,7 @@ class AnnotationPanel(QFrame):
             widget = item.widget()
             if widget is not None:
                 widget.deleteLater()
-        self._title.setText("标注")
+        self._apply_header_text()
         self._show_all_btn.setVisible(bool(self._types))
         self._hide_all_btn.setVisible(bool(self._types))
         self._scroll.setVisible(bool(self._types))
@@ -293,15 +305,43 @@ class AnnotationPanel(QFrame):
     def _fit_scroll_height_to_content(self) -> None:
         if self._scroll.isHidden():
             return
+        if not self.isVisible():
+            self._apply_height_fit()
+            return
+        if self._height_fit_pending:
+            return
+        self._height_fit_pending = True
+        QTimer.singleShot(0, self._apply_height_fit)
+
+    def fit_to_content_height(self) -> None:
+        self._height_fit_pending = False
+        self._apply_height_fit()
+
+    def _apply_height_fit(self) -> None:
+        self._height_fit_pending = False
+        if self._scroll.isHidden():
+            return
         self._list_layout.activate()
         self._inner.updateGeometry()
         content_height = max(1, self._inner.sizeHint().height())
         target_height = min(content_height, theme.ANNOTATION_PANEL_SCROLL_HEIGHT)
+        if self.isVisible():
+            target_height = max(target_height, self._scroll.minimumHeight())
         self._scroll.setMinimumHeight(target_height)
         self._scroll.setMaximumHeight(theme.ANNOTATION_PANEL_SCROLL_HEIGHT)
         self._scroll.updateGeometry()
-        if self.isVisible():
-            self.adjustSize()
+        self._resize_to_content_height()
+
+    def _resize_to_content_height(self) -> None:
+        layout = self.layout()
+        if layout is not None:
+            layout.activate()
+        surface_layout = self._surface.layout()
+        if surface_layout is not None:
+            surface_layout.activate()
+        self.updateGeometry()
+        target_height = max(1, self.sizeHint().height())
+        self.resize(max(1, self.width()), target_height)
 
     def _build_row(self, item: dict, selected: set[str]) -> QPushButton | None:
         type_id = str(item.get("typeId") or "")
@@ -405,36 +445,86 @@ class AnnotationPanel(QFrame):
         self._set_hint_compact(compact)
 
     def _set_hint_compact(self, compact: bool) -> None:
-        if compact:
-            self._hint.setTextFormat(Qt.PlainText)
-            self._hint.setOpenExternalLinks(False)
-            self._hint.setTextInteractionFlags(Qt.NoTextInteraction)
-            self._hint.setText(strings.ANNOTATION_ROUTE_HINT_COMPACT)
-        else:
-            self._hint.setTextFormat(Qt.RichText)
-            self._hint.setOpenExternalLinks(True)
-            self._hint.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
-            self._hint.setText(strings.annotation_route_hint_html())
+        compact = bool(compact)
+        if self._compact_hint == compact:
+            return
+        self._compact_hint = compact
+        self._apply_header_text()
+
+    def _apply_header_text(self) -> None:
+        self._title.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        self._hint.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+        self._title.setCursor(Qt.SizeAllCursor)
+        self._title.setTextFormat(Qt.PlainText)
+        self._title.setOpenExternalLinks(False)
+        self._title.setTextInteractionFlags(Qt.NoTextInteraction)
+        self._title.setText("标注")
+        self._title.setToolTip("")
+        self._hint.setVisible(True)
+        self._hint.setTextFormat(Qt.RichText)
+        self._hint.setOpenExternalLinks(True)
+        self._hint.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+        hint_html = (
+            strings.annotation_route_hint_compact_html()
+            if bool(self._compact_hint)
+            else strings.annotation_route_hint_html()
+        )
+        self._hint.setText(hint_html)
         self._hint.setToolTip(strings.ANNOTATION_ROUTE_HINT)
 
-    def _install_drag_handle(self, widget: QWidget) -> None:
-        self._drag_handles.append(widget)
+    def _install_drag_handle(self, widget: QWidget, *, passthrough_click: bool = False) -> None:
+        if passthrough_click:
+            if widget in self._drag_passthrough_handles:
+                return
+            self._drag_passthrough_handles.append(widget)
+        else:
+            if widget in self._drag_handles:
+                return
+            self._drag_handles.append(widget)
         widget.installEventFilter(self)
 
     def eventFilter(self, watched, event) -> bool:
-        if watched in self._drag_handles:
+        if watched in self._drag_handles or watched in self._drag_passthrough_handles:
             if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
-                self._dragging = True
-                self._drag_offset = event.globalPosition().toPoint() - self.pos()
+                global_pos = event.globalPosition().toPoint()
+                self._dragging = watched not in self._drag_passthrough_handles
+                self._drag_offset = global_pos - self.pos()
+                self._drag_start_pos = self.pos()
+                self._drag_press_global = global_pos
+                if watched in self._drag_passthrough_handles:
+                    return False
                 event.accept()
                 return True
-            if event.type() == QEvent.MouseMove and self._dragging and self._drag_offset is not None:
-                self.move(event.globalPosition().toPoint() - self._drag_offset)
+            if event.type() == QEvent.MouseMove and self._drag_offset is not None:
+                event_buttons = event.buttons() if hasattr(event, "buttons") else Qt.LeftButton
+                if not (event_buttons & Qt.LeftButton):
+                    self._dragging = False
+                    self._drag_offset = None
+                    self._drag_start_pos = None
+                    self._drag_press_global = None
+                    return False
+                global_pos = event.globalPosition().toPoint()
+                if not self._dragging:
+                    if (
+                        self._drag_press_global is not None
+                        and (global_pos - self._drag_press_global).manhattanLength() < 4
+                    ):
+                        return False
+                    self._dragging = True
+                self.move(global_pos - self._drag_offset)
                 event.accept()
                 return True
             if event.type() == QEvent.MouseButtonRelease and event.button() == Qt.LeftButton:
+                moved = self._dragging and self._drag_start_pos is not None and self.pos() != self._drag_start_pos
+                was_dragging = self._dragging
                 self._dragging = False
                 self._drag_offset = None
+                self._drag_start_pos = None
+                self._drag_press_global = None
+                if moved:
+                    self.drag_finished.emit(int(self.x()), int(self.y()))
+                if watched in self._drag_passthrough_handles and not was_dragging:
+                    return False
                 event.accept()
                 return True
         return super().eventFilter(watched, event)
@@ -442,5 +532,7 @@ class AnnotationPanel(QFrame):
     def hideEvent(self, event) -> None:
         self._dragging = False
         self._drag_offset = None
+        self._drag_start_pos = None
+        self._drag_press_global = None
         self.panel_hidden.emit()
         super().hideEvent(event)

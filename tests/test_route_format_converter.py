@@ -95,7 +95,7 @@ class RouteFormatConverterTests(unittest.TestCase):
             self.assertEqual(payload["name"], "路线")
             self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
             self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-            self.assertNotIn("enable_versions", payload)
+            self.assertEqual(payload["enable_versions"], [resource_metadata.APP_FORMAT_VERSION])
             self.assertEqual(payload["points"][0]["x"], expected_x)
             self.assertEqual(payload["points"][0]["y"], expected_y)
 
@@ -184,7 +184,7 @@ class RouteFormatConverterTests(unittest.TestCase):
         self.assertEqual(point_count, 1)
         self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
         self.assertEqual(payload["format_version"], "legacy-route-format")
-        self.assertNotIn("enable_versions", payload)
+        self.assertEqual(payload["enable_versions"], [resource_metadata.APP_FORMAT_VERSION])
         self.assertEqual(payload["points"][0]["x"], expected_x)
         self.assertEqual(payload["points"][0]["y"], expected_y)
         self.assertEqual(payload["points"][0]["label"], "A")
@@ -193,6 +193,21 @@ class RouteFormatConverterTests(unittest.TestCase):
         self.assertNotIn("map_hashs", payload)
         self.assertNotIn("map_info", payload)
         self.assertNotIn("coordinate_space_id", payload)
+
+    def test_convert_old_big_map_route_payload_appends_current_enable_version(self) -> None:
+        payload, _ = convert_old_big_map_route_payload(
+            {
+                "name": "旧路线",
+                "format_version": "legacy-route-format",
+                "enable_versions": ["legacy-route-format", resource_metadata.APP_FORMAT_VERSION, ""],
+                "points": [],
+            }
+        )
+
+        self.assertEqual(
+            payload["enable_versions"],
+            ["legacy-route-format", resource_metadata.APP_FORMAT_VERSION],
+        )
 
     def test_convert_old_big_map_routes_in_place_overwrites_source_and_skips_non_routes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -228,7 +243,7 @@ class RouteFormatConverterTests(unittest.TestCase):
             self.assertEqual(payload["points"][0]["y"], expected_y)
             self.assertTrue(resource_metadata.HASH_RE.fullmatch(payload["id"]))
             self.assertEqual(payload["format_version"], resource_metadata.APP_FORMAT_VERSION)
-            self.assertNotIn("enable_versions", payload)
+            self.assertEqual(payload["enable_versions"], [resource_metadata.APP_FORMAT_VERSION])
             self.assertNotIn("coordinate_space_id", payload)
 
     def test_annotate_route_payload_matches_annotations_and_preserves_manual_fields(self) -> None:

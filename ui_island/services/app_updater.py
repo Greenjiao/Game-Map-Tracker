@@ -41,10 +41,8 @@ RESTART_PATHS = (
 RUNTIME_CONFIG_STRING_KEYS = (
     "QUARK_DOWNLOAD_URL",
     "ROUTE_RESOURCE_URL",
-    "DOCUMENTATION_URL",
-    "FEEDBACK_BILIBILI_URL",
-    "FEEDBACK_QQ_GROUP",
 )
+RUNTIME_CONFIG_NAMED_LINK_KEYS = ("ROUTE_RESOURCE_LINKS", "FEEDBACK_LINKS")
 RUNTIME_CONFIG_LIST_KEYS = ("APP_UPDATE_MANIFEST_URLS",)
 RUNTIME_CONFIG_STRING_LIST_KEYS = ("APP_ENABLE_VERSIONS",)
 
@@ -250,9 +248,10 @@ def sanitize_runtime_config(payload: Any) -> dict[str, object]:
         if isinstance(value, str):
             runtime_config[key] = value.strip()
 
-    route_resource_links = _sanitize_named_links(payload.get("ROUTE_RESOURCE_LINKS"))
-    if route_resource_links:
-        runtime_config["ROUTE_RESOURCE_LINKS"] = route_resource_links
+    for key in RUNTIME_CONFIG_NAMED_LINK_KEYS:
+        named_links = _sanitize_named_links(payload.get(key))
+        if named_links:
+            runtime_config[key] = named_links
 
     manifest_urls: list[str] = []
     legacy_manifest_url = payload.get("APP_UPDATE_MANIFEST_URL")

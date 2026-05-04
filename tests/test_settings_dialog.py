@@ -13,12 +13,89 @@ from PySide6.QtWidgets import QApplication, QWidget
 import config
 from ui_island.services import resource_metadata
 from ui_island.dialogs.settings_dialog import AnnotationFormatConverterDialog, RouteFormatConverterDialog, SettingsDialog
+from ui_island.services.settings_schema import TOOL_BUTTONS
 
 
 class SettingsDialogMapTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls._app = QApplication.instance() or QApplication([])
+
+    def test_settings_tool_buttons_remove_documentation_entry(self) -> None:
+        self.assertNotIn("更新文档", TOOL_BUTTONS)
+
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+
+        self.assertNotIn("更新文档", dialog._TOOL_BUTTON_ICONS)
+        for _, names in dialog._TOOL_BUTTON_GROUPS:
+            self.assertNotIn("更新文档", names)
+        dialog.close()
+
+    def test_interaction_tab_collects_annotation_panel_follow_window(self) -> None:
+        with patch.object(config, "ANNOTATION_PANEL_FOLLOW_WINDOW", True, create=True):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            self.assertIn("交互", [button.text() for button in dialog._common_tab_buttons])
+            self.assertIsNotNone(dialog._annotation_panel_follow_checkbox)
+            self.assertTrue(dialog._annotation_panel_follow_checkbox.isChecked())
+
+            dialog._annotation_panel_follow_checkbox.setChecked(False)
+            values = dialog._collect()
+
+            self.assertIsNotNone(values)
+            self.assertEqual(values["ANNOTATION_PANEL_FOLLOW_WINDOW"], False)
+            dialog.close()
+
+    def test_reset_defaults_restores_annotation_panel_follow_checkbox(self) -> None:
+        with patch.object(config, "ANNOTATION_PANEL_FOLLOW_WINDOW", False, create=True):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            self.assertIsNotNone(dialog._annotation_panel_follow_checkbox)
+            self.assertFalse(dialog._annotation_panel_follow_checkbox.isChecked())
+
+            dialog._on_reset_defaults()
+
+            self.assertTrue(dialog._annotation_panel_follow_checkbox.isChecked())
+            dialog.close()
+
+    def test_feedback_uses_configured_named_links(self) -> None:
+        with (
+            patch.object(
+                config,
+                "FEEDBACK_LINKS",
+                [
+                    {"name": " Bilibili ", "url": " https://space.bilibili.com/example "},
+                    {"name": "QQ Group", "url": "https://qm.qq.com/q/example"},
+                ],
+                create=True,
+            ),
+            patch("ui_island.dialogs.settings_dialog.styled_info") as styled_info,
+        ):
+            dialog = SettingsDialog(None)
+            dialog._on_feedback_clicked()
+
+            styled_info.assert_called_once()
+            args, kwargs = styled_info.call_args
+            self.assertEqual(args[1], "问题反馈")
+            self.assertIn("Bilibili", args[2])
+            self.assertIn("QQ Group", args[2])
+            self.assertTrue(kwargs["allow_links"])
+            dialog.close()
+
+    def test_feedback_reports_invalid_or_missing_named_links(self) -> None:
+        with patch.object(
+            config,
+            "FEEDBACK_LINKS",
+            [{"name": "Bad", "url": "not a url"}],
+            create=True,
+        ):
+            self.assertEqual(SettingsDialog._configured_feedback_links(), ([], True))
+
+        with patch.object(config, "FEEDBACK_LINKS", [], create=True):
+            self.assertEqual(SettingsDialog._configured_feedback_links(), ([], False))
 
     def test_existing_unregistered_map_remains_selectable(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

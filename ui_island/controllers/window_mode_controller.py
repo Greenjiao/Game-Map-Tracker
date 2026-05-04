@@ -431,8 +431,6 @@ class WindowModeController:
 
         if new_mode in pause_family:
             self.window._tracking_attempts_paused = True
-            if self.window._locked:
-                self.window._set_locked_state(False)
             self.window._restore_lock_after_relocate = None
             self.window._lock_state_before_lost = None
             self.window._jump_anomaly_count = 0
@@ -454,9 +452,10 @@ class WindowModeController:
                         self.window.state_hint_label.setStyleSheet("")
 
             if new_mode in stable_family and old_mode in pause_family:
-                desired_locked = bool(self.window._preferred_locked)
-                if self.window._locked != desired_locked:
-                    self.window._set_locked_state(desired_locked)
+                if not bool(getattr(config, "WINDOW_LOCK_FOLLOWS_GUIDE", False)):
+                    desired_locked = bool(self.window._preferred_locked)
+                    if self.window._locked != desired_locked:
+                        self.window._set_locked_state(desired_locked)
 
         self.window._update_lock_button_visibility()
         self.window._update_header_button_labels()

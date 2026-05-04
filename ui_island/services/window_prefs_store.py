@@ -39,6 +39,19 @@ class WindowPrefsStore:
     def load_annotation_group_expanded(self) -> dict[str, bool]:
         return self._gateway.get_annotation_group_expanded()
 
+    def load_annotation_panel_follow_window(self) -> bool:
+        return self._gateway.get_annotation_panel_follow_window()
+
+    def load_annotation_panel_offset(self, maximized: bool = False):
+        if maximized:
+            return self._gateway.get_annotation_panel_maximized_offset()
+        return self._gateway.get_annotation_panel_offset()
+
+    def load_annotation_panel_position(self, maximized: bool = False):
+        if maximized:
+            return self._gateway.get_annotation_panel_maximized_position()
+        return self._gateway.get_annotation_panel_position()
+
     def save_annotation_preferences(self, type_ids: list[str]) -> None:
         self._gateway.save(
             {
@@ -51,6 +64,14 @@ class WindowPrefsStore:
 
     def save_annotation_group_expanded(self, expanded: dict[str, bool]) -> None:
         self._gateway.save({"ANNOTATION_GROUP_EXPANDED": expanded})
+
+    def save_annotation_panel_offset(self, offset: dict, maximized: bool = False) -> None:
+        key = "ANNOTATION_PANEL_MAXIMIZED_OFFSET" if maximized else "ANNOTATION_PANEL_OFFSET"
+        self._gateway.save({key: offset})
+
+    def save_annotation_panel_position(self, position: dict, maximized: bool = False) -> None:
+        key = "ANNOTATION_PANEL_MAXIMIZED_POSITION" if maximized else "ANNOTATION_PANEL_POSITION"
+        self._gateway.save({key: position})
 
     def save_route_section_expanded(self, expanded: dict[str, bool]) -> None:
         self._gateway.save({"ROUTE_SECTION_EXPANDED": expanded})

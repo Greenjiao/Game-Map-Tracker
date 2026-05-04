@@ -1,101 +1,105 @@
 {
+  "id": "2026042108",
+  "format_version": "GMT-N-0.1.5",
+  "enable_versions": [
+    "GMT-N-0.1.5"
+  ],
+  "color": "#00ffff",
   "name": "1.示例跑图路线",
-  "loop": false,
   "notes": "路线坐标基于地图像素坐标，仅用于截图识别导航，不设计任何游戏内存读取。",
+  "loop": false,
   "points": [
     {
-      "x": 1522,
-      "y": 4161,
+      "x": 2495,
+      "y": 5749,
       "label": "节点 1",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1499,
-      "y": 4134,
+      "x": 2472,
+      "y": 5722,
       "label": "节点 2",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1513,
-      "y": 4066,
+      "x": 2486,
+      "y": 5654,
       "label": "节点 3",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1515,
-      "y": 3973,
+      "x": 2488,
+      "y": 5561,
       "label": "节点 4",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1591,
-      "y": 3958,
+      "x": 2564,
+      "y": 5546,
       "label": "节点 5",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1627,
-      "y": 3951,
+      "x": 2600,
+      "y": 5539,
       "label": "节点 6",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1643,
-      "y": 4000,
+      "x": 2616,
+      "y": 5588,
       "label": "节点 7",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1645,
-      "y": 4039,
+      "x": 2618,
+      "y": 5627,
       "label": "节点 8",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1642,
-      "y": 4127,
+      "x": 2615,
+      "y": 5715,
       "label": "节点 9",
       "radius": 30,
       "node_type": "collect"
     },
     {
-      "x": 1923,
-      "y": 2929,
+      "x": 2896,
+      "y": 4517,
       "node_type": "collect"
     },
     {
       "id": "9862437836624f9c914808e76e3fc08c",
       "node_type": "collect",
-      "x": 3046,
-      "y": 3008,
+      "x": 4019,
+      "y": 4596,
       "typeId": "17310030001",
       "type": "宝箱"
     },
     {
       "id": "342d9f0158c94fbeb5ce9b002a3d6963",
-      "x": 2915,
-      "y": 3129,
+      "x": 3888,
+      "y": 4717,
       "node_type": "collect",
       "typeId": "17310030001",
       "type": "宝箱"
     },
     {
       "id": "fcd302f851bc47dcb55effe21be45a2a",
-      "x": 2968,
-      "y": 3186,
+      "x": 3941,
+      "y": 4774,
       "node_type": "collect",
       "typeId": "17310030029",
       "type": "挑战小游戏"
     }
-  ],
-  "id": "2026042108",
-  "color": "#00ffff"
+  ]
 }

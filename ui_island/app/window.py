@@ -11,7 +11,7 @@ from enum import Enum
 
 import config
 from PySide6.QtCore import QEvent, QPoint, Qt, QTimer, Signal
-from PySide6.QtGui import QCursor
+from PySide6.QtGui import QCursor, QGuiApplication
 from PySide6.QtWidgets import QApplication, QWidget
 
 from ui_island.services import resource_metadata
@@ -133,6 +133,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.annotation_type_ids = self.window_prefs_store.load_annotation_type_ids()
         self.annotation_presets = self.window_prefs_store.load_annotation_presets()
         self.annotation_group_expanded = self.window_prefs_store.load_annotation_group_expanded()
+        self._annotation_panel_follow_window = self.window_prefs_store.load_annotation_panel_follow_window()
         self.route_mgr.set_annotation_type_ids(self.annotation_type_ids)
 
         saved_collapsed = self.window_prefs_store.load_sidebar_collapsed()
@@ -284,6 +285,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.annotation_panel.preset_edit_requested.connect(self._on_annotation_preset_edit_requested)
         self.annotation_panel.preset_delete_requested.connect(self._on_annotation_preset_delete_requested)
         self.annotation_panel.plan_route_requested.connect(self._on_annotation_plan_route_requested)
+        self.annotation_panel.drag_finished.connect(self._on_annotation_panel_drag_finished)
         self.annotation_panel.panel_hidden.connect(lambda: self.annotation_toggle_btn.setChecked(False))
 
         self._minimap_region = self.settings_gateway.get_minimap()
@@ -688,24 +690,128 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.annotation_toggle_btn.setChecked(True)
 
     def _position_annotation_panel(self) -> None:
-        if self.isMaximized():
-            self.annotation_panel.set_compact_hint(True)
-            sidebar_pos = self.sidebar_shell.mapToGlobal(QPoint(0, 0))
+        maximized = self._annotation_panel_is_maximized_context()
+        follow_window = self.window_prefs_store.load_annotation_panel_follow_window()
+        saved = (
+            self.window_prefs_store.load_annotation_panel_offset(maximized)
+            if follow_window
+            else self.window_prefs_store.load_annotation_panel_position(maximized)
+        )
+        panel_visible = self.annotation_panel.isVisible() if hasattr(self.annotation_panel, "isVisible") else True
+        should_apply_default_layout = follow_window or saved is None or not panel_visible
+        if should_apply_default_layout and hasattr(self, "_configure_annotation_panel_for_context"):
+            self._configure_annotation_panel_for_context(maximized)
+        anchor = self._annotation_panel_default_anchor(maximized)
+        if saved is None:
+            if not follow_window and panel_visible:
+                target = self.annotation_panel.pos()
+            else:
+                target = anchor
+        elif follow_window:
+            target = anchor + QPoint(saved["x"], saved["y"])
+        else:
+            target = QPoint(saved["x"], saved["y"])
+
+        self.annotation_panel.move(self._clamp_annotation_panel_pos(target))
+        self.annotation_panel.raise_()
+
+    def _annotation_panel_is_maximized_context(self) -> bool:
+        return self._mode == WindowMode.MAXIMIZED or self.isMaximized()
+
+    def _annotation_panel_default_width(self, maximized: bool) -> int:
+        if maximized:
             sidebar_width = max(0, self.sidebar_shell.width())
             inset = 8 if sidebar_width >= 336 else 0
             panel_width = max(320, sidebar_width - inset * 2)
             if sidebar_width > 0:
                 panel_width = min(panel_width, sidebar_width - inset * 2 if inset else sidebar_width)
-            self.annotation_panel.setFixedWidth(panel_width)
-            self.annotation_panel.move(sidebar_pos.x() + inset, sidebar_pos.y() + 8)
-            self.annotation_panel.raise_()
+            return panel_width
+        return max(320, min(720, self.width()))
+
+    def _configure_annotation_panel_for_context(self, maximized: bool) -> None:
+        self.annotation_panel.set_compact_hint(maximized)
+        self.annotation_panel.setFixedWidth(self._annotation_panel_default_width(maximized))
+        self.annotation_panel.fit_to_content_height()
+
+    def _sync_annotation_panel_follow_preference(self) -> None:
+        follow_window = self.window_prefs_store.load_annotation_panel_follow_window()
+        previous_follow_window = bool(getattr(self, "_annotation_panel_follow_window", follow_window))
+        self._annotation_panel_follow_window = follow_window
+        if follow_window == previous_follow_window:
             return
 
-        self.annotation_panel.set_compact_hint(False)
-        global_pos = self.mapToGlobal(QPoint(0, self.height()))
-        panel_width = max(320, min(720, self.width()))
-        self.annotation_panel.setFixedWidth(panel_width)
-        self.annotation_panel.move(global_pos.x(), global_pos.y())
+        maximized = self._annotation_panel_is_maximized_context()
+        panel_visible = self.annotation_panel.isVisible() if hasattr(self.annotation_panel, "isVisible") else False
+        if follow_window:
+            if panel_visible:
+                anchor = self._annotation_panel_default_anchor(maximized)
+                current = self._clamp_annotation_panel_pos(self.annotation_panel.pos())
+                offset = current - anchor
+            else:
+                offset = QPoint(0, 0)
+            self.window_prefs_store.save_annotation_panel_offset(
+                {"x": int(offset.x()), "y": int(offset.y())},
+                maximized,
+            )
+        elif panel_visible:
+            current = self._clamp_annotation_panel_pos(self.annotation_panel.pos())
+            self.window_prefs_store.save_annotation_panel_position(
+                {"x": int(current.x()), "y": int(current.y())},
+                maximized,
+            )
+
+    def _annotation_panel_default_anchor(self, maximized: bool) -> QPoint:
+        if maximized:
+            sidebar_pos = self.sidebar_shell.mapToGlobal(QPoint(0, 0))
+            sidebar_width = max(0, self.sidebar_shell.width())
+            inset = 8 if sidebar_width >= 336 else 0
+            return QPoint(sidebar_pos.x() + inset, sidebar_pos.y() + 8)
+
+        return self.mapToGlobal(QPoint(0, self.height()))
+
+    def _clamp_annotation_panel_pos(self, pos: QPoint) -> QPoint:
+        screen = QGuiApplication.screenAt(pos)
+        if screen is None and hasattr(self, "screen"):
+            screen = self.screen()
+        if screen is None:
+            screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            return QPoint(pos)
+
+        available = screen.availableGeometry()
+        panel_size = self.annotation_panel.sizeHint()
+        panel_w = max(1, self.annotation_panel.width(), panel_size.width())
+        panel_h = max(1, self.annotation_panel.height(), panel_size.height())
+        min_x = available.x()
+        min_y = available.y()
+        max_x = available.x() + max(0, available.width() - panel_w)
+        max_y = available.y() + max(0, available.height() - panel_h)
+        return QPoint(
+            min(max(pos.x(), min_x), max_x),
+            min(max(pos.y(), min_y), max_y),
+        )
+
+    def _on_annotation_panel_drag_finished(self, x: int, y: int) -> None:
+        maximized = self._annotation_panel_is_maximized_context()
+        target = self._clamp_annotation_panel_pos(QPoint(int(x), int(y)))
+        if self.annotation_panel.pos() != target:
+            self.annotation_panel.move(target)
+
+        try:
+            if self.window_prefs_store.load_annotation_panel_follow_window():
+                anchor = self._annotation_panel_default_anchor(maximized)
+                offset = target - anchor
+                self.window_prefs_store.save_annotation_panel_offset(
+                    {"x": int(offset.x()), "y": int(offset.y())},
+                    maximized,
+                )
+            else:
+                self.window_prefs_store.save_annotation_panel_position(
+                    {"x": int(target.x()), "y": int(target.y())},
+                    maximized,
+                )
+        except Exception as e:
+            print(f"保存标注栏位置失败：{e}")
 
     def _on_annotation_selection_changed(self, type_ids: list) -> None:
         self.annotation_type_ids = normalize_type_ids(type_ids)
@@ -994,12 +1100,16 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.hotkey_controller.start_listener()
         self._apply_configured_window_opacity()
         try:
-            self.route_mgr.invalidate_annotation_cache()
+            self.route_mgr.invalidate_annotation_cache(icons=True)
             self.annotation_panel.load_index(config.selected_annotation_path_from_settings())
             self.annotation_panel.set_preferences(self.annotation_type_ids)
             self.annotation_panel.set_presets(self.annotation_presets)
         except Exception:
             pass
+        self._sync_annotation_panel_follow_preference()
+        if self.annotation_panel.isVisible():
+            self._position_annotation_panel()
+        self._sync_route_point_drag_enabled()
         self.map_view._refresh_from_last_frame()
 
     def _collapse_to_icon(self) -> None:
@@ -1113,25 +1223,27 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             )
 
     def _update_lock_button_visibility(self) -> None:
-        visible = self._mode in _STABLE_FAMILY
-        self.terminate_nav_btn.setVisible(visible)
-        self.lock_btn.setVisible(visible)
+        terminate_visible = self._mode in _STABLE_FAMILY
+        self.terminate_nav_btn.setVisible(terminate_visible)
+        self.lock_btn.setVisible(True)
 
     def _is_unlock_only_lock_mode(self) -> bool:
-        return self._mode in {
-            WindowMode.PAUSED,
-            WindowMode.MAXIMIZED,
-            WindowMode.TRACKING_LOST,
-        }
+        return False
 
     def _can_toggle_lock(self) -> bool:
-        return self._mode in _STABLE_FAMILY or self._is_unlock_only_lock_mode()
+        return True
 
     def _sync_route_point_drag_enabled(self) -> None:
         mode_enum = self._mode.__class__
-        enabled = self._mode in (mode_enum.PAUSED, mode_enum.MAXIMIZED) or (
-            self._mode in _STABLE_FAMILY and not self._locked
-        )
+        in_paused = self._mode in (mode_enum.PAUSED, mode_enum.MAXIMIZED)
+        in_guide_active = self._mode in _STABLE_FAMILY or self._mode == mode_enum.TRACKING_LOST
+        disable_during_guide = bool(getattr(config, "ROUTE_GUIDE_DISABLE_NODE_DRAG", True))
+        if in_paused:
+            enabled = True
+        elif in_guide_active and disable_during_guide:
+            enabled = False
+        else:
+            enabled = not self._locked
         self.map_view.set_route_point_drag_enabled(enabled)
 
     def _set_locked_state(self, locked: bool) -> None:
@@ -1259,6 +1371,12 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self._update_window_controls()
         self.window_mode_controller.position_sidebar_overlay()
         self.route_panel_controller.position_route_drawing_toolbar()
+        if (
+            getattr(self, "annotation_panel", None) is not None
+            and self.annotation_panel.isVisible()
+            and self.window_prefs_store.load_annotation_panel_follow_window()
+        ):
+            self._position_annotation_panel()
 
         if self.isMaximized() or self._applying_mode:
             return
@@ -1283,7 +1401,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         if (
             getattr(self, "annotation_panel", None) is not None
             and self.annotation_panel.isVisible()
-            and not self.isMaximized()
+            and self.window_prefs_store.load_annotation_panel_follow_window()
         ):
             self._position_annotation_panel()
 
@@ -1310,14 +1428,6 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         super().closeEvent(event)
 
     def toggle_lock(self) -> None:
-        if not self._can_toggle_lock():
-            return
-        if self._is_unlock_only_lock_mode():
-            self._preferred_locked = False
-            self._lock_state_before_lost = None
-            self._restore_lock_after_relocate = None
-            self._set_locked_state(False)
-            return
         self._preferred_locked = not self._locked
         self._set_locked_state(self._preferred_locked)
 

@@ -21,6 +21,7 @@ PROTECTED_USER_FILES = {
 }
 PROTECTED_USER_PREFIXES = (
     "annotations/",
+    "maps/",
     "routes/",
     "tools/",
 )
@@ -28,19 +29,27 @@ DEFAULT_EXCLUDES = {
     "app-manifest.json",
     "big_map.png",
     "big_map_17173.png",
+    "maps/卡洛西亚大陆/big_map_17173.png",
+    "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+    "maps/卡洛西亚大陆/big_map_17173带传送点图标.png",
     "installed-manifest.json",
     "update-job.json",
     "config.json.bak",
 }
-DEFAULT_DELETE_PATHS: tuple[str, ...] = ()
-DEFAULT_INCLUDE_PATHS: tuple[str, ...] = ()
+DEFAULT_DELETE_PATHS: tuple[str, ...] = (
+    "big_map.png",
+    "maps/卡洛西亚大陆/big_map_17173.png",
+    "maps/卡洛西亚大陆/big_map_17173带传送图标.png",
+    "maps/卡洛西亚大陆/big_map_17173带传送点图标.png",
+)
+DEFAULT_INCLUDE_PATHS: tuple[str, ...] = (
+    "maps/卡洛西亚大陆/big_map_new.png",
+)
 RUNTIME_CONFIG_STRING_KEYS = (
     "QUARK_DOWNLOAD_URL",
     "ROUTE_RESOURCE_URL",
-    "DOCUMENTATION_URL",
-    "FEEDBACK_BILIBILI_URL",
-    "FEEDBACK_QQ_GROUP",
 )
+RUNTIME_CONFIG_NAMED_LINK_KEYS = ("ROUTE_RESOURCE_LINKS", "FEEDBACK_LINKS")
 RUNTIME_CONFIG_LIST_KEYS = ("APP_UPDATE_MANIFEST_URLS",)
 RUNTIME_CONFIG_STRING_LIST_KEYS = ("APP_ENABLE_VERSIONS",)
 APP_STATUS_NORMAL = "normal"
@@ -141,9 +150,10 @@ def sanitize_runtime_config(payload: dict) -> dict:
         if isinstance(value, str):
             runtime_config[key] = value.strip()
 
-    route_resource_links = _sanitize_named_links(payload.get("ROUTE_RESOURCE_LINKS"))
-    if route_resource_links:
-        runtime_config["ROUTE_RESOURCE_LINKS"] = route_resource_links
+    for key in RUNTIME_CONFIG_NAMED_LINK_KEYS:
+        named_links = _sanitize_named_links(payload.get(key))
+        if named_links:
+            runtime_config[key] = named_links
 
     manifest_urls: list[str] = []
     legacy_manifest_url = payload.get("APP_UPDATE_MANIFEST_URL")

@@ -49,8 +49,6 @@ class TrackingController:
             return
         if self.window._mode in stable_family:
             self.window._lock_state_before_lost = self.window._preferred_locked
-        if self.window._locked:
-            self.window._set_locked_state(False)
         self.window.window_mode_controller.enter_mode(mode_enum.TRACKING_LOST)
         self.window._update_lock_button_visibility()
 
@@ -63,12 +61,15 @@ class TrackingController:
         self.window._update_lock_button_visibility()
 
     def restore_lock_state_after_lost(self) -> None:
+        import config
+
+        follow_guide = bool(getattr(config, "WINDOW_LOCK_FOLLOWS_GUIDE", False))
         desired_locked = self.window._lock_state_before_lost
         if desired_locked is None:
             desired_locked = self.window._preferred_locked
         self.exit_lost_mode(clear_saved_lock_state=False)
         self.window._lock_state_before_lost = None
-        if desired_locked is not None and self.window._locked != desired_locked:
+        if not follow_guide and desired_locked is not None and self.window._locked != desired_locked:
             self.window._set_locked_state(desired_locked)
         self.window._update_lock_button_visibility()
 
@@ -130,8 +131,6 @@ class TrackingController:
 
         if self.window._mode in (mode_enum.PAUSED, mode_enum.MAXIMIZED):
             self.window._lock_state_before_lost = None
-            if self.window._locked:
-                self.window._set_locked_state(False)
             self.window._update_lock_button_visibility()
             self.set_alert_mode(False)
             drawing = getattr(self.window, "route_drawing_state", None)

@@ -119,12 +119,20 @@ class _SelectorOverlay(QWidget):
         self.update()
 
 
+def _show_window_on_top(widget: QWidget) -> None:
+    widget.show()
+    widget.raise_()
+    widget.activateWindow()
+    widget.setFocus(Qt.ActiveWindowFocusReason)
+
+
 class _PreviewDialog(StyledDialogBase):
     retake_requested = Signal()
     cancel_requested = Signal()
 
     def __init__(self, parent, pixmap: QPixmap, x: int, y: int, size: int) -> None:
         super().__init__(parent, "确认小地图截取区域", modal=True, min_width=340, max_width=520)
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setStyleSheet(qss.ISLAND_QSS)
         self.close_btn.clicked.disconnect()
         self.close_btn.clicked.connect(self._on_close)
@@ -175,10 +183,7 @@ class MinimapCalibrator:
             self._overlay = _SelectorOverlay(x, y, size)
             self._overlay.confirm_requested.connect(self._request_preview)
             self._overlay.cancel_requested.connect(self._cancel)
-            self._overlay.show()
-            self._overlay.activateWindow()
-            self._overlay.raise_()
-            self._overlay.setFocus(Qt.ActiveWindowFocusReason)
+            _show_window_on_top(self._overlay)
 
             self._loop = QEventLoop()
             self._overlay.destroyed.connect(lambda _=None: self._loop.quit())
@@ -238,6 +243,7 @@ class MinimapCalibrator:
         dialog.retake_requested.connect(self._resume_overlay)
         dialog.cancel_requested.connect(_on_cancel)
 
+        _show_window_on_top(dialog)
         accepted = dialog.exec() == QDialog.Accepted
         if accepted:
             self._save_config(x, y, size)
@@ -248,9 +254,7 @@ class MinimapCalibrator:
 
     def _resume_overlay(self) -> None:
         if self._overlay is not None:
-            self._overlay.show()
-            self._overlay.activateWindow()
-            self._overlay.setFocus()
+            _show_window_on_top(self._overlay)
 
     def _cancel(self) -> None:
         if self._overlay is not None:

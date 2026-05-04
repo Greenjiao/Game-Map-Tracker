@@ -253,6 +253,13 @@ def _ensure_route_metadata(payload: dict) -> dict:
     return payload
 
 
+def _ensure_current_enable_version(payload: dict) -> None:
+    enable_versions = resource_metadata.normalize_enable_versions(payload.get("enable_versions"))
+    if resource_metadata.APP_FORMAT_VERSION not in enable_versions:
+        enable_versions.append(resource_metadata.APP_FORMAT_VERSION)
+    payload["enable_versions"] = enable_versions
+
+
 def _write_json_atomic(path: Path, payload: dict) -> None:
     tmp_path = path.with_name(path.name + ".tmp")
     try:
@@ -321,6 +328,7 @@ def convert_old_big_map_route_payload(payload: dict) -> tuple[dict, int]:
             converted_points += 1
             converted.append(copied)
         output[key] = converted
+    _ensure_current_enable_version(output)
     return _ordered_route_payload(_ensure_route_metadata(output)), converted_points
 
 

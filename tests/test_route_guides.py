@@ -837,7 +837,52 @@ class RouteGuideTests(unittest.TestCase):
 
             self.assertEqual(manager.route_enable_versions("2026010101"), ["old-format"])
 
-    def test_route_and_annotation_warnings_check_route_format_version_only(self) -> None:
+    def test_add_current_route_enable_version_creates_or_appends_field(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            missing_file = category / "missing.json"
+            missing_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "format_version": "old-format",
+                        "name": "missing",
+                        "points": [],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            existing_file = category / "existing.json"
+            existing_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010102",
+                        "format_version": "old-format",
+                        "enable_versions": ["old-format"],
+                        "name": "existing",
+                        "points": [],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(manager.add_current_route_enable_version("2026010101"))
+            self.assertTrue(manager.add_current_route_enable_version("2026010102"))
+
+            missing_payload = json.loads(missing_file.read_text(encoding="utf-8"))
+            existing_payload = json.loads(existing_file.read_text(encoding="utf-8"))
+            self.assertEqual(missing_payload["enable_versions"], [resource_metadata.APP_FORMAT_VERSION])
+            self.assertEqual(
+                existing_payload["enable_versions"],
+                ["old-format", resource_metadata.APP_FORMAT_VERSION],
+            )
+
+    def test_route_and_annotation_warnings_check_route_enable_versions(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             category = base / "routes"
@@ -878,9 +923,9 @@ class RouteGuideTests(unittest.TestCase):
             warnings = manager.route_metadata_warnings()
 
             self.assertEqual(len(warnings), 1)
-            self.assertIn("unsupported", warnings[0])
+            self.assertIn("compatible", warnings[0])
             self.assertIn("missing", warnings[0])
-            self.assertNotIn("compatible", warnings[0])
+            self.assertNotIn("unsupported", warnings[0])
 
             missing_annotation = base / "missing_annotation.json"
             missing_annotation.write_text(json.dumps({"types": [], "pointsByType": {}}), encoding="utf-8")
