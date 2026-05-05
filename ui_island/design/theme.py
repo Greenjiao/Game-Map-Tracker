@@ -49,15 +49,15 @@ TOP_MARGIN = 0
 ANIMATION_MS = 220
 RECENT_ROUTES_MAX_HEIGHT = 100
 TRACKED_ROUTES_MAX_HEIGHT = 96
-ROUTES_LIST_MIN_HEIGHT = 160
+ROUTES_LIST_MIN_HEIGHT = 60
 ANNOTATION_PANEL_SCROLL_HEIGHT = 330
 SIDEBAR_RAIL_WIDTH = 34
 MAXIMIZED_SIDEBAR_WIDTH = 360  # 最大化时侧边栏的默认固定宽度
-WINDOW_MIN_W = 420
-WINDOW_MIN_H = 240
-TRACKING_WINDOW_MIN_H = 360
+WINDOW_MIN_W = 300
+WINDOW_MIN_H = 60
+TRACKING_WINDOW_MIN_H = 100
 SIDEBAR_MIN_EXPANDED_W = 760
-SIDEBAR_MIN_EXPANDED_H = 420
+SIDEBAR_MIN_EXPANDED_H = 60
 COMPACT_ALERT_HEIGHT = 140
 ALERT_ACTION_HEIGHT = 28
 TRACK_JUMP_DETECT_THRESHOLD = 220
@@ -827,6 +827,23 @@ QKeySequenceEdit {{
     selection-background-color: {ACCENT};
 }}
 QKeySequenceEdit:focus {{
+    border: 1px solid rgba(10, 132, 255, 0.65);
+    background: {ACCENT_SOFT};
+}}
+QPushButton#SettingsHotkeyEdit {{
+    background: rgba(255, 255, 255, 0.08);
+    color: {FG};
+    border: 1px solid {BORDER};
+    border-radius: 10px;
+    padding: 5px 10px;
+    font-size: 11px;
+    text-align: center;
+}}
+QPushButton#SettingsHotkeyEdit:hover {{
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(10, 132, 255, 0.45);
+}}
+QPushButton#SettingsHotkeyEdit:focus {{
     border: 1px solid rgba(10, 132, 255, 0.65);
     background: {ACCENT_SOFT};
 }}

@@ -8,7 +8,8 @@ from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QKeySequence
+from PySide6.QtWidgets import QApplication, QCheckBox, QLabel, QWidget
 
 import config
 from ui_island.services import resource_metadata
@@ -46,6 +47,150 @@ class SettingsDialogMapTests(unittest.TestCase):
 
             self.assertIsNotNone(values)
             self.assertEqual(values["ANNOTATION_PANEL_FOLLOW_WINDOW"], False)
+            dialog.close()
+
+    def test_interaction_tab_collects_window_lock_follows_guide(self) -> None:
+        with patch.object(config, "WINDOW_LOCK_FOLLOWS_GUIDE", True, create=True):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            self.assertIsNotNone(dialog._window_lock_follows_guide_checkbox)
+            self.assertTrue(dialog._window_lock_follows_guide_checkbox.isChecked())
+
+            dialog._window_lock_follows_guide_checkbox.setChecked(False)
+            values = dialog._collect()
+
+            self.assertIsNotNone(values)
+            self.assertEqual(values["WINDOW_LOCK_FOLLOWS_GUIDE"], False)
+            dialog.close()
+
+    def test_interaction_tab_collects_pure_navigation_mode(self) -> None:
+        with (
+            patch.object(config, "PURE_NAVIGATION_MODE", False, create=True),
+            patch.object(config, "ACTION_HOTKEYS", {}, create=True),
+        ):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            self.assertIsNotNone(dialog._pure_navigation_checkbox)
+            dialog._pure_navigation_checkbox.setChecked(True)
+            dialog._action_hotkey_editors["terminate_navigation"].setKeySequence(QKeySequence("T"))
+            values = dialog._collect()
+
+            self.assertIsNotNone(values)
+            self.assertEqual(values["PURE_NAVIGATION_MODE"], True)
+            dialog.close()
+
+    def test_interaction_tab_rejects_pure_navigation_without_terminate_hotkey(self) -> None:
+        with (
+            patch.object(config, "PURE_NAVIGATION_MODE", False, create=True),
+            patch.object(config, "ACTION_HOTKEYS", {}, create=True),
+            patch("ui_island.dialogs.settings_dialog.styled_info") as info,
+        ):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            dialog._pure_navigation_checkbox.setChecked(True)
+            values = dialog._collect()
+
+            self.assertIsNone(values)
+            info.assert_called()
+            self.assertIn("终止导航快捷键", info.call_args.args[2])
+            dialog.close()
+
+    def test_interaction_tab_option_labels_share_one_row(self) -> None:
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+
+        checkboxes = {
+            checkbox.text(): checkbox
+            for checkbox in dialog.findChildren(QCheckBox)
+        }
+        for label in ("纯净导航模式", "锁定状态流转", "标注栏固定在底部"):
+            self.assertIn(label, checkboxes)
+        self.assertIs(checkboxes["纯净导航模式"].parentWidget(), checkboxes["锁定状态流转"].parentWidget())
+        self.assertIs(checkboxes["锁定状态流转"].parentWidget(), checkboxes["标注栏固定在底部"].parentWidget())
+        dialog.close()
+
+    def test_interaction_tab_collects_action_hotkeys(self) -> None:
+        with patch.object(config, "ACTION_HOTKEYS", {}, create=True):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            self.assertIn("reset_view", dialog._action_hotkey_editors)
+            dialog._action_hotkey_editors["reset_view"].setKeySequence(QKeySequence("R"))
+            values = dialog._collect()
+
+            self.assertIsNotNone(values)
+            self.assertEqual(values["ACTION_HOTKEYS"]["reset_view"]["key"], "R")
+            self.assertEqual(values["ACTION_HOTKEYS"]["reset_view"]["modifiers"], [])
+            self.assertIsNone(values["ACTION_HOTKEYS"]["relocate"])
+            dialog.close()
+
+    def test_interaction_tab_hotkeys_use_compact_chinese_layout(self) -> None:
+        with patch.object(config, "ACTION_HOTKEYS", {}, create=True):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            labels = [
+                label.text()
+                for label in dialog.findChildren(QLabel)
+                if label.property("settingsHotkeyLabel")
+            ]
+            self.assertEqual(
+                labels,
+                [
+                    "锁定/解锁",
+                    "开始导航",
+                    "终止导航",
+                    "重置视图",
+                    "重定位",
+                    "跳转路线节点",
+                    "角色位置加点",
+                ],
+            )
+            hints = [
+                label.text()
+                for label in dialog.findChildren(QLabel)
+                if label.property("settingsHotkeyHint")
+            ]
+            self.assertEqual(hints, ["快捷键可能与游戏按键冲突"])
+            self.assertEqual(dialog._action_hotkey_editors["reset_view"].text(), "未设置")
+            dialog._action_hotkey_editors["reset_view"].click()
+            self.assertEqual(dialog._action_hotkey_editors["reset_view"].text(), "请按键")
+            self.assertNotIn("shortcut", dialog._action_hotkey_editors["reset_view"].toolTip().casefold())
+            dialog.close()
+
+    def test_interaction_tab_can_clear_action_and_restore_lock_default(self) -> None:
+        with patch.object(config, "ACTION_HOTKEYS", {}, create=True):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            dialog._action_hotkey_editors["reset_view"].setKeySequence(QKeySequence("R"))
+            dialog._action_hotkey_editors["reset_view"].clear()
+            dialog._hotkey_editor.setKeySequence(QKeySequence("L"))
+            dialog._reset_hotkey_to_default()
+            values = dialog._collect()
+
+            self.assertIsNotNone(values)
+            self.assertIsNone(values["ACTION_HOTKEYS"]["reset_view"])
+            self.assertEqual(values["TOGGLE_LOCK_HOTKEY"]["label"], "Alt+`")
+            dialog.close()
+
+    def test_interaction_tab_rejects_duplicate_hotkeys(self) -> None:
+        with (
+            patch.object(config, "ACTION_HOTKEYS", {}, create=True),
+            patch("ui_island.dialogs.settings_dialog.styled_info") as info,
+        ):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            dialog._hotkey_editor.setKeySequence(QKeySequence("R"))
+            dialog._action_hotkey_editors["reset_view"].setKeySequence(QKeySequence("R"))
+            values = dialog._collect()
+
+            self.assertIsNone(values)
+            self.assertTrue(info.called)
             dialog.close()
 
     def test_reset_defaults_restores_annotation_panel_follow_checkbox(self) -> None:

@@ -6,7 +6,13 @@ import time
 
 import config
 
-from ..services.hotkey_config import key_vk, modifier_names, native_modifier_flags
+from ..services.hotkey_config import (
+    key_vk,
+    modifier_names,
+    native_modifier_flags,
+    normalize_action_hotkeys,
+    normalize_hotkey_payload,
+)
 
 try:
     from pynput import keyboard
@@ -18,14 +24,28 @@ class HotkeyController:
     def __init__(self, window) -> None:
         self.window = window
 
+    def configured_hotkeys(self) -> list[tuple[str, dict]]:
+        hotkeys: list[tuple[str, dict]] = [
+            ("toggle_lock", normalize_hotkey_payload(getattr(config, "TOGGLE_LOCK_HOTKEY", None)))
+        ]
+        for action, payload in normalize_action_hotkeys(getattr(config, "ACTION_HOTKEYS", None)).items():
+            if payload is not None:
+                hotkeys.append((action, payload))
+        return hotkeys
+
+    def set_suspended(self, suspended: bool) -> None:
+        self.window._hotkeys_suspended = bool(suspended)
+
     def start_listener(self) -> None:
         if self.window._is_windows and self.start_native_listener():
             return
         if keyboard is None:
             return
 
-        required_modifiers = modifier_names(getattr(config, "TOGGLE_LOCK_HOTKEY", None))
-        target_vk = key_vk(getattr(config, "TOGGLE_LOCK_HOTKEY", None))
+        hotkeys = [
+            (action, modifier_names(payload), key_vk(payload))
+            for action, payload in self.configured_hotkeys()
+        ]
         pressed_modifiers: set[str] = set()
 
         def on_press(key):
@@ -33,9 +53,11 @@ class HotkeyController:
             if modifier is not None:
                 pressed_modifiers.add(modifier)
                 return
-            if self._pynput_vk(key) != target_vk or not required_modifiers.issubset(pressed_modifiers):
-                return
-            self.request_toggle_lock()
+            vk = self._pynput_vk(key)
+            for action, required_modifiers, target_vk in hotkeys:
+                if vk == target_vk and set(required_modifiers) == pressed_modifiers:
+                    self.request_action(action)
+                    return
 
         def on_release(key):
             modifier = self._pynput_modifier_name(key)
@@ -46,14 +68,14 @@ class HotkeyController:
         self.window._hotkey_listener.daemon = True
         self.window._hotkey_listener.start()
 
-    def request_toggle_lock(self) -> None:
-        if not self.window._can_toggle_lock():
+    def request_action(self, action: str) -> None:
+        if self.window._hotkeys_suspended:
             return
         now = time.monotonic()
         if now - self.window._last_hotkey_at < self.window._HOTKEY_DEBOUNCE_SEC:
             return
         self.window._last_hotkey_at = now
-        self.window._toggle_lock_requested.emit()
+        self.window._hotkey_action_requested.emit(str(action))
 
     def start_native_listener(self) -> bool:
         try:
@@ -67,37 +89,38 @@ class HotkeyController:
         kernel32 = ctypes.windll.kernel32
         wm_hotkey = 0x0312
         mod_norepeat = 0x4000
-        hotkey = getattr(config, "TOGGLE_LOCK_HOTKEY", None)
-        modifiers = native_modifier_flags(hotkey)
-        vk = key_vk(hotkey)
-        if not modifiers or not vk:
+        registrations = [
+            (self.window._NATIVE_HOTKEY_ID_BASE + index, action, native_modifier_flags(payload), key_vk(payload))
+            for index, (action, payload) in enumerate(self.configured_hotkeys())
+        ]
+        registrations = [
+            (hotkey_id, action, modifiers, vk)
+            for hotkey_id, action, modifiers, vk in registrations
+            if vk
+        ]
+        if not registrations:
             return False
 
         def hotkey_loop():
             self.window._hotkey_thread_id = kernel32.GetCurrentThreadId()
-            registered_hotkey = bool(
-                user32.RegisterHotKey(
-                    None,
-                    self.window._NATIVE_HOTKEY_ID_ALT_GRAVE,
-                    modifiers | mod_norepeat,
-                    vk,
-                )
-            )
-            if not registered_hotkey:
+            registered_ids: dict[int, str] = {}
+            for hotkey_id, action, modifiers, vk in registrations:
+                if user32.RegisterHotKey(None, hotkey_id, modifiers | mod_norepeat, vk):
+                    registered_ids[int(hotkey_id)] = action
+            if not registered_ids:
                 self.window._hotkey_thread_id = None
                 return
 
             message = wintypes.MSG()
             try:
                 while user32.GetMessageW(ctypes.byref(message), None, 0, 0) != 0:
-                    if (
-                        message.message == wm_hotkey
-                        and message.wParam == self.window._NATIVE_HOTKEY_ID_ALT_GRAVE
-                    ):
-                        self.request_toggle_lock()
+                    if message.message == wm_hotkey:
+                        action = registered_ids.get(int(message.wParam))
+                        if action is not None:
+                            self.request_action(action)
             finally:
-                if registered_hotkey:
-                    user32.UnregisterHotKey(None, self.window._NATIVE_HOTKEY_ID_ALT_GRAVE)
+                for hotkey_id in registered_ids:
+                    user32.UnregisterHotKey(None, hotkey_id)
                 self.window._hotkey_thread_id = None
 
         self.window._hotkey_thread = threading.Thread(target=hotkey_loop, daemon=True)

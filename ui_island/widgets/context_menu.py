@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable, Iterable
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import QApplication, QMenu
 
 from ..design import theme
@@ -18,10 +19,36 @@ class ContextMenuItem:
     separator: bool = False
     enabled: bool = True
     visible: bool = True
+    shortcut: str = ""
 
     @classmethod
     def separator_item(cls) -> "ContextMenuItem":
         return cls(separator=True)
+
+
+class _ShortcutMenu(QMenu):
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._shortcut_actions: dict[str, object] = {}
+
+    def add_shortcut_action(self, shortcut: str, action) -> None:
+        key = _shortcut_key(shortcut)
+        if key:
+            self._shortcut_actions[key] = action
+
+    def keyPressEvent(self, event) -> None:
+        key = _shortcut_key(event.text())
+        action = self._shortcut_actions.get(key)
+        if action is not None and action.isEnabled() and action.isVisible():
+            action.trigger()
+            self.close()
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+
+def _shortcut_key(value: object) -> str:
+    return str(value or "").strip().casefold()
 
 
 def _context_menu_style(parent) -> str:
@@ -56,7 +83,7 @@ def show_context_menu(
     *,
     object_name: str = "",
 ) -> None:
-    menu = QMenu(parent)
+    menu = _ShortcutMenu(parent)
     if object_name:
         menu.setObjectName(object_name)
     menu.setWindowFlags(menu.windowFlags() | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
@@ -74,9 +101,22 @@ def show_context_menu(
             continue
         action = menu.addAction(item.text)
         action.setEnabled(item.enabled)
+        if item.shortcut:
+            action.setShortcut(QKeySequence(item.shortcut))
+            action.setShortcutVisibleInContextMenu(True)
+            menu.add_shortcut_action(item.shortcut, action)
         has_actions = True
         if item.callback is not None:
             action.triggered.connect(lambda _checked=False, callback=item.callback: callback())
 
     if has_actions:
-        menu.exec(global_pos)
+        window = parent.window() if parent is not None and hasattr(parent, "window") else parent
+        previous_suspended = bool(getattr(window, "_hotkeys_suspended", False))
+        hotkey_controller = getattr(window, "hotkey_controller", None)
+        if hotkey_controller is not None and hasattr(hotkey_controller, "set_suspended"):
+            hotkey_controller.set_suspended(True)
+        try:
+            menu.exec(global_pos)
+        finally:
+            if hotkey_controller is not None and hasattr(hotkey_controller, "set_suspended"):
+                hotkey_controller.set_suspended(previous_suspended)

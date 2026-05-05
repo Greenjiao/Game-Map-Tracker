@@ -28,6 +28,7 @@ class WindowLayoutPrefs:
     normal_minimum_width: int = 0
     normal_minimum_height: int = 0
     compact_minimum_height: int = 0
+    pure_navigation_minimum_height: int = 0
     sidebar_collapsed_before_pause: bool | None = None
     sidebar_width_before_pause: int | None = None
     sidebar_collapsed_before_max: bool | None = None
@@ -147,3 +148,4 @@ class HotkeyState:
     thread_id: int | None = None
     last_hotkey_at: float = 0.0
     alt_pressed: bool = False
+    suspended: bool = False

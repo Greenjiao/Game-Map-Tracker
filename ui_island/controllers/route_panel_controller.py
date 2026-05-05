@@ -5,10 +5,11 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import math
 from copy import deepcopy
 
 from PySide6.QtCore import QPoint, QTimer, Qt
-from PySide6.QtGui import QColor, QPainter, QPen
+from PySide6.QtGui import QColor, QCursor, QPainter, QPen
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -2094,16 +2095,20 @@ QCheckBox::indicator:checked:hover {{
         visible_routes = self.window.route_mgr.visible_routes()
         self.window.tracked_routes_title.setText(f"{strings.ROUTE_TRACKED_TITLE} ({len(visible_routes)})")
         self.remove_tracked_route_widgets()
+        tracked_route_ids = [self.window.route_mgr.route_id(route) for route in visible_routes]
+        has_any_progress = False
 
         if visible_routes:
             for index, route in enumerate(visible_routes):
                 route_id = self.window.route_mgr.route_id(route)
                 route_name = route.get("display_name", "")
+                has_progress = self.window.route_mgr.has_progress(route_id)
+                has_any_progress = has_any_progress or has_progress
                 route_item = TrackedRouteItem(
                     route_id,
                     route_name,
                     self.window.route_mgr.visibility.get(route_id, False),
-                    self.window.route_mgr.has_progress(route_id),
+                    has_progress,
                 )
                 self.apply_route_checkbox_color(route_item.checkbox, route_id)
                 route_item.checkbox.toggled.connect(
@@ -2130,7 +2135,9 @@ QCheckBox::indicator:checked:hover {{
             empty_label.setStyleSheet(f"font-size: 12px; color: {theme.FG_DIM};")
             self.window.tracked_routes_grid.addWidget(empty_label, 0, 0, 1, 2)
 
-        tracked_route_ids = [self.window.route_mgr.route_id(route) for route in visible_routes]
+        clear_btn = getattr(self.window, "tracked_routes_clear_progress_btn", None)
+        if clear_btn is not None:
+            clear_btn.setVisible(has_any_progress)
         self.window._tracked_route_progress_signature = self.build_tracked_route_progress_signature(tracked_route_ids)
         self.window.tracked_routes_inner.adjustSize()
         self.sync_tracked_routes_height(len(visible_routes))
@@ -2156,6 +2163,34 @@ QCheckBox::indicator:checked:hover {{
         self.refresh_tracked_routes()
         route_name = self.window.route_mgr.route_name_for_id(route_id) or route_id
         toast(self.window, f"已重置路线“{route_name}”进度")
+
+    def reset_tracked_routes_progress(self) -> None:
+        route_ids = self.window.route_mgr.visible_route_ids()
+        if not route_ids:
+            toast(self.window, strings.ROUTE_EMPTY_TRACKED)
+            return
+
+        reset_count = 0
+        for route_id in route_ids:
+            route = self.window.route_mgr.route_for_id(route_id)
+            if route is None:
+                continue
+            changed = False
+            for point in route.get("points", []):
+                if point.get("visited", False):
+                    point["visited"] = False
+                    changed = True
+            if changed:
+                reset_count += 1
+
+        if reset_count <= 0:
+            toast(self.window, "当前追踪路线没有可重置的进度")
+            return
+
+        self.window.route_mgr.save_progress()
+        self.window.map_view._refresh_from_last_frame()
+        self.refresh_tracked_routes()
+        toast(self.window, f"已重置 {reset_count} 条追踪路线的进度")
 
     @staticmethod
     def _route_point_xy(point: object) -> tuple[int, int] | None:
@@ -2228,13 +2263,54 @@ QCheckBox::indicator:checked:hover {{
         )
         toast(self.window, message.format(index=point_index + 1))
 
-    def _current_player_xy_or_warn(self) -> tuple[int, int] | None:
+    def current_route_id_by_player_position(self) -> str | None:
+        player_xy = self._current_player_xy_or_warn(
+            title="无法确定当前路线",
+            body="当前没有可用定位，请等待定位稳定后再使用当前路线快捷键。",
+        )
+        if player_xy is None:
+            return None
+
+        paused = self._is_paused_route_jump_mode()
+        best: tuple[float, str] | None = None
+        for route in self.window.route_mgr.visible_routes():
+            route_id = self.window.route_mgr.route_id(route)
+            if not route_id:
+                continue
+            target = self._route_jump_target(route, paused=paused)
+            if target is None:
+                continue
+            _point_index, x, y, _completed = target
+            distance = math.hypot(float(x) - float(player_xy[0]), float(y) - float(player_xy[1]))
+            if best is None or distance < best[0]:
+                best = (distance, route_id)
+
+        if best is None:
+            styled_info(
+                self.window,
+                strings.ROUTE_TRACKED_JUMP_EMPTY_TITLE,
+                strings.ROUTE_TRACKED_JUMP_EMPTY_BODY,
+            )
+            return None
+        return best[1]
+
+    def jump_to_current_route_node(self) -> None:
+        route_id = self.current_route_id_by_player_position()
+        if route_id is not None:
+            self.jump_to_route_node(route_id)
+
+    def _current_player_xy_or_warn(
+        self,
+        *,
+        title: str = "无法添加节点",
+        body: str = "当前没有可用定位，请等待定位稳定后再添加。",
+    ) -> tuple[int, int] | None:
         player_xy = getattr(self.window, "_last_player_xy", None)
         if player_xy is None:
             styled_info(
                 self.window,
-                "无法添加节点",
-                "当前没有可用定位，请等待定位稳定后再添加。",
+                title,
+                body,
             )
             return
 
@@ -2243,12 +2319,79 @@ QCheckBox::indicator:checked:hover {{
         except (TypeError, ValueError, IndexError):
             styled_info(
                 self.window,
-                "无法添加节点",
-                "当前定位坐标无效，请等待定位稳定后再添加。",
+                title,
+                "当前定位坐标无效，请等待定位稳定后再使用。",
             )
             return
 
         return x, y
+
+    def _current_position_add_menu_items(
+        self,
+        route_id: str,
+        *,
+        include_annotated: bool,
+        show_shortcuts: bool,
+    ) -> list[ContextMenuItem]:
+        def label(text: str, shortcut: str) -> str:
+            return f"{text} (按{shortcut})" if show_shortcuts else text
+
+        items = [
+            ContextMenuItem(
+                label(strings.MAP_ADD_COLLECT_POINT_MENU_LABEL, "1"),
+                lambda known_route_id=route_id: self.add_current_position_to_route(
+                    known_route_id,
+                    NODE_TYPE_COLLECT,
+                ),
+                shortcut="1" if show_shortcuts else "",
+            ),
+            ContextMenuItem(
+                label(strings.MAP_ADD_TELEPORT_POINT_MENU_LABEL, "2"),
+                lambda known_route_id=route_id: self.add_current_position_to_route(
+                    known_route_id,
+                    NODE_TYPE_TELEPORT,
+                ),
+                shortcut="2" if show_shortcuts else "",
+            ),
+            ContextMenuItem(
+                label(strings.MAP_ADD_GUIDE_POINT_MENU_LABEL, "3"),
+                lambda known_route_id=route_id: self.add_current_position_to_route(
+                    known_route_id,
+                    NODE_TYPE_VIRTUAL,
+                ),
+                shortcut="3" if show_shortcuts else "",
+            ),
+        ]
+        if include_annotated:
+            items.append(
+                ContextMenuItem(
+                    strings.MAP_ADD_POINT_WITH_ANNOTATION_MENU_LABEL,
+                    lambda known_route_id=route_id: self.add_current_position_to_route(
+                        known_route_id,
+                        annotated=True,
+                    ),
+                )
+            )
+        return items
+
+    def _show_current_position_add_menu_at(
+        self,
+        route_id: str,
+        global_pos: QPoint,
+        *,
+        include_annotated: bool,
+        show_shortcuts: bool,
+    ) -> None:
+        show_context_menu(
+            self.window,
+            global_pos,
+            self._current_position_add_menu_items(
+                route_id,
+                include_annotated=include_annotated,
+                show_shortcuts=show_shortcuts,
+            ),
+            object_name="RouteListContextMenu",
+        )
 
     def show_current_position_add_menu(self, route_id: str, anchor: QWidget) -> None:
         if not self.confirm_exit_route_drawing():
@@ -2257,40 +2400,24 @@ QCheckBox::indicator:checked:hover {{
             global_pos = anchor.mapToGlobal(QPoint(0, anchor.height()))
         except Exception:
             global_pos = QPoint(0, 0)
-        show_context_menu(
-            self.window,
+        self._show_current_position_add_menu_at(
+            route_id,
             global_pos,
-            [
-                ContextMenuItem(
-                    strings.MAP_ADD_COLLECT_POINT_MENU_LABEL,
-                    lambda known_route_id=route_id: self.add_current_position_to_route(
-                        known_route_id,
-                        NODE_TYPE_COLLECT,
-                    ),
-                ),
-                ContextMenuItem(
-                    strings.MAP_ADD_TELEPORT_POINT_MENU_LABEL,
-                    lambda known_route_id=route_id: self.add_current_position_to_route(
-                        known_route_id,
-                        NODE_TYPE_TELEPORT,
-                    ),
-                ),
-                ContextMenuItem(
-                    strings.MAP_ADD_GUIDE_POINT_MENU_LABEL,
-                    lambda known_route_id=route_id: self.add_current_position_to_route(
-                        known_route_id,
-                        NODE_TYPE_VIRTUAL,
-                    ),
-                ),
-                ContextMenuItem(
-                    strings.MAP_ADD_POINT_WITH_ANNOTATION_MENU_LABEL,
-                    lambda known_route_id=route_id: self.add_current_position_to_route(
-                        known_route_id,
-                        annotated=True,
-                    ),
-                ),
-            ],
-            object_name="RouteListContextMenu",
+            include_annotated=True,
+            show_shortcuts=False,
+        )
+
+    def show_current_position_add_menu_for_current_route(self) -> None:
+        if not self.confirm_exit_route_drawing():
+            return
+        route_id = self.current_route_id_by_player_position()
+        if route_id is None:
+            return
+        self._show_current_position_add_menu_at(
+            route_id,
+            QCursor.pos(),
+            include_annotated=False,
+            show_shortcuts=True,
         )
 
     def add_current_position_to_route(

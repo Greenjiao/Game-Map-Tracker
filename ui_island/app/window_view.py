@@ -44,8 +44,12 @@ def build_window_ui(window) -> None:
     outer.addWidget(window.root)
 
     root_layout = QVBoxLayout(window.root)
-    root_layout.setContentsMargins(12, 8, 12, 10)
-    root_layout.setSpacing(8)
+    window._root_layout_margins = (12, 8, 12, 10)
+    window._root_layout_spacing = 8
+    window._pure_root_layout_margins = (8, 8, 8, 8)
+    window._pure_root_layout_spacing = 0
+    root_layout.setContentsMargins(*window._root_layout_margins)
+    root_layout.setSpacing(window._root_layout_spacing)
 
     _build_header(window, root_layout)
     _build_body(window, root_layout)
@@ -53,6 +57,7 @@ def build_window_ui(window) -> None:
 
 def _build_header(window, root_layout: QVBoxLayout) -> None:
     header = QHBoxLayout()
+    window.header_layout = header
     header.setContentsMargins(0, 0, 0, 0)
     header.setSpacing(10)
 
@@ -208,7 +213,9 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.map_shell = QWidget()
     map_layout = QVBoxLayout(window.map_shell)
     map_layout.setContentsMargins(0, 0, 0, 0)
-    map_layout.setSpacing(10)
+    window._map_layout_spacing = 10
+    window._pure_map_layout_spacing = 0
+    map_layout.setSpacing(window._map_layout_spacing)
 
     window.map_view = MapView(window.route_mgr)
     window.map_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -246,6 +253,16 @@ def _build_body(window, root_layout: QVBoxLayout) -> None:
     window.tracked_routes_toggle_btn.setFixedWidth(26)
     window.tracked_routes_toggle_btn.clicked.connect(window.route_panel_controller.toggle_tracked_routes_collapsed)
     window.tracked_routes_header_layout.addWidget(window.tracked_routes_toggle_btn, stretch=0)
+
+    window.tracked_routes_clear_progress_btn = QPushButton("↺")
+    window.tracked_routes_clear_progress_btn.setObjectName("SectionHeader")
+    window.tracked_routes_clear_progress_btn.setProperty("compact", True)
+    window.tracked_routes_clear_progress_btn.setProperty("sectionToggleOnly", True)
+    window.tracked_routes_clear_progress_btn.setToolTip(strings.ROUTE_TRACKED_CLEAR_PROGRESS_TOOLTIP)
+    window.tracked_routes_clear_progress_btn.setFixedWidth(26)
+    window.tracked_routes_clear_progress_btn.setVisible(False)
+    window.tracked_routes_clear_progress_btn.clicked.connect(window.route_panel_controller.reset_tracked_routes_progress)
+    window.tracked_routes_header_layout.addWidget(window.tracked_routes_clear_progress_btn, stretch=0)
     window.tracked_routes_header_layout.addStretch(1)
 
     window.tracked_guide_hint_label = QLabel("")

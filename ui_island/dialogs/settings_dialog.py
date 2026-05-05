@@ -10,8 +10,8 @@ from datetime import datetime
 from html import escape
 from typing import Callable
 
-from PySide6.QtCore import QPoint, Qt, QTimer, QUrl, Signal
-from PySide6.QtGui import QColor, QDesktopServices, QDoubleValidator, QIntValidator, QMouseEvent
+from PySide6.QtCore import QKeyCombination, QPoint, Qt, QTimer, QUrl, Signal
+from PySide6.QtGui import QColor, QDesktopServices, QDoubleValidator, QIntValidator, QKeySequence, QMouseEvent
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -26,7 +26,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QPlainTextEdit,
     QPushButton,
-    QKeySequenceEdit,
     QSizePolicy,
     QSpinBox,
     QStackedWidget,
@@ -51,7 +50,13 @@ from ..services.app_updater import (
     install_non_restart_update,
     start_restart_update,
 )
-from ..services.hotkey_config import hotkey_sequence, payload_from_key_sequence
+from ..services.hotkey_config import (
+    ACTION_HOTKEY_LABELS,
+    duplicate_hotkey_labels,
+    hotkey_sequence,
+    normalize_action_hotkeys,
+    payload_from_key_sequence,
+)
 from ..services import resource_metadata
 from ..services.settings_schema import ALL_FIELDS, COMMON_FIELDS, FIELD_INDEX, SIFT_FIELDS, TOOL_BUTTONS, Field
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
@@ -80,6 +85,17 @@ _SETTINGS_DISCLAIMER = "本工具免费分享，内置地图与标注数据来�
 _MAP_FILE_PLACEHOLDER = "请选择底图"
 _ANNOTATION_FILE_PLACEHOLDER = "请选择标注文件"
 _ROUTE_CONVERSION_LOG_LIMIT = 40
+_HOTKEY_EDITOR_WIDTH = 98
+_HOTKEY_LABEL_WIDTH = 82
+_HOTKEY_BUTTON_WIDTH = 58
+_SETTINGS_HOTKEY_LABELS = {
+    "reset_view": "重置视图",
+    "relocate": "重定位",
+    "start_navigation": "开始导航",
+    "terminate_navigation": "终止导航",
+    "jump_current_route_node": "跳转路线节点",
+    "add_current_position_to_current_route": "角色位置加点",
+}
 
 
 class _ElidedLabel(QLabel):
@@ -97,6 +113,63 @@ class _ElidedLabel(QLabel):
         text = self.fontMetrics().elidedText(self._full_text, Qt.ElideRight, available_width)
         if text != self.text():
             self.setText(text)
+
+
+class _HotkeyEdit(QPushButton):
+    keySequenceChanged = Signal(QKeySequence)
+
+    _MODIFIERS = Qt.ControlModifier | Qt.AltModifier | Qt.ShiftModifier | Qt.MetaModifier
+    _MODIFIER_KEYS = {Qt.Key_Control, Qt.Key_Shift, Qt.Key_Alt, Qt.Key_Meta}
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent)
+        self._sequence = QKeySequence()
+        self._recording = False
+        self.setObjectName("SettingsHotkeyEdit")
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedSize(_HOTKEY_EDITOR_WIDTH, 28)
+        self.clicked.connect(self._start_recording)
+        self._sync_text()
+
+    def keySequence(self) -> QKeySequence:
+        return QKeySequence(self._sequence)
+
+    def setKeySequence(self, sequence: QKeySequence) -> None:
+        self._recording = False
+        self._sequence = QKeySequence(sequence)
+        self._sync_text()
+        self.keySequenceChanged.emit(self.keySequence())
+
+    def clear(self) -> None:
+        self.setKeySequence(QKeySequence())
+
+    def _start_recording(self) -> None:
+        self._recording = True
+        self.setText("请按键")
+        self.setFocus(Qt.MouseFocusReason)
+
+    def focusOutEvent(self, event) -> None:
+        self._recording = False
+        self._sync_text()
+        super().focusOutEvent(event)
+
+    def keyPressEvent(self, event) -> None:
+        if not self._recording:
+            self._start_recording()
+            event.accept()
+            return
+        key = event.key()
+        if key in self._MODIFIER_KEYS:
+            event.accept()
+            return
+        sequence = QKeySequence(QKeyCombination(event.modifiers() & self._MODIFIERS, Qt.Key(key)))
+        self.setKeySequence(sequence)
+        event.accept()
+
+    def _sync_text(self) -> None:
+        label = self._sequence.toString(QKeySequence.NativeText).strip()
+        self.setText(label or "未设置")
 
 
 def styled_info(parent, title: str, message: str, *, allow_links: bool = False) -> None:
@@ -1066,6 +1139,7 @@ class SettingsDialog(QDialog):
         self._route_node_order_visible_checkbox: QCheckBox | None = None
         self._route_guide_disable_node_drag_checkbox: QCheckBox | None = None
         self._window_lock_follows_guide_checkbox: QCheckBox | None = None
+        self._pure_navigation_checkbox: QCheckBox | None = None
         self._route_node_icon_size_spin: QSpinBox | None = None
         self._annotation_icon_size_spin: QSpinBox | None = None
         self._route_node_dot_size_spin: QSpinBox | None = None
@@ -1076,7 +1150,8 @@ class SettingsDialog(QDialog):
         }
         self._route_pointer_arrow_visible = bool(getattr(config, "ROUTE_POINTER_ARROW_VISIBLE", True))
         self._route_color_button: QPushButton | None = None
-        self._hotkey_editor: QKeySequenceEdit | None = None
+        self._hotkey_editor: _HotkeyEdit | None = None
+        self._action_hotkey_editors: dict[str, _HotkeyEdit] = {}
         self._annotation_panel_follow_checkbox: QCheckBox | None = None
         self._route_default_color = self._route_colors["ROUTE_DEFAULT_COLOR"]
         self._opacity_editors: dict[str, QLineEdit] = {}
@@ -1142,9 +1217,8 @@ class SettingsDialog(QDialog):
         minimap_row = self._build_minimap_row()
         route_color_row = self._build_route_color_row()
         route_display_row = self._build_route_display_row()
-        hotkey_row = self._build_hotkey_row()
-        lock_follows_guide_row = self._build_lock_follows_guide_row()
-        annotation_panel_follow_row = self._build_annotation_panel_follow_row()
+        hotkey_row = self._build_hotkey_section()
+        interaction_options_row = self._build_interaction_options_row()
         opacity_row = self._build_opacity_row()
         tools_section = self._build_tools_section()
 
@@ -1181,7 +1255,7 @@ class SettingsDialog(QDialog):
         common_section = self._build_common_tabbed_section(
             resource_rows=(map_file_row, annotation_file_row, minimap_row),
             route_rows=(route_color_row, route_display_row, opacity_row),
-            interaction_rows=(hotkey_row, lock_follows_guide_row, annotation_panel_follow_row),
+            interaction_rows=(hotkey_row, interaction_options_row),
             param_fields=COMMON_FIELDS,
             section_height=bottom_section_height,
         )
@@ -1594,47 +1668,159 @@ class SettingsDialog(QDialog):
         layout.addWidget(size_row)
         return row
 
-    def _build_hotkey_row(self) -> QWidget:
+    def _build_hotkey_section(self) -> QWidget:
+        section = QWidget()
+        layout = QVBoxLayout(section)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+        action_hotkeys = normalize_action_hotkeys(getattr(config, "ACTION_HOTKEYS", None))
+        layout.addWidget(self._build_hotkey_single_row(self._build_lock_hotkey_cell()))
+        layout.addWidget(
+            self._build_hotkey_pair_row(
+                self._build_action_hotkey_cell(
+                    "start_navigation",
+                    action_hotkeys.get("start_navigation"),
+                ),
+                self._build_action_hotkey_cell(
+                    "terminate_navigation",
+                    action_hotkeys.get("terminate_navigation"),
+                ),
+            )
+        )
+        layout.addWidget(
+            self._build_hotkey_pair_row(
+                self._build_action_hotkey_cell("reset_view", action_hotkeys.get("reset_view")),
+                self._build_action_hotkey_cell("relocate", action_hotkeys.get("relocate")),
+            )
+        )
+        layout.addWidget(
+            self._build_hotkey_pair_row(
+                self._build_action_hotkey_cell(
+                    "jump_current_route_node",
+                    action_hotkeys.get("jump_current_route_node"),
+                ),
+                self._build_action_hotkey_cell(
+                    "add_current_position_to_current_route",
+                    action_hotkeys.get("add_current_position_to_current_route"),
+                ),
+            )
+        )
+
+        hint = QLabel("快捷键可能与游戏按键冲突")
+        hint.setObjectName("StatLabel")
+        hint.setProperty("settingsHotkeyHint", True)
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+        return section
+
+    @staticmethod
+    def _build_hotkey_pair_row(left: QWidget, right: QWidget) -> QWidget:
         row = QWidget()
         layout = QHBoxLayout(row)
         layout.setContentsMargins(0, 0, 6, 0)
-        layout.setSpacing(8)
+        layout.setSpacing(12)
+        layout.addWidget(left, stretch=1)
+        layout.addWidget(right, stretch=1)
+        return row
 
-        label = QLabel("锁定/解锁快捷键")
+    @staticmethod
+    def _build_hotkey_single_row(left: QWidget) -> QWidget:
+        row = QWidget()
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(12)
+        layout.addWidget(left, stretch=1)
+        layout.addStretch(1)
+        return row
+
+    def _build_hotkey_cell(
+        self,
+        label_text: str,
+        editor: _HotkeyEdit,
+        button_text: str,
+        callback: Callable[[], None],
+    ) -> QWidget:
+        cell = QWidget()
+        layout = QHBoxLayout(cell)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        label = QLabel(label_text)
         label.setObjectName("FieldLabel")
+        label.setProperty("settingsHotkeyLabel", True)
+        label.setFixedWidth(_HOTKEY_LABEL_WIDTH)
         layout.addWidget(label)
-
-        editor = QKeySequenceEdit()
-        editor.setMaximumSequenceLength(1)
-        editor.setFixedHeight(28)
-        editor.setKeySequence(hotkey_sequence(getattr(config, "TOGGLE_LOCK_HOTKEY", None)))
-        editor.setToolTip("点击后按下新的组合键，需包含 Ctrl、Alt、Shift 或 Win。")
-        editor.keySequenceChanged.connect(lambda _sequence: self._sync_hotkey_editor_width())
-        self._hotkey_editor = editor
-        self._sync_hotkey_editor_width()
         layout.addWidget(editor)
 
-        reset_btn = QPushButton("恢复默认")
-        reset_btn.setFixedHeight(28)
-        reset_btn.clicked.connect(self._reset_hotkey_to_default)
-        layout.addWidget(reset_btn)
-        layout.addStretch()
-        return row
+        button = QPushButton(button_text)
+        button.setFixedSize(_HOTKEY_BUTTON_WIDTH, 28)
+        button.clicked.connect(lambda _checked=False: callback())
+        layout.addWidget(button)
+        layout.addStretch(1)
+        return cell
+
+    def _build_lock_hotkey_cell(self) -> QWidget:
+        editor = _HotkeyEdit()
+        editor.setKeySequence(hotkey_sequence(getattr(config, "TOGGLE_LOCK_HOTKEY", None)))
+        editor.setToolTip("点击后按下按键")
+        self._hotkey_editor = editor
+        return self._build_hotkey_cell("锁定/解锁", editor, "恢复默认", self._reset_hotkey_to_default)
+
+    def _build_action_hotkey_cell(self, action: str, payload: object) -> QWidget:
+        editor = _HotkeyEdit()
+        editor.setKeySequence(hotkey_sequence(payload, allow_empty=True))
+        editor.setToolTip("点击后按下按键；清空表示不设置")
+        self._action_hotkey_editors[action] = editor
+        return self._build_hotkey_cell(
+            _SETTINGS_HOTKEY_LABELS.get(action, ACTION_HOTKEY_LABELS.get(action, action)),
+            editor,
+            "清空",
+            editor.clear,
+        )
 
     def _reset_hotkey_to_default(self) -> None:
         if self._hotkey_editor is None:
             return
         self._hotkey_editor.setKeySequence(hotkey_sequence(config.DEFAULT_CONFIG.get("TOGGLE_LOCK_HOTKEY")))
-        self._sync_hotkey_editor_width()
 
-    def _sync_hotkey_editor_width(self) -> None:
-        if self._hotkey_editor is None:
-            return
-        text = self._hotkey_editor.keySequence().toString()
-        if not text:
-            text = "按下快捷键"
-        width = self._hotkey_editor.fontMetrics().horizontalAdvance(text) + 36
-        self._hotkey_editor.setFixedWidth(max(92, min(240, width)))
+    @staticmethod
+    def _clear_key_sequence_editor(editor: _HotkeyEdit) -> None:
+        editor.clear()
+
+    def _build_interaction_options_row(self) -> QWidget:
+        row = QWidget()
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(14)
+
+        pure_checkbox = QCheckBox("纯净导航模式")
+        pure_checkbox.setChecked(bool(getattr(config, "PURE_NAVIGATION_MODE", False)))
+        pure_checkbox.setToolTip("开启后正常导航时只保留地图视图")
+        self._pure_navigation_checkbox = pure_checkbox
+        layout.addWidget(pure_checkbox)
+
+        lock_checkbox = QCheckBox("锁定状态流转")
+        lock_checkbox.setChecked(
+            bool(
+                getattr(
+                    config,
+                    "WINDOW_LOCK_FOLLOWS_GUIDE",
+                    config.DEFAULT_CONFIG.get("WINDOW_LOCK_FOLLOWS_GUIDE", False),
+                )
+            )
+        )
+        lock_checkbox.setToolTip("开启后进入或退出导航时锁定状态保持不变")
+        self._window_lock_follows_guide_checkbox = lock_checkbox
+        layout.addWidget(lock_checkbox)
+
+        annotation_checkbox = QCheckBox("标注栏固定在底部")
+        annotation_checkbox.setChecked(bool(getattr(config, "ANNOTATION_PANEL_FOLLOW_WINDOW", True)))
+        annotation_checkbox.setToolTip("开启后标注栏随主窗口移动")
+        self._annotation_panel_follow_checkbox = annotation_checkbox
+        layout.addWidget(annotation_checkbox)
+
+        layout.addStretch()
+        return row
 
     def _build_annotation_panel_follow_row(self) -> QWidget:
         row = QWidget()
@@ -1657,7 +1843,15 @@ class SettingsDialog(QDialog):
         layout.setSpacing(8)
 
         checkbox = QCheckBox("锁定跟随导航")
-        checkbox.setChecked(bool(getattr(config, "WINDOW_LOCK_FOLLOWS_GUIDE", False)))
+        checkbox.setChecked(
+            bool(
+                getattr(
+                    config,
+                    "WINDOW_LOCK_FOLLOWS_GUIDE",
+                    config.DEFAULT_CONFIG.get("WINDOW_LOCK_FOLLOWS_GUIDE", False),
+                )
+            )
+        )
         checkbox.setToolTip("开启后进入或退出导航时锁定状态保持不变，不再随导航生命周期切换。")
         self._window_lock_follows_guide_checkbox = checkbox
         layout.addWidget(checkbox)
@@ -2744,6 +2938,8 @@ class SettingsDialog(QDialog):
             result["ROUTE_GUIDE_DISABLE_NODE_DRAG"] = self._route_guide_disable_node_drag_checkbox.isChecked()
         if self._window_lock_follows_guide_checkbox is not None:
             result["WINDOW_LOCK_FOLLOWS_GUIDE"] = self._window_lock_follows_guide_checkbox.isChecked()
+        if self._pure_navigation_checkbox is not None:
+            result["PURE_NAVIGATION_MODE"] = self._pure_navigation_checkbox.isChecked()
         if self._route_node_icon_size_spin is not None:
             result["ROUTE_NODE_ICON_SIZE"] = int(self._route_node_icon_size_spin.value())
         if self._annotation_icon_size_spin is not None:
@@ -2761,6 +2957,36 @@ class SettingsDialog(QDialog):
                 styled_info(self, "快捷键无效", hotkey_error or "请重新录入一个有效快捷键。")
                 return None
             result["TOGGLE_LOCK_HOTKEY"] = hotkey_payload
+        action_hotkeys: dict[str, dict | None] = {}
+        for action, editor in self._action_hotkey_editors.items():
+            hotkey_payload, hotkey_error = payload_from_key_sequence(
+                editor.keySequence(),
+                allow_empty=True,
+            )
+            if hotkey_error is not None:
+                label = ACTION_HOTKEY_LABELS.get(action, action)
+                styled_info(self, "快捷键无效", f"{label}：{hotkey_error}")
+                return None
+            action_hotkeys[action] = hotkey_payload
+        if self._action_hotkey_editors:
+            if result.get("PURE_NAVIGATION_MODE") and action_hotkeys.get("terminate_navigation") is None:
+                styled_info(self, "纯净导航模式", "开启纯净导航模式前，请先设置终止导航快捷键。")
+                return None
+            duplicate = duplicate_hotkey_labels(
+                [("锁定/解锁", result.get("TOGGLE_LOCK_HOTKEY"))]
+                + [
+                    (ACTION_HOTKEY_LABELS.get(action, action), payload)
+                    for action, payload in action_hotkeys.items()
+                ]
+            )
+            if duplicate is not None:
+                styled_info(
+                    self,
+                    "快捷键重复",
+                    f"{duplicate[0]} 和 {duplicate[1]} 使用了相同快捷键，请调整后再保存。",
+                )
+                return None
+            result["ACTION_HOTKEYS"] = action_hotkeys
         for key, editor in self._opacity_editors.items():
             raw = editor.text().strip()
             if raw == "":
@@ -2872,6 +3098,10 @@ class SettingsDialog(QDialog):
             self._window_lock_follows_guide_checkbox.setChecked(
                 bool(config.DEFAULT_CONFIG.get("WINDOW_LOCK_FOLLOWS_GUIDE", False))
             )
+        if self._pure_navigation_checkbox is not None:
+            self._pure_navigation_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("PURE_NAVIGATION_MODE", False))
+            )
         if self._route_node_icon_size_spin is not None:
             self._route_node_icon_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ROUTE_NODE_ICON_SIZE", 24)))
         if self._annotation_icon_size_spin is not None:
@@ -2884,6 +3114,8 @@ class SettingsDialog(QDialog):
         self._route_default_color = self._route_colors["ROUTE_DEFAULT_COLOR"]
         self._sync_route_color_buttons()
         self._reset_hotkey_to_default()
+        for editor in self._action_hotkey_editors.values():
+            self._clear_key_sequence_editor(editor)
         for key, editor in self._opacity_editors.items():
             editor.setText(str(config.DEFAULT_CONFIG.get(key, 1.0)))
         self._refresh_map_file_combo(config.DEFAULT_CONFIG.get("MAP_FILE", ""))
@@ -2943,6 +3175,10 @@ def open_settings_dialog(
             _active_dialog = None
 
     dialog = SettingsDialog(parent)
+    hotkey_controller = getattr(parent, "hotkey_controller", None)
+    previous_hotkeys_suspended = bool(getattr(parent, "_hotkeys_suspended", False))
+    if hotkey_controller is not None and hasattr(hotkey_controller, "set_suspended"):
+        hotkey_controller.set_suspended(True)
     if on_applied is not None:
         dialog.applied.connect(on_applied)
     if on_annotation_refresh_requested is not None:
@@ -2952,6 +3188,8 @@ def open_settings_dialog(
     def _clear_ref():
         global _active_dialog
         _active_dialog = None
+        if hotkey_controller is not None and hasattr(hotkey_controller, "set_suspended"):
+            hotkey_controller.set_suspended(previous_hotkeys_suspended)
         if on_closed is not None:
             on_closed()
 

@@ -1,4 +1,4 @@
-"""Shared parsing and validation for the lock toggle hotkey."""
+"""Shared parsing and validation for configurable global hotkeys."""
 
 from __future__ import annotations
 
@@ -12,6 +12,26 @@ DEFAULT_TOGGLE_LOCK_HOTKEY = {
     "key": "QuoteLeft",
     "vk": 0xC0,
 }
+
+ACTION_HOTKEY_ACTIONS = (
+    "reset_view",
+    "relocate",
+    "start_navigation",
+    "terminate_navigation",
+    "jump_current_route_node",
+    "add_current_position_to_current_route",
+)
+
+ACTION_HOTKEY_LABELS = {
+    "reset_view": "重置视图",
+    "relocate": "重定位",
+    "start_navigation": "开始导航",
+    "terminate_navigation": "终止导航",
+    "jump_current_route_node": "跳转当前路线节点",
+    "add_current_position_to_current_route": "角色位置加入当前路线",
+}
+
+DEFAULT_ACTION_HOTKEYS = {action: None for action in ACTION_HOTKEY_ACTIONS}
 
 _MODIFIER_BITS = {
     "Ctrl": Qt.ControlModifier.value,
@@ -54,10 +74,9 @@ def default_hotkey() -> dict:
     return dict(DEFAULT_TOGGLE_LOCK_HOTKEY)
 
 
-def normalize_hotkey_payload(raw: object) -> dict:
-    """Return a valid hotkey payload, falling back to the default when needed."""
+def _valid_hotkey_payload(raw: object) -> dict | None:
     if not isinstance(raw, dict):
-        return default_hotkey()
+        return None
 
     modifiers = raw.get("modifiers")
     vk = raw.get("vk")
@@ -66,21 +85,44 @@ def normalize_hotkey_payload(raw: object) -> dict:
     sequence = str(raw.get("sequence") or "").strip()
     if (
         not isinstance(modifiers, list)
-        or not modifiers
         or any(modifier not in _MODIFIER_BITS for modifier in modifiers)
         or not isinstance(vk, int)
         or not 1 <= vk <= 0xFE
         or not isinstance(key, str)
         or not key.strip()
     ):
-        return default_hotkey()
+        return None
 
+    modifiers_set = set(modifiers)
     return {
-        "sequence": sequence or label or DEFAULT_TOGGLE_LOCK_HOTKEY["sequence"],
-        "label": label or sequence or DEFAULT_TOGGLE_LOCK_HOTKEY["label"],
-        "modifiers": [modifier for modifier in _MODIFIER_ORDER if modifier in set(modifiers)],
+        "sequence": sequence or label,
+        "label": label or sequence,
+        "modifiers": [modifier for modifier in _MODIFIER_ORDER if modifier in modifiers_set],
         "key": key.strip(),
         "vk": int(vk),
+    }
+
+
+def normalize_hotkey_payload(raw: object) -> dict:
+    """Return a valid hotkey payload, falling back to the default when needed."""
+    payload = _valid_hotkey_payload(raw)
+    if payload is None:
+        return default_hotkey()
+
+    payload["sequence"] = payload["sequence"] or DEFAULT_TOGGLE_LOCK_HOTKEY["sequence"]
+    payload["label"] = payload["label"] or DEFAULT_TOGGLE_LOCK_HOTKEY["label"]
+    return payload
+
+
+def normalize_optional_hotkey_payload(raw: object) -> dict | None:
+    return _valid_hotkey_payload(raw)
+
+
+def normalize_action_hotkeys(raw: object) -> dict[str, dict | None]:
+    source = raw if isinstance(raw, dict) else {}
+    return {
+        action: normalize_optional_hotkey_payload(source.get(action))
+        for action in ACTION_HOTKEY_ACTIONS
     }
 
 
@@ -88,8 +130,12 @@ def hotkey_label(raw: object) -> str:
     return str(normalize_hotkey_payload(raw)["label"])
 
 
-def hotkey_sequence(raw: object) -> QKeySequence:
-    payload = normalize_hotkey_payload(raw)
+def hotkey_sequence(raw: object, *, allow_empty: bool = False) -> QKeySequence:
+    payload = normalize_optional_hotkey_payload(raw)
+    if payload is None:
+        if allow_empty:
+            return QKeySequence()
+        payload = default_hotkey()
     sequence = QKeySequence(str(payload["sequence"]))
     if sequence.count() == 0:
         sequence = QKeySequence(str(payload["label"]))
@@ -98,16 +144,21 @@ def hotkey_sequence(raw: object) -> QKeySequence:
     return sequence
 
 
-def payload_from_key_sequence(sequence: QKeySequence) -> tuple[dict | None, str | None]:
+def payload_from_key_sequence(
+    sequence: QKeySequence,
+    *,
+    allow_empty: bool = False,
+) -> tuple[dict | None, str | None]:
+    if sequence.count() == 0:
+        if allow_empty:
+            return None, None
+        return None, "请录入一个快捷键。"
     if sequence.count() != 1:
         return None, "快捷键必须是单个组合键。"
 
     combo = sequence[0]
     key_value = combo.key().value
     modifiers = _modifiers_from_flags(_flag_value(combo.keyboardModifiers()))
-    if not modifiers:
-        return None, "快捷键必须包含 Ctrl、Alt、Shift 或 Win 中的至少一个修饰键。"
-
     vk = vk_from_qt_key(key_value)
     if vk is None:
         return None, "这个按键暂不支持注册为全局快捷键，请换一个组合。"
@@ -127,6 +178,25 @@ def payload_from_key_sequence(sequence: QKeySequence) -> tuple[dict | None, str 
         "key": key_name,
         "vk": vk,
     }, None
+
+
+def hotkey_signature(raw: object) -> tuple[tuple[str, ...], int] | None:
+    payload = normalize_optional_hotkey_payload(raw)
+    if payload is None:
+        return None
+    return tuple(str(modifier) for modifier in payload["modifiers"]), int(payload["vk"])
+
+
+def duplicate_hotkey_labels(items: list[tuple[str, object]]) -> tuple[str, str] | None:
+    seen: dict[tuple[tuple[str, ...], int], str] = {}
+    for label, payload in items:
+        signature = hotkey_signature(payload)
+        if signature is None:
+            continue
+        if signature in seen:
+            return seen[signature], label
+        seen[signature] = label
+    return None
 
 
 def key_name_from_qt_key(key_value: int) -> str | None:
@@ -189,9 +259,11 @@ def key_vk(raw: object) -> int:
 
 
 def qt_event_matches_hotkey(event, raw: object) -> bool:
-    payload = normalize_hotkey_payload(raw)
+    payload = normalize_optional_hotkey_payload(raw)
+    if payload is None:
+        return False
     event_modifiers = _modifiers_from_flags(_flag_value(event.modifiers()))
-    if not set(payload["modifiers"]).issubset(event_modifiers):
+    if set(payload["modifiers"]) != set(event_modifiers):
         return False
     key_value = _flag_value(event.key())
     return key_value in compatible_qt_keys(payload)

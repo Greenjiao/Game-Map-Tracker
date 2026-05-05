@@ -61,15 +61,10 @@ class TrackingController:
         self.window._update_lock_button_visibility()
 
     def restore_lock_state_after_lost(self) -> None:
-        import config
-
-        follow_guide = bool(getattr(config, "WINDOW_LOCK_FOLLOWS_GUIDE", False))
-        desired_locked = self.window._lock_state_before_lost
-        if desired_locked is None:
-            desired_locked = self.window._preferred_locked
+        desired_locked = self.window._preferred_locked
         self.exit_lost_mode(clear_saved_lock_state=False)
         self.window._lock_state_before_lost = None
-        if not follow_guide and desired_locked is not None and self.window._locked != desired_locked:
+        if self.window._locked != desired_locked:
             self.window._set_locked_state(desired_locked)
         self.window._update_lock_button_visibility()
 
@@ -114,8 +109,23 @@ class TrackingController:
             self.window.window_mode_controller.apply_compact_constraints(False)
             self.window.alert_terminate_btn.setVisible(False)
             self.window.state_hint_label.setVisible(True)
+            pure_active = getattr(self.window, "_is_pure_navigation_active", None)
+            if callable(pure_active) and pure_active():
+                apply_pure_navigation_ui = getattr(self.window, "_apply_pure_navigation_ui", None)
+                if callable(apply_pure_navigation_ui):
+                    apply_pure_navigation_ui()
+                sync_pure_height = getattr(self.window.window_mode_controller, "sync_pure_navigation_minimum_height", None)
+                if callable(sync_pure_height):
+                    sync_pure_height()
+                    self.window.setMinimumHeight(self.window._pure_navigation_minimum_height)
 
     def set_header_action_visibility(self, visible: bool) -> None:
+        pure_active = getattr(self.window, "_is_pure_navigation_active", None)
+        if callable(pure_active) and pure_active():
+            self.window.relocate_btn.setVisible(False)
+            self.window.reset_view_btn.setVisible(False)
+            self.window.sidebar_toggle_btn.setVisible(False)
+            return
         mode_enum = self.window._mode.__class__
         is_paused = self.window._mode in (mode_enum.PAUSED, mode_enum.MAXIMIZED)
         is_lost = self.window._mode == mode_enum.TRACKING_LOST

@@ -77,6 +77,14 @@ class WindowStateBridgeMixin:
         self.window_layout_prefs.compact_minimum_height = value
 
     @property
+    def _pure_navigation_minimum_height(self) -> int:
+        return self.window_layout_prefs.pure_navigation_minimum_height
+
+    @_pure_navigation_minimum_height.setter
+    def _pure_navigation_minimum_height(self, value: int) -> None:
+        self.window_layout_prefs.pure_navigation_minimum_height = value
+
+    @property
     def _sidebar_collapsed_before_pause(self):
         return self.window_layout_prefs.sidebar_collapsed_before_pause
 
@@ -355,3 +363,11 @@ class WindowStateBridgeMixin:
     @_alt_pressed.setter
     def _alt_pressed(self, value: bool) -> None:
         self.hotkey_state.alt_pressed = value
+
+    @property
+    def _hotkeys_suspended(self) -> bool:
+        return self.hotkey_state.suspended
+
+    @_hotkeys_suspended.setter
+    def _hotkeys_suspended(self, value: bool) -> None:
+        self.hotkey_state.suspended = bool(value)

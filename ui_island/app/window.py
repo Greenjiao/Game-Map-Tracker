@@ -67,14 +67,14 @@ _STABLE_FAMILY = {WindowMode.TRACKING_STABLE, WindowMode.TRACKING_INERTIAL}
 
 class IslandWindow(WindowStateBridgeMixin, QWidget):
     _frame_ready = Signal(object)
-    _toggle_lock_requested = Signal()
+    _hotkey_action_requested = Signal(str)
     _deferred_tracker_finished = Signal(object)
     _annotation_refresh_finished = Signal(int, str, str)
     _startup_update_check_finished = Signal(object)
     _startup_update_install_finished = Signal(object)
     _startup_update_progress_changed = Signal(str)
 
-    _NATIVE_HOTKEY_ID_ALT_GRAVE = 1
+    _NATIVE_HOTKEY_ID_BASE = 100
     _HOTKEY_DEBOUNCE_SEC = 0.35
     _AUTO_RECENTER_MOVE_THRESHOLD = 3
     _DISPLAY_LOCK_CONFIRM_FRAMES = 2
@@ -217,6 +217,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self._sidebar_resize_start_x = 0
         self._sidebar_resize_start_width = self._sidebar_width
         self._header_buttons_icon_only = False
+        self._pure_navigation_active = False
         self._mini_icon = None
         self._annotation_refresh_running = False
         self._annotation_refresh_toast = None
@@ -244,13 +245,13 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self._apply_configured_window_opacity()
         QTimer.singleShot(0, self._paint_default_map)
 
-        self._toggle_lock_requested.connect(self.toggle_lock, Qt.QueuedConnection)
         self._deferred_tracker_finished.connect(self._on_deferred_tracker_finished, Qt.QueuedConnection)
         self._annotation_refresh_finished.connect(self._on_annotation_refresh_finished, Qt.QueuedConnection)
         self._startup_update_check_finished.connect(self._on_startup_update_check_finished, Qt.QueuedConnection)
         self._startup_update_install_finished.connect(self._on_startup_update_install_finished, Qt.QueuedConnection)
         self._startup_update_progress_changed.connect(self._on_startup_update_progress_changed, Qt.QueuedConnection)
         self._frame_ready.connect(self._on_frame)
+        self._hotkey_action_requested.connect(self._handle_hotkey_action, Qt.QueuedConnection)
         self.map_view.add_point_requested.connect(self.map_interaction_controller.on_add_point_requested)
         self.map_view.add_route_node_requested.connect(self.map_interaction_controller.add_route_node_from_context_menu)
         self.map_view.add_annotation_requested.connect(self.map_interaction_controller.add_annotation_point)
@@ -1012,6 +1013,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         title = getattr(self, "tracked_routes_title", None)
         layout = getattr(self, "tracked_routes_header_layout", None)
         toggle_btn = getattr(self, "tracked_routes_toggle_btn", None)
+        clear_btn = getattr(self, "tracked_routes_clear_progress_btn", None)
         if label is None or header is None or title is None or layout is None or not label.text():
             return
 
@@ -1028,10 +1030,14 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         toggle_width = 0
         if toggle_btn is not None and toggle_btn.isVisible():
             toggle_width = max(toggle_btn.sizeHint().width(), toggle_btn.width()) + layout.spacing()
+        clear_width = 0
+        if clear_btn is not None and clear_btn.isVisible():
+            clear_width = max(clear_btn.sizeHint().width(), clear_btn.width()) + layout.spacing()
         available_width = (
             header_width
             - title_width
             - toggle_width
+            - clear_width
             - (layout.spacing() * 2)
             - margins.left()
             - margins.right()
@@ -1107,6 +1113,8 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         except Exception:
             pass
         self._sync_annotation_panel_follow_preference()
+        self._apply_pure_navigation_ui()
+        self.window_mode_controller.refresh_layout_constraints()
         if self.annotation_panel.isVisible():
             self._position_annotation_panel()
         self._sync_route_point_drag_enabled()
@@ -1223,9 +1231,94 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             )
 
     def _update_lock_button_visibility(self) -> None:
+        if self._is_pure_navigation_active():
+            self.terminate_nav_btn.setVisible(False)
+            self.lock_btn.setVisible(False)
+            return
         terminate_visible = self._mode in _STABLE_FAMILY
         self.terminate_nav_btn.setVisible(terminate_visible)
         self.lock_btn.setVisible(True)
+
+    def _is_pure_navigation_active(self) -> bool:
+        return self._mode in _STABLE_FAMILY and self.settings_gateway.get_pure_navigation_mode()
+
+    def _apply_pure_navigation_ui(self) -> None:
+        previous_active = bool(getattr(self, "_pure_navigation_active", False))
+        active = self._is_pure_navigation_active()
+        self._pure_navigation_active = active
+
+        root_layout = self.root.layout() if hasattr(self, "root") else None
+        if root_layout is not None:
+            if active:
+                root_layout.setContentsMargins(*getattr(self, "_pure_root_layout_margins", (8, 8, 8, 8)))
+                root_layout.setSpacing(getattr(self, "_pure_root_layout_spacing", 0))
+            else:
+                root_layout.setContentsMargins(*getattr(self, "_root_layout_margins", (12, 8, 12, 10)))
+                root_layout.setSpacing(getattr(self, "_root_layout_spacing", 8))
+
+        map_layout = self.map_shell.layout() if hasattr(self, "map_shell") else None
+        if map_layout is not None:
+            map_layout.setSpacing(
+                getattr(self, "_pure_map_layout_spacing", 0)
+                if active
+                else getattr(self, "_map_layout_spacing", 10)
+            )
+
+        chrome_widgets = (
+            getattr(self, "title_drag_area", None),
+            getattr(self, "settings_btn", None),
+            getattr(self, "min_btn", None),
+            getattr(self, "max_btn", None),
+            getattr(self, "close_btn", None),
+            getattr(self, "relocate_btn", None),
+            getattr(self, "reset_view_btn", None),
+            getattr(self, "sidebar_toggle_btn", None),
+            getattr(self, "terminate_nav_btn", None),
+            getattr(self, "lock_btn", None),
+        )
+        if active:
+            for widget in chrome_widgets:
+                if widget is not None:
+                    widget.setVisible(False)
+            self.tracked_routes_card.setVisible(True)
+            self.sidebar_shell.setVisible(False)
+        else:
+            self.title_drag_area.setVisible(True)
+            self.settings_btn.setVisible(True)
+            self.min_btn.setVisible(True)
+            self.max_btn.setVisible(True)
+            self.close_btn.setVisible(True)
+            self.tracked_routes_card.setVisible(self._mode != WindowMode.TRACKING_LOST)
+            if self._mode != WindowMode.TRACKING_LOST:
+                self.window_mode_controller.apply_sidebar_state()
+            header_visible = self._mode not in (WindowMode.MAXIMIZED, WindowMode.TRACKING_LOST)
+            self.tracking_controller.set_header_action_visibility(header_visible)
+            self._update_lock_button_visibility()
+
+        for layout in (root_layout, self.body_container.layout(), map_layout, getattr(self, "tracked_routes_layout", None)):
+            if layout is not None:
+                layout.invalidate()
+                layout.activate()
+
+        controller = getattr(self, "window_mode_controller", None)
+        if (
+            previous_active != active
+            and self._mode in _STABLE_FAMILY
+            and controller is not None
+            and not getattr(self, "_applying_mode", False)
+            and callable(getattr(self, "isMaximized", None))
+            and not self.isMaximized()
+        ):
+            current_h = self.height()
+            if active:
+                target_h = controller.pure_height_from_normal(current_h)
+                target_h = max(target_h, getattr(self, "_pure_navigation_minimum_height", 0))
+            else:
+                controller.sync_normal_minimum_height()
+                target_h = controller.normal_height_from_pure(current_h)
+                target_h = max(target_h, getattr(self, "_normal_minimum_height", 0))
+            if target_h != current_h:
+                controller.apply_geometry_for_mode((self.width(), target_h))
 
     def _is_unlock_only_lock_mode(self) -> bool:
         return False
@@ -1360,11 +1453,38 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         return super().eventFilter(watched, event)
 
     def keyPressEvent(self, event):
-        if qt_event_matches_hotkey(event, self.settings_gateway.get_toggle_lock_hotkey()):
+        for action, payload in self.hotkey_controller.configured_hotkeys():
+            if qt_event_matches_hotkey(event, payload):
+                self._handle_hotkey_action(action)
+                return
+        super().keyPressEvent(event)
+
+    def _handle_hotkey_action(self, action: str) -> None:
+        if self._hotkeys_suspended:
+            return
+        if action == "toggle_lock":
             if self._can_toggle_lock():
                 self.toggle_lock()
             return
-        super().keyPressEvent(event)
+        if action == "reset_view":
+            self._reset_map_view()
+            return
+        if action == "relocate":
+            self._prompt_relocate()
+            return
+        if action == "start_navigation":
+            mode_enum = self._mode.__class__
+            if self._mode in (mode_enum.PAUSED, mode_enum.MAXIMIZED):
+                self.tracking_controller.start_navigation()
+            return
+        if action == "terminate_navigation":
+            self.tracking_controller.pause_navigation()
+            return
+        if action == "jump_current_route_node":
+            self.route_panel_controller.jump_to_current_route_node()
+            return
+        if action == "add_current_position_to_current_route":
+            self.route_panel_controller.show_current_position_add_menu_for_current_route()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1381,7 +1501,12 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         if self.isMaximized() or self._applying_mode:
             return
 
-        if self._mode in _STABLE_FAMILY and not self._tracking_bootstrap_pending:
+        if self._is_pure_navigation_active():
+            if self._mode in _STABLE_FAMILY and not self._tracking_bootstrap_pending:
+                normal_h = self.window_mode_controller.normal_height_from_pure(self.height())
+                self._size_prefs[WindowMode.TRACKING_STABLE] = (self.width(), normal_h)
+                self._stable_size_save_timer.start()
+        elif self._mode in _STABLE_FAMILY and not self._tracking_bootstrap_pending:
             self._size_prefs[WindowMode.TRACKING_STABLE] = (self.width(), self.height())
             self._stable_size_save_timer.start()
         elif self._mode == WindowMode.TRACKING_LOST:
@@ -1447,7 +1572,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             self.tracking_controller.set_header_action_visibility(False)
             self.state_hint_label.setVisible(False)
         else:
-            self.setMinimumHeight(self._normal_minimum_height)
+            self.window_mode_controller._apply_window_minimum_height()
             self.tracking_controller.set_alert_mode(False)
             self.tracking_controller.set_header_action_visibility(True)
             self.state_hint_label.setVisible(True)

@@ -185,6 +185,54 @@ class ConfigMergeTests(unittest.TestCase):
         self.assertEqual(merged["TOGGLE_LOCK_HOTKEY"], config.DEFAULT_CONFIG["TOGGLE_LOCK_HOTKEY"])
         self.assertIn("TOGGLE_LOCK_HOTKEY", repaired)
 
+    def test_action_hotkey_settings_are_merged_empty_by_default(self) -> None:
+        merged, repaired = config.merge_config_payload(config.DEFAULT_CONFIG, {"CONFIG_VERSION": 2})
+
+        self.assertNotIn("ACTION_HOTKEYS", repaired)
+        self.assertEqual(
+            merged["ACTION_HOTKEYS"],
+            {
+                "reset_view": None,
+                "relocate": None,
+                "start_navigation": None,
+                "terminate_navigation": None,
+                "jump_current_route_node": None,
+                "add_current_position_to_current_route": None,
+            },
+        )
+
+        user = {
+            "CONFIG_VERSION": 2,
+            "ACTION_HOTKEYS": {
+                "reset_view": {
+                    "sequence": "R",
+                    "label": "R",
+                    "modifiers": [],
+                    "key": "R",
+                    "vk": 0x52,
+                }
+            },
+        }
+        merged, repaired = config.merge_config_payload(config.DEFAULT_CONFIG, user)
+
+        self.assertEqual(repaired, [])
+        self.assertEqual(merged["ACTION_HOTKEYS"]["reset_view"]["label"], "R")
+        self.assertIsNone(merged["ACTION_HOTKEYS"]["relocate"])
+
+    def test_pure_navigation_mode_is_merged_and_preserved(self) -> None:
+        merged, repaired = config.merge_config_payload(config.DEFAULT_CONFIG, {"CONFIG_VERSION": 2})
+
+        self.assertNotIn("PURE_NAVIGATION_MODE", repaired)
+        self.assertEqual(merged["PURE_NAVIGATION_MODE"], False)
+
+        merged, repaired = config.merge_config_payload(
+            config.DEFAULT_CONFIG,
+            {"CONFIG_VERSION": 2, "PURE_NAVIGATION_MODE": True},
+        )
+
+        self.assertEqual(repaired, [])
+        self.assertEqual(merged["PURE_NAVIGATION_MODE"], True)
+
     def test_annotation_group_expanded_is_merged_and_repaired(self) -> None:
         merged, _repaired = config.merge_config_payload(config.DEFAULT_CONFIG, {"CONFIG_VERSION": 2})
 

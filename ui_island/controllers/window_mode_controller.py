@@ -26,6 +26,31 @@ class WindowModeController:
             mode_enum.TRACKING_LOST,
         )
 
+    @staticmethod
+    def _window_lock_follows_guide() -> bool:
+        return bool(
+            getattr(
+                config,
+                "WINDOW_LOCK_FOLLOWS_GUIDE",
+                config.DEFAULT_CONFIG.get("WINDOW_LOCK_FOLLOWS_GUIDE", False),
+            )
+        )
+
+    def _desired_lock_state_for_mode(self, mode) -> bool | None:
+        mode_enum = self.window._mode.__class__
+        if self._window_lock_follows_guide():
+            return bool(self.window._preferred_locked)
+        if mode in (mode_enum.TRACKING_LOST, mode_enum.PAUSED):
+            return False
+        if mode in self._stable_family():
+            return bool(self.window._preferred_locked)
+        return None
+
+    def _apply_lock_state_for_mode(self, mode) -> None:
+        desired_locked = self._desired_lock_state_for_mode(mode)
+        if desired_locked is not None and self.window._locked != desired_locked:
+            self.window._set_locked_state(desired_locked)
+
     def window_geometry(self) -> QRect:
         screen = QGuiApplication.primaryScreen().availableGeometry()
         total_width = theme.EXPANDED_W + self.window._window_margin * 2
@@ -104,6 +129,90 @@ class WindowModeController:
             + theme.COMPACT_ALERT_HEIGHT
         )
 
+    def sync_pure_navigation_minimum_height(self) -> None:
+        root_layout = self.window.root.layout()
+        if root_layout is None:
+            return
+
+        for layout in (
+            root_layout,
+            self.window.body_container.layout(),
+            self.window.map_shell.layout(),
+        ):
+            if layout is not None:
+                layout.activate()
+
+        margins = root_layout.contentsMargins()
+        map_height = max(self.window.map_view.minimumHeight(), self.window.map_view.minimumSizeHint().height())
+        self.window._pure_navigation_minimum_height = (
+            self.window._window_margin * 2
+            + margins.top()
+            + margins.bottom()
+            + map_height
+        )
+
+    def _apply_window_minimum_height(self) -> int:
+        """根据当前 mode 与纯净状态选择并应用合适的窗口最小高度。返回所应用值。"""
+        mode_enum = self.window._mode.__class__
+        if self.window._mode == mode_enum.TRACKING_LOST:
+            self.sync_compact_minimum_height()
+            value = self.window._compact_minimum_height
+            self.window.setMinimumHeight(value)
+            return value
+        pure_active = getattr(self.window, "_is_pure_navigation_active", None)
+        if callable(pure_active) and pure_active():
+            self.sync_pure_navigation_minimum_height()
+            value = self.window._pure_navigation_minimum_height
+            self.window.setMinimumHeight(value)
+            return value
+        self.sync_normal_minimum_height()
+        value = self.window._normal_minimum_height
+        self.window.setMinimumHeight(value)
+        return value
+
+    def _normal_pure_offset(self) -> int:
+        """普通模式相对纯净模式的非地图固定开销（实时基于当前 layout 计算）。"""
+        root_layout = self.window.root.layout()
+        if root_layout is None:
+            return 0
+        for layout in (
+            root_layout,
+            self.window.body_container.layout(),
+            self.window.map_shell.layout(),
+            self.window.tracked_routes_layout,
+        ):
+            if layout is not None:
+                layout.activate()
+        margins = root_layout.contentsMargins()
+        spacing = root_layout.spacing()
+        header_item = root_layout.itemAt(0)
+        header_height = header_item.sizeHint().height() if header_item is not None else 0
+        body_height = self.window.body_container.minimumSizeHint().height()
+        normal_total = (
+            self.window._window_margin * 2
+            + margins.top()
+            + margins.bottom()
+            + header_height
+            + body_height
+            + spacing * 2
+        )
+        map_hint = self.window.map_view.minimumSizeHint().height()
+        map_height = max(theme.WINDOW_MIN_H, self.window.map_view.minimumHeight(), map_hint)
+        shell_height = self.window.map_shell.minimumSizeHint().height()
+        pure_total = (
+            self.window._window_margin * 2
+            + margins.top()
+            + margins.bottom()
+            + max(map_height, shell_height)
+        )
+        return max(0, normal_total - pure_total)
+
+    def pure_height_from_normal(self, normal_h: int) -> int:
+        return int(normal_h) - self._normal_pure_offset()
+
+    def normal_height_from_pure(self, pure_h: int) -> int:
+        return int(pure_h) + self._normal_pure_offset()
+
     def apply_compact_constraints(self, enabled: bool) -> None:
         clear_hint = getattr(self.window, "_clear_route_guide_hint", None)
         if enabled and callable(clear_hint):
@@ -151,7 +260,7 @@ class WindowModeController:
             self.window.alert_terminate_btn.setFixedHeight(theme.ALERT_ACTION_HEIGHT)
             alert.hide()
             body.show()
-            self.window.setMinimumHeight(self.window._normal_minimum_height)
+            self._apply_window_minimum_height()
             sync_routes = getattr(self.window.route_panel_controller, "sync_tracked_routes_height", None)
             if callable(sync_routes):
                 sync_routes(len(self.window.route_mgr.visible_routes()))
@@ -176,6 +285,21 @@ class WindowModeController:
             self.window.setMinimumWidth(self.window._normal_minimum_width)
             self.window.setMinimumHeight(self.window._compact_minimum_height)
             self.window.setMaximumHeight(self.window._compact_minimum_height)
+            return
+
+        pure_active = getattr(self.window, "_is_pure_navigation_active", None)
+        if callable(pure_active) and pure_active():
+            self.sync_pure_navigation_minimum_height()
+            self.sync_compact_minimum_height()
+            self.window.setMaximumHeight(16777215)
+            self.window.setMinimumWidth(self.window._normal_minimum_width)
+            self.window.setMinimumHeight(self.window._pure_navigation_minimum_height)
+            if (
+                not self.window.isMaximized()
+                and not self.window._applying_mode
+                and self.window.height() < self.window._pure_navigation_minimum_height
+            ):
+                self.apply_geometry_for_mode((self.window.width(), self.window._pure_navigation_minimum_height))
             return
 
         self.sync_normal_minimum_height()
@@ -353,7 +477,12 @@ class WindowModeController:
                 if not same_family_shift:
                     self.apply_geometry_for_mode(self.size_for_mode(new_mode))
                 else:
-                    self.window.setMinimumHeight(self.window._normal_minimum_height)
+                    pure_active = getattr(self.window, "_is_pure_navigation_active", None)
+                    if callable(pure_active) and pure_active():
+                        self.sync_pure_navigation_minimum_height()
+                        self.window.setMinimumHeight(self.window._pure_navigation_minimum_height)
+                    else:
+                        self.window.setMinimumHeight(self.window._normal_minimum_height)
 
             self.apply_mode_ui(new_mode, old_mode, tracking_modes)
             if new_mode == mode_enum.TRACKING_LOST and not self.window.isMaximized():
@@ -377,6 +506,11 @@ class WindowModeController:
         )
 
         if mode in self._stable_family():
+            pure_active = getattr(self.window, "_is_pure_navigation_active", None)
+            if callable(pure_active) and pure_active():
+                pure_minimum = getattr(self.window, "_pure_navigation_minimum_height", theme.WINDOW_MIN_H)
+                pure_h = max(pure_minimum, self.pure_height_from_normal(stable_size[1]))
+                return (stable_size[0], pure_h)
             return stable_size
 
         if mode == mode_enum.TRACKING_LOST:
@@ -403,6 +537,12 @@ class WindowModeController:
             self.window.setMinimumHeight(compact_minimum_height)
             self.window.setMaximumHeight(compact_minimum_height)
             h = compact_minimum_height
+        elif callable(getattr(self.window, "_is_pure_navigation_active", None)) and self.window._is_pure_navigation_active():
+            self.sync_pure_navigation_minimum_height()
+            pure_minimum = getattr(self.window, "_pure_navigation_minimum_height", theme.WINDOW_MIN_H)
+            self.window.setMaximumHeight(16777215)
+            self.window.setMinimumHeight(pure_minimum)
+            h = max(pure_minimum, h)
         else:
             self.window.setMaximumHeight(16777215)
             self.window.setMinimumHeight(self.window._normal_minimum_height)
@@ -451,14 +591,12 @@ class WindowModeController:
                         self.window.state_hint_label.setText("正在搜索目标，请稍候…")
                         self.window.state_hint_label.setStyleSheet("")
 
-            if new_mode in stable_family and old_mode in pause_family:
-                if not bool(getattr(config, "WINDOW_LOCK_FOLLOWS_GUIDE", False)):
-                    desired_locked = bool(self.window._preferred_locked)
-                    if self.window._locked != desired_locked:
-                        self.window._set_locked_state(desired_locked)
-
+        self._apply_lock_state_for_mode(new_mode)
         self.window._update_lock_button_visibility()
         self.window._update_header_button_labels()
+        apply_pure_navigation_ui = getattr(self.window, "_apply_pure_navigation_ui", None)
+        if callable(apply_pure_navigation_ui):
+            apply_pure_navigation_ui()
         sync_route_point_drag = getattr(self.window, "_sync_route_point_drag_enabled", None)
         if callable(sync_route_point_drag):
             sync_route_point_drag()

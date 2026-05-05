@@ -38,6 +38,13 @@ class SettingsGateway:
     def get_toggle_lock_hotkey(self):
         return getattr(config, "TOGGLE_LOCK_HOTKEY", None)
 
+    def get_action_hotkeys(self) -> dict:
+        raw = getattr(config, "ACTION_HOTKEYS", None)
+        return raw if isinstance(raw, dict) else {}
+
+    def get_pure_navigation_mode(self) -> bool:
+        return bool(getattr(config, "PURE_NAVIGATION_MODE", False))
+
     @staticmethod
     def _opacity(name: str, default: float) -> float:
         try:

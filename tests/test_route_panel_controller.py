@@ -1549,6 +1549,60 @@ class RoutePanelFilterTests(unittest.TestCase):
         self.assertEqual(window.map_view.focus_calls, [])
         self.assertEqual(window.relocate_calls, [])
 
+    def test_jump_to_current_route_node_uses_nearest_visible_route_target(self) -> None:
+        window = _FakeWindow("")
+        window._mode = _Mode.TRACKING_STABLE
+        window._last_player_xy = (90, 90)
+        window.route_mgr = _FakeRouteManager({
+            "route-far": {
+                "id": "route-far",
+                "points": [{"x": 500, "y": 500, "visited": False}],
+            },
+            "route-near": {
+                "id": "route-near",
+                "points": [{"x": 100, "y": 100, "visited": False}],
+            },
+        })
+        window.route_mgr.visibility = {"route-far": True, "route-near": True}
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            controller.jump_to_current_route_node()
+
+        self.assertEqual(window.map_view.focus_calls, [(100, 100)])
+
+    def test_current_position_hotkey_menu_uses_current_route_and_numeric_shortcuts(self) -> None:
+        window = _FakeWindow("")
+        window._last_player_xy = (90, 90)
+        window.map_interaction_controller = Mock()
+        window.route_mgr = _FakeRouteManager({
+            "route-near": {
+                "id": "route-near",
+                "points": [{"x": 100, "y": 100, "visited": False}],
+            }
+        })
+        window.route_mgr.visibility = {"route-near": True}
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.show_context_menu") as menu:
+            controller.show_current_position_add_menu_for_current_route()
+
+        menu.assert_called_once()
+        items = list(menu.call_args.args[2])
+        self.assertEqual(len(items), 3)
+        self.assertEqual([item.shortcut for item in items], ["1", "2", "3"])
+        self.assertIn("按1", items[0].text)
+
+        window.map_interaction_controller.add_route_node_from_context_menu.assert_not_called()
+        items[0].callback()
+        window.map_interaction_controller.add_route_node_from_context_menu.assert_called_once_with(
+            90,
+            90,
+            NODE_TYPE_COLLECT,
+            route_ids=["route-near"],
+            show_dialog=False,
+        )
+
     def test_current_position_add_menu_contains_new_node_actions(self) -> None:
         window = _FakeWindow("")
         window._last_player_xy = (12, 34)

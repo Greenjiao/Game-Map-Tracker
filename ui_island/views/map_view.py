@@ -93,7 +93,7 @@ class MapView(QWidget):
         self._missing_map_notice_visible = False
         self._ARROW_HALF = 16   # 从小地图中心裁取 ±16px 的箭头区域
         self._arrow_alpha = self._build_arrow_alpha(self._ARROW_HALF)
-        self.setMinimumSize(260, 180)
+        self.setMinimumSize(260, 60)
         self.setAttribute(Qt.WA_OpaquePaintEvent, False)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.StrongFocus)
