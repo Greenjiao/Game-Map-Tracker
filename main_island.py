@@ -17,6 +17,7 @@ from datetime import datetime
 import numpy as np
 from PySide6.QtWidgets import QApplication
 
+from Plan_SIFT.hybrid_tracker import HybridTracker
 import config
 
 # 把 C 层崩溃（段错误等）的栈写到日志，否则 Qt native crash 会静默退出
@@ -73,7 +74,7 @@ def build_tracker() -> tuple[BaseTracker, Callable[[], BaseTracker] | None]:
     from Plan_SIFT import SiftTracker, has_valid_descriptor_cache
     try:
         if has_valid_descriptor_cache(map_path):
-            return SiftTracker(), None
+            return HybridTracker(SiftTracker()), None
         logic_map_bgr = imread_unicode(map_path)
         if logic_map_bgr is None:
             raise FileNotFoundError(f"Could not load logic map: {map_path}")
