@@ -47,7 +47,15 @@ from ..services.app_updater import (
 )
 from ..services.annotation_preferences import annotation_preset_names, normalize_annotation_presets, normalize_type_ids
 from ..services.hotkey_config import hotkey_label, qt_event_matches_hotkey
-from ..state import HotkeyState, RouteDrawingState, RoutePanelState, TrackingState, WindowLayoutPrefs, WindowModeState
+from ..state import (
+    HotkeyState,
+    RouteCalibrationState,
+    RouteDrawingState,
+    RoutePanelState,
+    TrackingState,
+    WindowLayoutPrefs,
+    WindowModeState,
+)
 from ..views.map_coordinates import MapCoordinateAdapter
 from ..widgets import RestoreIcon
 from ..platform.win_overlay import apply_overlay_flags, set_click_through
@@ -97,6 +105,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.window_layout_prefs = WindowLayoutPrefs()
         self.route_panel_state = RoutePanelState()
         self.route_drawing_state = RouteDrawingState()
+        self.route_calibration_state = RouteCalibrationState()
         self.tracking_state = TrackingState()
         self.hotkey_state = HotkeyState()
         self.route_panel_controller = RoutePanelController(self)
@@ -275,6 +284,9 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.map_view.route_point_move_requested.connect(self.map_interaction_controller.move_route_point_preview)
         self.map_view.route_point_move_finished.connect(self.map_interaction_controller.finish_move_route_point)
         self.map_view.route_point_move_undo_requested.connect(self.map_interaction_controller.undo_route_point_move)
+        self.map_view.route_calibration_drag_delta_requested.connect(
+            self.route_panel_controller.apply_route_calibration_drag_delta
+        )
         self.annotation_toggle_btn.clicked.connect(lambda _checked=False: self._toggle_annotation_panel())
         self.annotation_panel.set_group_expanded_state(
             self.annotation_group_expanded,
@@ -373,7 +385,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             self,
             "资源兼容提醒",
             "\n".join(f"- {message}" for message in messages)
-            + "\n\n若提示路线不兼容并且点位偏离，请前往设置窗口进行路线转换，若你觉得路线无误，可以对路线分类右键手动进行批量兼容",
+            + "\n\n若提示路线不兼容并且点位偏离，可以右键路线校准坐标或右键分类栏目批量校准坐标，若点位准确不需校准，可以右键路线列表分类栏目批量设置兼容",
         )
 
     def _show_missing_map_notice(self) -> None:
@@ -962,6 +974,30 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
 
         threading.Thread(target=worker, daemon=True).start()
 
+    def _on_annotation_calibration_requested(self, payload: object) -> None:
+        if not isinstance(payload, dict):
+            return
+        dialog = payload.get("dialog")
+        path = str(payload.get("annotation_path") or "")
+        transform = payload.get("coord_transform")
+        if dialog is not None:
+            try:
+                dialog.hide()
+            except RuntimeError:
+                dialog = None
+        started = self.route_panel_controller.begin_annotation_calibration(
+            path,
+            transform if isinstance(transform, dict) else None,
+            settings_dialog=dialog,
+        )
+        if not started and dialog is not None:
+            try:
+                dialog.show()
+                dialog.raise_()
+                dialog.activateWindow()
+            except RuntimeError:
+                pass
+
     def _on_annotation_refresh_finished(self, code: int, error: str, output_rel: str = "") -> None:
         self._annotation_refresh_running = False
         if self._annotation_refresh_toast is not None:
@@ -1098,6 +1134,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             on_applied=self._on_settings_applied,
             on_closed=lambda: self.settings_btn.setChecked(False),
             on_annotation_refresh_requested=self._on_annotation_refresh_requested,
+            on_annotation_calibration_requested=self._on_annotation_calibration_requested,
         )
 
     @staticmethod
@@ -1182,6 +1219,14 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         toolbar = getattr(self, "route_drawing_toolbar", None)
         if toolbar is not None:
             toolbar.hide()
+        for panel_name in (
+            "route_calibration_action_panel",
+            "route_calibration_x_panel",
+            "route_calibration_y_panel",
+        ):
+            panel = getattr(self, panel_name, None)
+            if panel is not None:
+                panel.hide()
         geom = self.frameGeometry()
         anchor = geom.topLeft()
         self._mini_icon = RestoreIcon(self, self._restore_from_icon, self._close_app_from_icon)
@@ -1204,6 +1249,10 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         if drawing is not None and drawing.active:
             QTimer.singleShot(0, self.route_panel_controller._sync_route_drawing_ui)
             QTimer.singleShot(60, self.route_panel_controller.position_route_drawing_toolbar)
+        calibration = getattr(self, "route_calibration_state", None)
+        if calibration is not None and calibration.active:
+            QTimer.singleShot(0, self.route_panel_controller._sync_route_calibration_ui)
+            QTimer.singleShot(60, self.route_panel_controller.position_route_calibration_controls)
 
     def _close_app_from_icon(self) -> None:
         if self._mini_icon is not None:
@@ -1544,6 +1593,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self._update_window_controls()
         self.window_mode_controller.position_sidebar_overlay()
         self.route_panel_controller.position_route_drawing_toolbar()
+        self.route_panel_controller.position_route_calibration_controls()
         if (
             getattr(self, "annotation_panel", None) is not None
             and self.annotation_panel.isVisible()
@@ -1574,6 +1624,7 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
     def moveEvent(self, event):
         super().moveEvent(event)
         self.route_panel_controller.position_route_drawing_toolbar()
+        self.route_panel_controller.position_route_calibration_controls()
         if not self._applying_mode and not self.isMaximized():
             self._preferred_right_edge = self.x() + self.width()
         if (

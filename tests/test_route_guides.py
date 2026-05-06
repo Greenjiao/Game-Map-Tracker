@@ -1,4 +1,4 @@
-﻿import json
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -961,6 +961,38 @@ class RouteGuideTests(unittest.TestCase):
             self.assertNotIn("format_version", payload)
             self.assertEqual(payload["enable_versions"], ["old-format", resource_metadata.APP_FORMAT_VERSION])
 
+    def test_save_route_calibration_writes_transform_and_appends_current_enable_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps(
+                    {
+                        "id": "2026010101",
+                        "enable_versions": ["old-format"],
+                        "name": "route",
+                        "points": [{"x": 1, "y": 2}],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertTrue(
+                manager.save_route_calibration(
+                    "2026010101",
+                    {"scale_x": 1.1, "scale_y": 1.0, "offset_x": 12.0, "offset_y": 0.0},
+                )
+            )
+
+            payload = json.loads(route_file.read_text(encoding="utf-8"))
+            self.assertEqual(payload["enable_versions"], ["old-format", resource_metadata.APP_FORMAT_VERSION])
+            self.assertEqual(payload["coord_transform"]["scale_x"], 1.1)
+            self.assertEqual(payload["coord_transform"]["offset_x"], 12.0)
+
     def test_update_route_enable_versions_respects_manual_selection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
@@ -1013,7 +1045,7 @@ class RouteGuideTests(unittest.TestCase):
 
             payload = json.loads(route_file.read_text(encoding="utf-8"))
             self.assertEqual(payload["format_version"], "old-format")
-            self.assertEqual(payload["enable_versions"], ["old-format"])
+            self.assertEqual(payload["enable_versions"], [])
 
     def test_update_route_enable_versions_keeps_empty_array_without_format_version(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -9,7 +9,7 @@ from unittest.mock import patch
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtGui import QKeySequence
-from PySide6.QtWidgets import QApplication, QCheckBox, QLabel, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton, QWidget
 
 import config
 from ui_island.app.window import IslandWindow
@@ -112,6 +112,30 @@ class SettingsDialogMapTests(unittest.TestCase):
         self.assertTrue(all(editor.maximumWidth() == 60 for editor in editors))
         dialog.close()
 
+    def test_resource_tab_annotation_rows_use_standard_spacing(self) -> None:
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+
+        container = dialog.findChild(QWidget, "AnnotationFileSettingsContainer")
+
+        self.assertIsNotNone(container)
+        self.assertEqual(container.layout().spacing(), 10)
+        dialog.close()
+
+    def test_coord_tab_shows_global_transform_warning_hint_only_there(self) -> None:
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+        hints = [
+            label
+            for label in dialog.findChildren(QLabel)
+            if label.property("settingsCoordTransformHint")
+        ]
+
+        self.assertEqual(len(hints), 1)
+        self.assertEqual(hints[0].text(), "若无法确定路线来源一致，请不改动此处全局坐标变换参数。")
+        self.assertEqual(hints[0].objectName(), "StatLabel")
+        dialog.close()
+
     def test_annotation_coord_transform_inputs_are_compact_line_edits(self) -> None:
         dialog = SettingsDialog(None)
         self._app.processEvents()
@@ -126,6 +150,44 @@ class SettingsDialogMapTests(unittest.TestCase):
         self.assertTrue(all(editor.minimumWidth() == 56 for editor in editors))
         self.assertTrue(all(editor.maximumWidth() == 56 for editor in editors))
         dialog.close()
+
+    def test_annotation_coord_row_has_manual_calibration_button(self) -> None:
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+
+        buttons = [button.text() for button in dialog.findChildren(QPushButton)]
+
+        self.assertIn("手动校准", buttons)
+        dialog.close()
+
+    def test_annotation_manual_calibration_emits_path_and_current_transform(self) -> None:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as handle:
+            json.dump({"types": [], "pointsByType": {}}, handle)
+            path = handle.name
+        try:
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+            dialog._annotation_current_payload_path = lambda: path
+            dialog._annotation_coord_editors["scale_x"].setText("1.25")
+            dialog._annotation_coord_editors["scale_y"].setText("0.75")
+            dialog._annotation_coord_editors["offset_x"].setText("12.5")
+            dialog._annotation_coord_editors["offset_y"].setText("-4")
+            emitted: list[dict] = []
+            dialog.annotation_calibration_requested.connect(lambda payload: emitted.append(payload))
+            button = next(button for button in dialog.findChildren(QPushButton) if button.text() == "手动校准")
+
+            button.click()
+
+            self.assertEqual(len(emitted), 1)
+            self.assertEqual(emitted[0]["annotation_path"], path)
+            self.assertIs(emitted[0]["dialog"], dialog)
+            self.assertEqual(
+                emitted[0]["coord_transform"],
+                {"scale_x": 1.25, "scale_y": 0.75, "offset_x": 12.5, "offset_y": -4.0},
+            )
+            dialog.close()
+        finally:
+            os.remove(path)
 
     def test_settings_applied_rebuilds_map_coordinate_adapter(self) -> None:
         class FakeMapView:

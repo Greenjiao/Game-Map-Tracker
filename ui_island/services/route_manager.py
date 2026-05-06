@@ -236,6 +236,7 @@ _ROUTE_PAYLOAD_KEY_ORDER = (
     "name",
     "notes",
     "loop",
+    "coord_transform",
     "points",
     "nodes",
 )
@@ -2514,12 +2515,7 @@ class RouteManager:
 
         had_enable_versions = "enable_versions" in route
         old_enable_versions = route.get("enable_versions", None)
-        cleaned = resource_metadata.normalize_enable_versions(
-            [
-                resource_metadata.format_version_as_enable_version(route),
-                *resource_metadata.normalize_enable_versions(versions),
-            ]
-        )
+        cleaned = resource_metadata.normalize_enable_versions(versions)
         route["enable_versions"] = cleaned
         try:
             self._write_route_file(
@@ -2622,6 +2618,75 @@ class RouteManager:
             return False
         return True
 
+    def save_route_calibration(
+        self,
+        route_ref: str,
+        coord_transform: dict | None,
+    ) -> bool:
+        route_id = self.resolve_route_id(route_ref)
+        if route_id is None:
+            return False
+        route = self.route_for_id(route_id)
+        if route is None:
+            return False
+        category = self.category_for_route_id(route_id)
+        name = route.get("display_name") or route.get("name")
+        if not category or not name:
+            return False
+
+        had_transform = "coord_transform" in route
+        previous_transform = route.get("coord_transform")
+        had_enable_versions = "enable_versions" in route
+        previous_enable_versions = route.get("enable_versions")
+
+        resource_metadata.apply_coord_transform_to_payload(route, coord_transform)
+        enable_versions = resource_metadata.normalize_enable_versions(
+            previous_enable_versions if isinstance(previous_enable_versions, list) else []
+        )
+        current_version = resource_metadata.APP_FORMAT_VERSION
+        if current_version not in enable_versions:
+            enable_versions.append(current_version)
+        route["enable_versions"] = enable_versions
+
+        try:
+            self._write_route_file(
+                category,
+                name,
+                route,
+                preserve_manual_enable_versions=True,
+            )
+        except Exception as e:
+            if had_transform:
+                route["coord_transform"] = previous_transform
+            else:
+                route.pop("coord_transform", None)
+            if had_enable_versions:
+                route["enable_versions"] = previous_enable_versions
+            else:
+                route.pop("enable_versions", None)
+            print(f"Save route calibration failed {self._route_file_path(category, name)}: {e}")
+            return False
+        return True
+
+    def save_annotation_calibration(
+        self,
+        annotation_path: str,
+        coord_transform: dict | None,
+    ) -> bool:
+        file_path = os.fspath(annotation_path or "")
+        if not file_path or not os.path.isfile(file_path):
+            return False
+        try:
+            with open(file_path, "r", encoding="utf-8-sig") as handle:
+                payload = json.load(handle)
+        except Exception as exc:
+            print(f"Load annotation calibration failed {file_path}: {exc}")
+            return False
+        if not isinstance(payload, dict):
+            return False
+        resource_metadata.apply_coord_transform_to_payload(payload, coord_transform)
+        return self._write_annotation_payload(file_path, payload)
+
     def route_coord_transform(self, route_ref: str) -> dict | None:
         route = self.route_for_id(route_ref)
         if route is None:
@@ -2685,6 +2750,7 @@ class RouteManager:
         scale_x: float = 1.0,
         scale_y: float = 1.0,
         map_pixels_per_screen_px: float | None = None,
+        skip_annotations: bool = False,
     ) -> None:
         scale_x = float(scale_x or 1.0)
         scale_y = float(scale_y or 1.0)
@@ -2706,19 +2772,20 @@ class RouteManager:
 
         if map_pixels_per_screen_px is None:
             map_pixels_per_screen_px = max(1.0 / max(scale_x, 1e-6), 1.0 / max(scale_y, 1e-6))
-        self._draw_annotations(
-            canvas,
-            vx1,
-            vy1,
-            canvas_width,
-            canvas_height,
-            viewport_width=viewport_width,
-            viewport_height=viewport_height,
-            scale_x=scale_x,
-            scale_y=scale_y,
-            map_pixels_per_screen_px=float(map_pixels_per_screen_px),
-            coord_adapter=coord_adapter,
-        )
+        if not skip_annotations:
+            self._draw_annotations(
+                canvas,
+                vx1,
+                vy1,
+                canvas_width,
+                canvas_height,
+                viewport_width=viewport_width,
+                viewport_height=viewport_height,
+                scale_x=scale_x,
+                scale_y=scale_y,
+                map_pixels_per_screen_px=float(map_pixels_per_screen_px),
+                coord_adapter=coord_adapter,
+            )
         visible_routes = [
             route
             for _category, route in self.iter_routes()
@@ -2765,6 +2832,8 @@ class RouteManager:
             is_drawing_route = drawing_route is not None and route is drawing_route
             draw_records.append((route, color, local_points, map_points, points, is_drawing_route))
 
+            if bool(route.get("_annotation_calibration")):
+                continue
             for index in range(len(local_points) - 1):
                 start = local_points[index]
                 end = local_points[index + 1]
@@ -2815,6 +2884,7 @@ class RouteManager:
                     color=self.pointer_arrow_color(),
                 )
         for _route, color, local_points, _map_points, points, _is_drawing_route in draw_records:
+            is_annotation_calibration = bool(_route.get("_annotation_calibration"))
             for index, (local_point, point_data) in enumerate(zip(local_points, points)):
                 if local_point is None:
                     continue
@@ -2822,7 +2892,11 @@ class RouteManager:
                     continue
 
                 visited = point_data.get("visited", False)
-                point_icon = self.point_icon_for(point_data.get("typeId"))
+                point_icon = (
+                    self.annotation_icon_for(point_data.get("typeId"))
+                    if is_annotation_calibration
+                    else self.point_icon_for(point_data.get("typeId"))
+                )
                 visited_point_opacity = _config_opacity("ROUTE_VISITED_POINT_OPACITY", 1.0)
                 visited_icon_opacity = _config_opacity("ROUTE_VISITED_ICON_OPACITY", _POINT_ICON_VISITED_ALPHA)
 
@@ -2848,6 +2922,8 @@ class RouteManager:
                     _draw_circle_with_opacity(canvas, local_point, dot_radius, dot_color, -1, opacity)
                     _draw_circle_with_opacity(canvas, local_point, dot_radius, border_color, 1, opacity)
 
+                if is_annotation_calibration:
+                    continue
                 if not _config_bool("ROUTE_NODE_ORDER_VISIBLE", True):
                     continue
 

@@ -1,39 +1,38 @@
 {
     "CONFIG_VERSION": 5,
     "MINIMAP": {
-        "top": 65,
-        "left": 2301,
-        "width": 212,
-        "height": 212
+        "top": 57,
+        "left": 2294,
+        "width": 226,
+        "height": 226
     },
     "WINDOW_GEOMETRY": {
-        "x": 727,
-        "y": 287,
-        "width": 766,
-        "height": 500
+        "x": 761,
+        "y": 85,
+        "width": 713,
+        "height": 410
     },
     "LOCKED_VIEW_SIZE": {
-        "width": 420,
-        "height": 380
+        "width": 542,
+        "height": 314
     },
     "PAUSED_VIEW_SIZE": {
-        "width": 766,
-        "height": 500
+        "width": 713,
+        "height": 410
     },
-    "SIDEBAR_COLLAPSED": false,
+    "SIDEBAR_COLLAPSED": true,
     "SIDEBAR_WIDTH": 231,
     "PAUSED_SIDEBAR_WIDTH": 231,
     "VIEW_SIZE": 400,
-    "MAP_FILE": "maps/卡洛西亚大陆/big_map_17173.png",
-    "LOGIC_MAP_PATH": "maps/卡洛西亚大陆/big_map_17173.png",
+    "MAP_FILE": "maps/卡洛西亚大陆/big_map_new.png",
     "ANNOTATION_FILE": "annotations/points_17173.json",
-    "MAX_LOST_FRAMES": 30,
+    "MAX_LOST_FRAMES": 150,
     "SIFT_REFRESH_RATE": 30,
-    "SIFT_CLAHE_LIMIT": 3.0,
-    "SIFT_MATCH_RATIO": 0.9,
-    "SIFT_MIN_MATCH_COUNT": 5,
-    "SIFT_RANSAC_THRESHOLD": 8.0,
-    "SIFT_LOCAL_SEARCH_RADIUS": 400,
+    "SIFT_CLAHE_LIMIT": 5.0,
+    "SIFT_MATCH_RATIO": 0.8,
+    "SIFT_MIN_MATCH_COUNT": 8,
+    "SIFT_RANSAC_THRESHOLD": 5.0,
+    "SIFT_LOCAL_SEARCH_RADIUS": 200,
     "ROUTE_GUIDE_NODE_DISTANCE": 40,
     "ROUTE_GUIDE_SEGMENT_DISTANCE": 30,
     "ROUTE_GUIDE_POINTER_SPACING": 28,
@@ -55,16 +54,64 @@
         "key": "QuoteLeft",
         "vk": 192
     },
+    "ACTION_HOTKEYS": {
+        "reset_view": {
+            "sequence": "Ctrl+2",
+            "label": "Ctrl+2",
+            "modifiers": [
+                "Ctrl"
+            ],
+            "key": "2",
+            "vk": 50
+        },
+        "relocate": {
+            "sequence": "Ctrl+3",
+            "label": "Ctrl+3",
+            "modifiers": [
+                "Ctrl"
+            ],
+            "key": "3",
+            "vk": 51
+        },
+        "start_navigation": null,
+        "terminate_navigation": null,
+        "jump_current_route_node": {
+            "sequence": "Ctrl+4",
+            "label": "Ctrl+4",
+            "modifiers": [
+                "Ctrl"
+            ],
+            "key": "4",
+            "vk": 52
+        },
+        "add_current_position_to_current_route": {
+            "sequence": "5",
+            "label": "5",
+            "modifiers": [],
+            "key": "5",
+            "vk": 53
+        }
+    },
     "ROUTE_VISITED_POINT_OPACITY": 1.0,
     "ROUTE_VISITED_ICON_OPACITY": 0.35,
+    "ROUTE_GUIDE_DISABLE_NODE_DRAG": true,
+    "ROUTE_NODE_ORDER_VISIBLE": false,
+    "ROUTE_NODE_ICON_SIZE": 20,
+    "ANNOTATION_ICON_SIZE": 20,
+    "ROUTE_NODE_DOT_SIZE": 5,
+    "WINDOW_LOCK_FOLLOWS_GUIDE": true,
+    "PURE_NAVIGATION_MODE": false,
+    "ROUTE_NOTES_DIALOG_WIDTH": 860,
+    "ROUTE_NOTES_NODE_PANEL_WIDTH": 365,
     "WINDOW_LOCKED_OPACITY": 0.78,
     "WINDOW_NORMAL_OPACITY": 1.0,
     "ROUTE_SECTION_EXPANDED": {
-        "其他": false,
+        "其他": true,
         "地区路线": false,
         "植物": false,
         "矿物": false,
-        "特定精灵球": false
+        "特定精灵球": false,
+        "奔波鼠路线-一枕月眠": false
     },
     "ANNOTATION_TYPE_IDS": [
         "17310030001",
@@ -146,6 +193,30 @@
         "17310030081",
         "17310030082"
     ],
+    "ANNOTATION_PRESETS": [
+        {
+            "id": "preset_3e2f22e82cf14888b6830b2da5047a65",
+            "name": "常用传送点",
+            "type_ids": [
+                "17310030024",
+                "17310030025",
+                "17310030038",
+                "17310030039",
+                "17310030040",
+                "17310030041"
+            ]
+        },
+        {
+            "id": "preset_7eab6eb79ce64b529cc749cbbe0fa6c9",
+            "name": "常用采集路线1_只显示矿",
+            "type_ids": [
+                "17310030043",
+                "17310030044",
+                "17310030045",
+                "17310030046"
+            ]
+        }
+    ],
     "ANNOTATION_GROUP_EXPANDED": {
         "地点": true,
         "花草": false,
@@ -158,6 +229,15 @@
         "标注": true,
         "标注方案预设": false
     },
-    "APP_UPDATE_LAST_PROMPTED_VERSION": "0.1.3",
-    "APP_NOTICE_LAST_ACK_KEY": "5d4e30788db431fe44ba2fe9f5bf8b176425abc5219c19b651ab059646e171fb"
+    "ANNOTATION_PANEL_FOLLOW_WINDOW": true,
+    "ANNOTATION_PANEL_OFFSET": {},
+    "ANNOTATION_PANEL_MAXIMIZED_OFFSET": {},
+    "ANNOTATION_PANEL_POSITION": {},
+    "ANNOTATION_PANEL_MAXIMIZED_POSITION": {},
+    "APP_UPDATE_LAST_PROMPTED_VERSION": "0.1.5",
+    "APP_NOTICE_LAST_ACK_KEY": "69ef27e2f9ae4bccce7bd497703417812b79c515f5793ff5f6ab3c4a09b88ada",
+    "COORD_SCALE_X": 1.0,
+    "COORD_SCALE_Y": 1.0,
+    "COORD_OFFSET_X": 0.0,
+    "COORD_OFFSET_Y": 0.0
 }

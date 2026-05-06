@@ -25,6 +25,7 @@ debug_minimap.png
 .idea/
 .vscode/
 .claude/
+.trae/
 
 
 # SIFT base-map descriptor cache (regenerated automatically on first launch)

@@ -171,6 +171,31 @@ class RouteNotesDialogTests(unittest.TestCase):
         self.assertIsNotNone(order_input)
         self.assertEqual(order_input.contextMenuPolicy(), Qt.NoContextMenu)
 
+    def test_default_node_panel_does_not_render_coord_editors(self) -> None:
+        panel = RouteNodeEditorPanel(None)
+        panel.set_nodes([{"x": 1, "y": 2}])
+
+        self.assertIsNone(panel.findChild(QLineEdit, "RouteNotesNodeX"))
+        self.assertIsNone(panel.findChild(QLineEdit, "RouteNotesNodeY"))
+
+    def test_route_details_node_rows_render_coord_editors(self) -> None:
+        dialog = RouteNotesDialog(None, "Route", "", (0x56, 0x34, 0x12), None, [{"x": 1, "y": 2}])
+
+        x_editor = dialog.findChild(QLineEdit, "RouteNotesNodeX")
+        y_editor = dialog.findChild(QLineEdit, "RouteNotesNodeY")
+
+        self.assertIsNotNone(x_editor)
+        self.assertIsNotNone(y_editor)
+        self.assertEqual(x_editor.text(), "1")
+        self.assertEqual(y_editor.text(), "2")
+        self.assertEqual(x_editor.contextMenuPolicy(), Qt.NoContextMenu)
+        self.assertEqual(y_editor.contextMenuPolicy(), Qt.NoContextMenu)
+        prefixes = [
+            label.text()
+            for label in dialog.findChildren(QLabel, "RouteNotesNodeCoordPrefix")
+        ]
+        self.assertEqual(prefixes, ["x", "y"])
+
     def test_dialog_renders_old_auto_name_as_refreshed_display_name(self) -> None:
         dialog = RouteNotesDialog(
             None,
@@ -205,6 +230,54 @@ class RouteNotesDialogTests(unittest.TestCase):
         self.assertEqual(dialog.nodes()[0]["label"], "新节点")
         self.assertEqual(dialog.nodes()[1]["label"], "节点 2")
         self.assertTrue(dialog.nodes_changed())
+
+    def test_node_coord_inputs_update_returned_node_draft(self) -> None:
+        dialog = RouteNotesDialog(
+            None,
+            "Route",
+            "",
+            (0x56, 0x34, 0x12),
+            None,
+            [{"x": 1, "y": 2}, {"x": 3, "y": 4}],
+        )
+        x_editors = dialog.findChildren(QLineEdit, "RouteNotesNodeX")
+        y_editors = dialog.findChildren(QLineEdit, "RouteNotesNodeY")
+
+        x_editors[0].setText("10.5")
+        x_editors[0].textEdited.emit("10.5")
+        y_editors[1].setText("20")
+        y_editors[1].textEdited.emit("20")
+
+        self.assertEqual(dialog.nodes()[0]["x"], 10.5)
+        self.assertEqual(dialog.nodes()[0]["y"], 2)
+        self.assertEqual(dialog.nodes()[1]["x"], 3)
+        self.assertEqual(dialog.nodes()[1]["y"], 20)
+        self.assertTrue(dialog.nodes_changed())
+
+    def test_invalid_node_coord_input_restores_current_value(self) -> None:
+        dialog = RouteNotesDialog(
+            None,
+            "Route",
+            "",
+            (0x56, 0x34, 0x12),
+            None,
+            [{"x": 1, "y": 2, "label": "A"}],
+        )
+        x_editor = dialog.findChild(QLineEdit, "RouteNotesNodeX")
+
+        x_editor.setText("bad")
+        x_editor.editingFinished.emit()
+
+        self.assertEqual(x_editor.text(), "1")
+        self.assertEqual(dialog.nodes()[0]["x"], 1)
+        self.assertFalse(dialog.nodes_changed())
+
+        x_editor.setText("")
+        x_editor.editingFinished.emit()
+
+        self.assertEqual(x_editor.text(), "1")
+        self.assertEqual(dialog.nodes()[0]["x"], 1)
+        self.assertFalse(dialog.nodes_changed())
 
     def test_node_annotation_picker_updates_and_clears_node_draft(self) -> None:
         dialog = RouteNotesDialog(
@@ -348,6 +421,29 @@ class RouteNotesDialogTests(unittest.TestCase):
         self._app.processEvents()
 
         self.assertEqual([node.get("label") for node in dialog.nodes()], ["B", "C", "A"])
+
+    def test_dragging_node_coord_input_does_not_reorder_nodes(self) -> None:
+        dialog = RouteNotesDialog(
+            None,
+            "Route",
+            "",
+            (0x56, 0x34, 0x12),
+            None,
+            [{"x": 1, "y": 1, "label": "A"}, {"x": 2, "y": 2, "label": "B"}, {"x": 3, "y": 3, "label": "C"}],
+        )
+        dialog.show()
+        self._app.processEvents()
+        coord_editors = dialog.findChildren(QLineEdit, "RouteNotesNodeX")
+        rows = dialog.findChildren(QWidget, "RouteNotesNodeRow")
+
+        start = coord_editors[0].rect().center()
+        end = rows[2].mapTo(coord_editors[0], rows[2].rect().center())
+        QTest.mousePress(coord_editors[0], Qt.LeftButton, Qt.NoModifier, start)
+        QTest.mouseMove(coord_editors[0], end, 50)
+        QTest.mouseRelease(coord_editors[0], Qt.LeftButton, Qt.NoModifier, end)
+        self._app.processEvents()
+
+        self.assertEqual([node.get("label") for node in dialog.nodes()], ["A", "B", "C"])
 
     def test_rejected_dialog_reports_no_node_changes_from_edit_route_notes(self) -> None:
         def reject_dialog(dialog):

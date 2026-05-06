@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPoint, QSize, Qt, QTimer, Signal
@@ -48,6 +49,7 @@ from ..widgets.factory import make_compact_slider, make_route_panel_line_edit, m
 
 _NODE_ICON_SIZE = 22
 _NODE_NAME_MIN_WIDTH = 80
+_NODE_COORD_WIDTH = 58
 _NODE_DRAG_PREVIEW_MIN_WIDTH = 200
 _STAT_COLUMNS = 3
 _TITLE_ROW_HEIGHT = 26
@@ -333,6 +335,8 @@ class RouteNodeEditorPanel(QWidget):
     nodes_changed = Signal()
     node_label_changed = Signal(int, object, object)
     node_label_edit_committed = Signal(int, object, object)
+    node_coord_changed = Signal(int, str, object, object)
+    node_coord_edit_committed = Signal(int, str, object, object)
     node_annotation_changed = Signal(int, object, object)
     node_order_changed = Signal(int, int)
 
@@ -345,6 +349,7 @@ class RouteNodeEditorPanel(QWidget):
         annotation_icon_path_provider=None,
         include_stats: bool = True,
         include_title: bool = True,
+        include_coord_editors: bool = False,
         annotation_picker_placement: str = "center",
         annotation_picker_anchor=None,
     ) -> None:
@@ -352,6 +357,7 @@ class RouteNodeEditorPanel(QWidget):
         self._route_color_hex = normalize_color_hex(route_color_hex) or "#1ad1ff"
         self._annotation_items_provider = annotation_items_provider
         self._annotation_icon_path_provider = annotation_icon_path_provider
+        self._include_coord_editors = bool(include_coord_editors)
         self._annotation_picker_placement = str(annotation_picker_placement or "center")
         self._annotation_picker_anchor = annotation_picker_anchor
         self._nodes: list[dict] = []
@@ -518,6 +524,10 @@ class RouteNodeEditorPanel(QWidget):
         name_input.installEventFilter(self)
         row_layout.addWidget(name_input, stretch=1)
 
+        if self._include_coord_editors:
+            row_layout.addWidget(self._build_node_coord_control(row, point, index, "x"))
+            row_layout.addWidget(self._build_node_coord_control(row, point, index, "y"))
+
         order_input = QLineEdit(row)
         order_input.setObjectName("RouteNotesNodeOrderInput")
         order_input.setProperty("routePanelInput", "true")
@@ -538,6 +548,42 @@ class RouteNodeEditorPanel(QWidget):
         )
         row_layout.addWidget(order_input)
         return row
+
+    def _build_node_coord_control(self, parent: QWidget, point: dict, index: int, axis: str) -> QWidget:
+        key = "x" if axis == "x" else "y"
+        control = QWidget(parent)
+        control.setObjectName("RouteNotesNodeCoordControl")
+        layout = QHBoxLayout(control)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+
+        prefix = QLabel(key, control)
+        prefix.setObjectName("RouteNotesNodeCoordPrefix")
+        prefix.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        prefix.setFixedWidth(8)
+        layout.addWidget(prefix)
+
+        editor = QLineEdit(control)
+        editor.setObjectName("RouteNotesNodeX" if key == "x" else "RouteNotesNodeY")
+        editor.setProperty("routePanelInput", "true")
+        editor.setProperty("routeNotesCoordAxis", key)
+        editor.setAlignment(Qt.AlignRight)
+        editor.setFixedSize(_NODE_COORD_WIDTH, 26)
+        editor.setToolTip(f"{key} 坐标")
+        validator = QDoubleValidator(-1e9, 1e9, 4, editor)
+        validator.setNotation(QDoubleValidator.StandardNotation)
+        editor.setValidator(validator)
+        editor.setContextMenuPolicy(Qt.NoContextMenu)
+        editor.setText(self._format_node_coord(point.get(key)))
+        editor.setProperty("routeNotesCoordBefore", point.get(key, None))
+        editor.textEdited.connect(
+            lambda text, known_index=index, known_key=key: self._set_node_coord(known_index, known_key, text)
+        )
+        editor.editingFinished.connect(
+            lambda editor=editor, known_index=index, known_key=key: self._commit_node_coord(known_index, known_key, editor)
+        )
+        layout.addWidget(editor)
+        return control
 
     def _show_name_context_menu(self, editor: QLineEdit, pos) -> None:
         has_selection = editor.hasSelectedText()
@@ -591,6 +637,58 @@ class RouteNodeEditorPanel(QWidget):
             return
         editor.setProperty("routeNotesLabelBefore", after)
         self.node_label_edit_committed.emit(index, before, after)
+
+    @staticmethod
+    def _parse_node_coord(text: str) -> int | float | None:
+        raw = str(text or "").strip()
+        if not raw:
+            return None
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(value):
+            return None
+        return int(value) if value.is_integer() else value
+
+    @classmethod
+    def _format_node_coord(cls, value: object) -> str:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return ""
+        if not math.isfinite(number):
+            return ""
+        return _format_coord_value(int(number) if number.is_integer() else number)
+
+    def _set_node_coord(self, index: int, key: str, text: str) -> None:
+        if self._syncing or key not in {"x", "y"} or not (0 <= index < len(self._nodes)):
+            return
+        parsed = self._parse_node_coord(text)
+        if parsed is None:
+            return
+        before = self._nodes[index].get(key, None)
+        if before == parsed:
+            return
+        self._nodes[index][key] = parsed
+        self.node_coord_changed.emit(index, key, before, parsed)
+        self._refresh_stats_section()
+        self._emit_nodes_changed()
+
+    def _commit_node_coord(self, index: int, key: str, editor: QLineEdit) -> None:
+        if key not in {"x", "y"} or not (0 <= index < len(self._nodes)):
+            return
+        before = editor.property("routeNotesCoordBefore")
+        parsed = self._parse_node_coord(editor.text())
+        if parsed is not None:
+            self._set_node_coord(index, key, editor.text())
+        after = self._nodes[index].get(key, None)
+        if before != after:
+            editor.setProperty("routeNotesCoordBefore", after)
+            self.node_coord_edit_committed.emit(index, key, before, after)
+        editor.blockSignals(True)
+        editor.setText(self._format_node_coord(self._nodes[index].get(key)))
+        editor.blockSignals(False)
 
     def _apply_order_text(self, index: int, text: str) -> None:
         if not (0 <= index < len(self._nodes)):
@@ -931,6 +1029,7 @@ class RouteNotesDialog(StyledDialogBase):
             annotation_items_provider=self._annotation_items,
             annotation_icon_path_provider=self._annotation_icon_path,
             include_stats=False,
+            include_coord_editors=True,
             annotation_picker_placement="left_of",
             annotation_picker_anchor=right,
         )

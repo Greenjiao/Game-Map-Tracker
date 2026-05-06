@@ -1,4 +1,5 @@
 import os
+import json
 import tempfile
 import unittest
 from enum import Enum
@@ -8,14 +9,14 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QColor, QPixmap
-from PySide6.QtWidgets import QApplication, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QLabel, QLineEdit, QPushButton, QWidget
 
 from ui_island.controllers.route_panel_controller import RoutePanelController
 from ui_island.design import strings
 from ui_island.dialogs.route_notes_dialog import _NODE_ICON_SIZE
 from ui_island.services import resource_metadata
 from ui_island.services.route_manager import NODE_TYPE_COLLECT, NODE_TYPE_TELEPORT, NODE_TYPE_VIRTUAL
-from ui_island.state import RouteDrawingState
+from ui_island.state import RouteCalibrationState, RouteDrawingState
 
 
 class _Mode(Enum):
@@ -191,12 +192,27 @@ class _FakeMapView:
     def __init__(self) -> None:
         self.focus_calls: list[tuple[int, int]] = []
         self.refresh_count = 0
+        self.calibration_contexts: list[dict | None] = []
+        self.drawing_contexts: list[dict | None] = []
+        self.preview_relocate_calls: list[tuple[int, int]] = []
 
     def focus_map_position(self, x: int, y: int) -> None:
         self.focus_calls.append((x, y))
 
     def _refresh_from_last_frame(self) -> None:
         self.refresh_count += 1
+
+    def set_route_calibration_context(self, context: dict | None) -> None:
+        self.calibration_contexts.append(context)
+
+    def set_route_drawing_context(self, context: dict | None) -> None:
+        self.drawing_contexts.append(context)
+
+    def preview_relocate(self, x: int, y: int, state=None) -> None:
+        self.preview_relocate_calls.append((x, y))
+
+    def coordinate_adapter(self):
+        return None
 
 
 class _FakeRouteManager:
@@ -209,7 +225,13 @@ class _FakeRouteManager:
         self.saved_notes_calls: list[tuple[str, str, str, str | None]] = []
         self.saved_enable_versions_calls: list[tuple[str, list[str]]] = []
         self.saved_coord_transform_calls: list[tuple[str, dict | None]] = []
+        self.saved_calibration_calls: list[tuple[str, dict | None]] = []
+        self.saved_annotation_calibration_calls: list[tuple[str, dict | None]] = []
+        self.annotation_type_ids_value: list[str] = ["ore"]
+        self.annotation_cache_invalidated = 0
         self._new_point_id = 0
+        self.categories: list[str] = []
+        self.route_groups: dict[str, list[dict]] = {}
 
     @staticmethod
     def route_id(route: dict | None) -> str:
@@ -249,6 +271,12 @@ class _FakeRouteManager:
     def point_icon_path_for(self, _type_id: str) -> str:
         return ""
 
+    def annotation_type_ids(self) -> list[str]:
+        return list(self.annotation_type_ids_value)
+
+    def invalidate_annotation_cache(self, **_kwargs) -> None:
+        self.annotation_cache_invalidated += 1
+
     def get_route_notes(self, category: str, name: str) -> str:
         route = self._route_by_category_name(category, name)
         return str(route.get("notes") or "") if route is not None else ""
@@ -264,6 +292,13 @@ class _FakeRouteManager:
         route = self.routes.get(route_id)
         transform = route.get("coord_transform") if route is not None else None
         return dict(transform) if isinstance(transform, dict) else None
+
+    def route_coordinate_adapter(self, route_id: str, fallback_adapter=None):
+        transform = self.route_coord_transform(route_id)
+        if transform is not None:
+            from ui_island.views.map_coordinates import MapCoordinateAdapter
+            return MapCoordinateAdapter.from_dict(transform)
+        return fallback_adapter
 
     def update_route_enable_versions(self, route_id: str, versions: list[str]) -> bool:
         route = self.routes.get(route_id)
@@ -309,6 +344,26 @@ class _FakeRouteManager:
             cleaned.append(current)
         route["enable_versions"] = cleaned
         self.saved_enable_versions_calls.append((route_id, cleaned))
+        return True
+
+    def save_route_calibration(self, route_id: str, coord_transform: dict | None) -> bool:
+        if not self.update_route_coord_transform(route_id, coord_transform):
+            return False
+        if not self.add_current_route_enable_version(route_id):
+            return False
+        self.saved_calibration_calls.append((route_id, dict(coord_transform) if isinstance(coord_transform, dict) else None))
+        return True
+
+    def save_annotation_calibration(self, annotation_path: str, coord_transform: dict | None) -> bool:
+        with open(annotation_path, "r", encoding="utf-8-sig") as handle:
+            payload = json.load(handle)
+        resource_metadata.apply_coord_transform_to_payload(payload, coord_transform)
+        with open(annotation_path, "w", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, indent=2)
+        self.saved_annotation_calibration_calls.append(
+            (annotation_path, dict(coord_transform) if isinstance(coord_transform, dict) else None)
+        )
+        self.invalidate_annotation_cache()
         return True
 
     def update_route_notes_and_color(
@@ -357,6 +412,27 @@ class _FakeRouteManager:
         )
 
 
+class _FakeTracker:
+    def __init__(self) -> None:
+        self.anchor_calls: list[tuple[int, int]] = []
+
+    def set_anchor(self, x: int, y: int) -> None:
+        self.anchor_calls.append((x, y))
+
+
+class _FakeCoordLabel:
+    def setText(self, text: str) -> None:
+        pass
+
+
+class _FakeTrackingState:
+    def __init__(self) -> None:
+        self.display_stable_xy = None
+        self.display_pending_locked_xy = None
+        self.display_pending_locked_count = 0
+        self.display_needs_lock_confirmation = False
+
+
 class _FakeWindow:
     def __init__(self, search_text: str = "") -> None:
         self.search_input = _FakeSearchInput(search_text)
@@ -367,7 +443,11 @@ class _FakeWindow:
         self._mode = _Mode.PAUSED
         self.route_mgr = _FakeRouteManager()
         self.map_view = _FakeMapView()
+        self.route_calibration_state = RouteCalibrationState()
         self.relocate_calls: list[tuple[int, int]] = []
+        self.tracker = _FakeTracker()
+        self.coord_label = _FakeCoordLabel()
+        self.tracking_state = _FakeTrackingState()
 
     def _on_relocate(self, x: int, y: int) -> None:
         self.relocate_calls.append((x, y))
@@ -392,6 +472,8 @@ class _ToolbarHost(QWidget):
         self.route_mgr = _FakeRouteManager()
         self.map_view = _FakeMapView()
         self.route_drawing_state = RouteDrawingState()
+        self.route_calibration_state = RouteCalibrationState()
+        self.state_hint_label = QLabel(self)
         self.resize(800, 600)
 
     def isMaximized(self) -> bool:
@@ -692,6 +774,271 @@ class RoutePanelFilterTests(unittest.TestCase):
 
         self.assertIn(strings.ROUTE_CATEGORY_MARK_COMPATIBLE, captured["texts"])
         self.assertEqual(captured["object_name"], "RouteListContextMenu")
+
+    def test_route_context_menu_includes_calibration_action(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        route_item = type(
+            "RouteItem",
+            (),
+            {"route_id": "route-1", "category": "cat-a", "route_name": "Route A"},
+        )()
+        captured: dict[str, object] = {}
+
+        def capture_menu(parent, global_pos, items, *, object_name=""):
+            captured["texts"] = [item.text for item in items if not item.separator]
+            captured["object_name"] = object_name
+
+        with patch("ui_island.controllers.route_panel_controller.show_context_menu", side_effect=capture_menu):
+            controller.show_route_context_menu(route_item, object())
+
+        self.assertIn(strings.ROUTE_CALIBRATION_MENU_LABEL, captured["texts"])
+        self.assertEqual(captured["object_name"], "RouteListContextMenu")
+
+    def test_begin_route_calibration_sets_map_context_for_current_route(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 1.2, "scale_y": 1.0, "offset_x": 30.0, "offset_y": 0.0},
+                "points": [{"x": 10, "y": 20}, {"x": 30, "y": 60}],
+            }
+        })
+        controller = self._controller_for(window)
+        route_item = type(
+            "RouteItem",
+            (),
+            {"route_id": "route-1", "category": "cat-a", "route_name": "Route A"},
+        )()
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            controller.begin_route_calibration(route_item)
+
+        self.assertTrue(window.route_calibration_state.active)
+        self.assertEqual(window.route_calibration_state.route_center, (20.0, 40.0))
+        context = window.map_view.calibration_contexts[-1]
+        self.assertIsNotNone(context)
+        self.assertEqual(context["route_id"], "route-1")
+        self.assertEqual(context["coord_transform"]["scale_x"], 1.2)
+
+    def test_route_calibration_drag_delta_updates_offsets_only(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        window.route_calibration_state.begin(
+            route_id="route-1",
+            category="cat-a",
+            name="Route A",
+            coord_transform={"scale_x": 1.2, "scale_y": 0.9, "offset_x": 30.0, "offset_y": -5.0},
+            route_center=(20.0, 40.0),
+        )
+
+        controller.apply_route_calibration_drag_delta(5.5, -2.0)
+
+        transform = window.route_calibration_state.current_transform
+        self.assertEqual(transform["offset_x"], 35.5)
+        self.assertEqual(transform["offset_y"], -7.0)
+        self.assertEqual(transform["scale_x"], 1.2)
+        self.assertEqual(transform["scale_y"], 0.9)
+        self.assertTrue(window.route_calibration_state.dirty)
+
+    def test_route_calibration_scale_keeps_route_center_stable(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        window.route_calibration_state.begin(
+            route_id="route-1",
+            category="cat-a",
+            name="Route A",
+            coord_transform={"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+            route_center=(100.0, 50.0),
+        )
+
+        controller.set_route_calibration_value("scale_x", 1.1)
+
+        transform = window.route_calibration_state.current_transform
+        self.assertAlmostEqual(transform["scale_x"], 1.1)
+        self.assertAlmostEqual(transform["offset_x"], -10.0)
+        self.assertAlmostEqual(transform["offset_y"], 0.0)
+
+    def test_save_route_calibration_writes_transform_and_current_version(self) -> None:
+        current = resource_metadata.APP_FORMAT_VERSION
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "enable_versions": ["old-format"],
+                "points": [],
+            }
+        })
+        controller = self._controller_for(window)
+        window.route_calibration_state.begin(
+            route_id="route-1",
+            category="cat-a",
+            name="Route A",
+            coord_transform={"scale_x": 1.0, "scale_y": 1.0, "offset_x": 9.0, "offset_y": 0.0},
+        )
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            self.assertTrue(controller.save_route_calibration())
+
+        self.assertEqual(
+            window.route_mgr.saved_calibration_calls,
+            [("route-1", {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 9.0, "offset_y": 0.0})],
+        )
+        self.assertEqual(window.route_mgr.routes["route-1"]["enable_versions"], ["old-format", current])
+        self.assertFalse(window.route_calibration_state.dirty)
+
+    def test_confirm_exit_route_calibration_prompts_when_dirty(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        window.route_calibration_state.begin(
+            route_id="route-1",
+            category="cat-a",
+            name="Route A",
+            coord_transform={"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+        )
+        window.route_calibration_state.current_transform["offset_x"] = 3.0
+
+        with (
+            patch.object(controller, "_prompt_calibration_save_discard_cancel", return_value="save") as prompt,
+            patch.object(controller, "save_route_calibration", return_value=True) as save,
+        ):
+            self.assertTrue(controller.confirm_exit_route_calibration())
+
+        prompt.assert_called_once()
+        save.assert_called_once()
+        self.assertFalse(window.route_calibration_state.active)
+
+    def test_route_calibration_controls_group_buttons_and_hug_map_edges(self) -> None:
+        window = _ToolbarHost()
+        window.map_view = QWidget()
+        window.map_view.resize(420, 260)
+        controller = self._controller_for(window)
+
+        controller._ensure_route_calibration_controls()
+        controller.position_route_calibration_controls()
+
+        x_buttons = [
+            button.text()
+            for button in window.route_calibration_x_panel.findChildren(QPushButton, "RouteCalibrationButton")
+        ]
+        y_buttons = [
+            button.text()
+            for button in window.route_calibration_y_panel.findChildren(QPushButton, "RouteCalibrationButton")
+        ]
+        y_labels = [
+            label.text()
+            for label in window.route_calibration_y_panel.findChildren(QLabel, "FieldLabel")
+        ]
+
+        self.assertEqual(x_buttons, ["-", "+", "缩", "放"])
+        self.assertEqual(y_buttons, ["-", "+", "缩", "放"])
+        self.assertIn("\n", y_labels[0])
+        self.assertEqual(
+            window.route_calibration_x_panel.y(),
+            window.map_view.height() - window.route_calibration_x_panel.height() - 2,
+        )
+        self.assertEqual(
+            window.route_calibration_y_panel.x(),
+            window.map_view.width() - window.route_calibration_y_panel.width() - 2,
+        )
+
+    def test_route_calibration_values_display_two_decimal_places(self) -> None:
+        self.assertEqual(RoutePanelController._format_calibration_value(1.2345), "1.23")
+        self.assertEqual(RoutePanelController._format_calibration_value(1.2), "1.2")
+        self.assertEqual(RoutePanelController._format_calibration_value(0), "0")
+
+    def test_route_calibration_scale_buttons_change_visible_scale_value(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        window.route_calibration_state.begin(
+            route_id="route-1",
+            category="cat-a",
+            name="Route A",
+            coord_transform={"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+            route_center=(100.0, 50.0),
+        )
+
+        controller.adjust_route_calibration_value("scale_x", 0.01)
+
+        transform = window.route_calibration_state.current_transform
+        self.assertEqual(RoutePanelController._format_calibration_value(transform["scale_x"]), "1.01")
+        self.assertAlmostEqual(transform["offset_x"], -1.0)
+
+    def test_begin_annotation_calibration_uses_enabled_points_only(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr.annotation_type_ids_value = ["ore"]
+        controller = self._controller_for(window)
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as handle:
+            json.dump(
+                {
+                    "types": [],
+                    "pointsByType": {
+                        "ore": [{"x": 10, "y": 20}],
+                        "plant": [{"x": 99, "y": 99}],
+                    },
+                },
+                handle,
+            )
+            path = handle.name
+        try:
+            with patch("ui_island.controllers.route_panel_controller.toast"):
+                started = controller.begin_annotation_calibration(
+                    path,
+                    {"scale_x": 1.25, "scale_y": 1.0, "offset_x": 4.0, "offset_y": 0.0},
+                )
+
+            self.assertTrue(started)
+            self.assertEqual(window.route_calibration_state.target_type, "annotation")
+            self.assertEqual(window.route_calibration_state.route_center, (10.0, 20.0))
+            context = window.map_view.calibration_contexts[-1]
+            self.assertEqual(context["target_type"], "annotation")
+            self.assertEqual(context["annotation_points"], [{"x": 10, "y": 20, "typeId": "ore"}])
+            self.assertEqual(context["coord_transform"]["scale_x"], 1.25)
+        finally:
+            os.remove(path)
+
+    def test_annotation_calibration_drag_and_save_write_annotation_only(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        payload = {
+            "types": [],
+            "pointsByType": {"ore": [{"x": 10, "y": 20}]},
+            "enable_versions": ["old-format"],
+        }
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as handle:
+            json.dump(payload, handle)
+            path = handle.name
+        try:
+            window.route_calibration_state.begin(
+                route_id="",
+                category="",
+                name="Annotations",
+                coord_transform={"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+                route_center=(10.0, 20.0),
+                target_type="annotation",
+                annotation_path=path,
+                annotation_points=[{"x": 10, "y": 20, "typeId": "ore"}],
+                annotation_type_ids=["ore"],
+            )
+
+            controller.apply_route_calibration_drag_delta(2.0, -3.0)
+            with patch("ui_island.controllers.route_panel_controller.toast"):
+                self.assertTrue(controller.save_route_calibration())
+
+            with open(path, "r", encoding="utf-8") as handle:
+                saved = json.load(handle)
+            transform = resource_metadata.coord_transform_from_payload(saved)
+            self.assertEqual(transform["offset_x"], 2.0)
+            self.assertEqual(transform["offset_y"], -3.0)
+            self.assertEqual(saved["enable_versions"], ["old-format"])
+            self.assertEqual(window.route_mgr.saved_calibration_calls, [])
+            self.assertFalse(window.route_calibration_state.active)
+        finally:
+            os.remove(path)
 
     def test_category_batch_compatibility_adds_current_version_only_where_needed(self) -> None:
         current = resource_metadata.APP_FORMAT_VERSION
@@ -1518,14 +1865,54 @@ class RoutePanelFilterTests(unittest.TestCase):
         stats_scroll = node_panel.findChild(QWidget, "RouteNotesStatsScroll")
         node_scroll = node_panel.findChild(QWidget, "RouteNotesNodeScroll")
         icons = node_panel.findChildren(QPushButton, "RouteNotesNodeIcon")
+        x_editor = node_panel.findChild(QLineEdit, "RouteNotesNodeX")
+        y_editor = node_panel.findChild(QLineEdit, "RouteNotesNodeY")
+        coord_prefixes = [
+            label.text()
+            for label in node_panel.findChildren(QLabel, "RouteNotesNodeCoordPrefix")
+        ]
         self.assertIs(node_panel._annotation_picker_anchor, toolbar)
         self.assertEqual(node_panel._annotation_picker_placement, "right_of")
         self.assertIsNotNone(stats)
         self.assertIsNotNone(stats_scroll)
         self.assertIsNotNone(node_scroll)
+        self.assertIsNotNone(x_editor)
+        self.assertIsNotNone(y_editor)
+        self.assertEqual(coord_prefixes, ["x", "y"])
         self.assertLess(stats_scroll.geometry().y(), node_scroll.geometry().y())
         self.assertTrue(icons)
         self.assertTrue(all(icon.iconSize() == QSize(_NODE_ICON_SIZE, _NODE_ICON_SIZE) for icon in icons))
+
+    def test_route_drawing_toolbar_coord_edit_updates_draft_and_preview(self) -> None:
+        window = _ToolbarHost()
+        window.route_drawing_state.begin(
+            route_id="2026010101",
+            category="routes",
+            name="route",
+            points=[{"x": 1, "y": 2, "label": "A"}],
+        )
+        window.route_mgr = _FakeRouteManager({"2026010101": {"points": []}})
+        window.route_mgr.annotation_type_items = lambda: []
+        controller = self._controller_for(window)
+
+        controller._ensure_route_drawing_toolbar()
+        controller._update_route_drawing_toolbar()
+        self._app.processEvents()
+
+        node_panel = window.route_drawing_node_panel
+        x_editor = node_panel.findChild(QLineEdit, "RouteNotesNodeX")
+        x_editor.setText("10.5")
+        x_editor.textEdited.emit("10.5")
+
+        self.assertEqual(window.route_drawing_state.draft_points[0]["x"], 10.5)
+        self.assertTrue(window.route_drawing_state.dirty)
+        self.assertEqual(window.map_view.calibration_contexts, [])
+        self.assertEqual(window.map_view.drawing_contexts[-1]["points"][0]["x"], 10.5)
+
+        x_editor.editingFinished.emit()
+        self.assertEqual(window.route_drawing_state.undo_stack[-1]["op"], "move")
+        self.assertEqual(window.route_drawing_state.undo_stack[-1]["before"], {"x": 1, "y": 2})
+        self.assertEqual(window.route_drawing_state.undo_stack[-1]["after"], {"x": 10.5, "y": 2})
 
     def test_route_drawing_toolbar_node_panel_hydrates_annotation_icons(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1574,7 +1961,8 @@ class RoutePanelFilterTests(unittest.TestCase):
         with patch("ui_island.controllers.route_panel_controller.toast"):
             controller.jump_to_route_node("route-1")
 
-        self.assertEqual(window.relocate_calls, [(10, 20)])
+        self.assertEqual(window.tracker.anchor_calls, [(10, 20)])
+        self.assertEqual(window.map_view.preview_relocate_calls, [(10, 20)])
         self.assertEqual(window.map_view.focus_calls, [])
 
     def test_jump_to_route_node_navigation_focuses_first_unvisited_without_relocating(self) -> None:
@@ -1770,6 +2158,277 @@ class RoutePanelFilterTests(unittest.TestCase):
         window.map_interaction_controller.add_route_node_from_context_menu.assert_not_called()
         window.map_interaction_controller.add_annotated_point_to_routes.assert_not_called()
         window.map_interaction_controller.add_point_to_routes.assert_not_called()
+
+    def test_category_context_menu_includes_batch_calibration_action(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+        captured: dict[str, object] = {}
+
+        def capture_menu(parent, global_pos, items, *, object_name=""):
+            captured["texts"] = [item.text for item in items if not item.separator]
+            captured["object_name"] = object_name
+
+        with patch("ui_island.controllers.route_panel_controller.show_context_menu", side_effect=capture_menu):
+            controller.show_category_context_menu("cat-a", object())
+
+        self.assertIn(strings.ROUTE_BATCH_CALIBRATION_MENU_LABEL, captured["texts"])
+        self.assertEqual(captured["object_name"], "RouteListContextMenu")
+
+    def test_begin_batch_route_calibration_sets_batch_state(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 1.2, "scale_y": 1.0, "offset_x": 10.0, "offset_y": 0.0},
+                "points": [{"x": 10, "y": 20}, {"x": 30, "y": 60}],
+            },
+            "route-2": {
+                "id": "route-2",
+                "category": "cat-a",
+                "display_name": "Route B",
+                "points": [{"x": 50, "y": 80}],
+            },
+        })
+        window.route_mgr.categories = ["cat-a"]
+        window.route_mgr.route_groups = {
+            "cat-a": [
+                window.route_mgr.routes["route-1"],
+                window.route_mgr.routes["route-2"],
+            ],
+        }
+
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            controller.begin_batch_route_calibration("cat-a")
+
+        state = window.route_calibration_state
+        self.assertTrue(state.active)
+        self.assertTrue(state.batch)
+        self.assertEqual(state.batch_route_ids, ["route-1", "route-2"])
+        self.assertEqual(state.route_id, "route-1")
+        self.assertEqual(state.name, "cat-a")
+        self.assertIsNotNone(state.route_center)
+
+    def test_batch_calibration_empty_category_shows_info(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({})
+        window.route_mgr.categories = ["cat-a"]
+        window.route_mgr.route_groups = {"cat-a": []}
+
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.styled_info") as info:
+            controller.begin_batch_route_calibration("cat-a")
+
+        info.assert_called_once()
+        self.assertIn(strings.ROUTE_BATCH_CALIBRATION_EMPTY_CATEGORY, info.call_args[0])
+
+    def test_batch_save_route_calibration_writes_all_routes(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "points": [],
+            },
+            "route-2": {
+                "id": "route-2",
+                "category": "cat-a",
+                "display_name": "Route B",
+                "points": [],
+            },
+            "route-3": {
+                "id": "route-3",
+                "category": "cat-a",
+                "display_name": "Route C",
+                "points": [],
+            },
+        })
+        controller = self._controller_for(window)
+        window.route_calibration_state.begin(
+            route_id="route-1",
+            category="cat-a",
+            name="cat-a",
+            coord_transform={"scale_x": 1.0, "scale_y": 1.0, "offset_x": 5.0, "offset_y": 3.0},
+            route_center=(100.0, 50.0),
+            batch=True,
+            batch_route_ids=["route-1", "route-2", "route-3"],
+        )
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            self.assertTrue(controller.save_route_calibration())
+
+        self.assertEqual(len(window.route_mgr.saved_calibration_calls), 3)
+        expected_transform = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 5.0, "offset_y": 3.0}
+        self.assertEqual(
+            window.route_mgr.saved_calibration_calls,
+            [
+                ("route-1", expected_transform),
+                ("route-2", expected_transform),
+                ("route-3", expected_transform),
+            ],
+        )
+        self.assertFalse(window.route_calibration_state.dirty)
+
+    def test_jump_target_uses_route_coord_transform(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 2.0, "scale_y": 1.0, "offset_x": 100.0, "offset_y": 0.0},
+                "points": [{"x": 500, "y": 500}],
+            }
+        })
+        controller = self._controller_for(window)
+        adapter = window.route_mgr.route_coordinate_adapter("route-1")
+        target = controller._route_jump_target(
+            window.route_mgr.routes["route-1"],
+            paused=False,
+            route_adapter=adapter,
+        )
+        self.assertIsNotNone(target)
+        _index, x, y, _completed = target
+        self.assertEqual(x, 1100)
+        self.assertEqual(y, 500)
+
+    def test_jump_target_without_adapter_returns_raw_coords(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 2.0, "scale_y": 1.0, "offset_x": 100.0, "offset_y": 0.0},
+                "points": [{"x": 500, "y": 500}],
+            }
+        })
+        controller = self._controller_for(window)
+        target = controller._route_jump_target(
+            window.route_mgr.routes["route-1"],
+            paused=False,
+            route_adapter=None,
+        )
+        self.assertIsNotNone(target)
+        _index, x, y, _completed = target
+        self.assertEqual(x, 500)
+        self.assertEqual(y, 500)
+
+    def test_focus_map_position_receives_correct_coords_for_calibrated_route(self) -> None:
+        window = _FakeWindow("")
+        window._mode = _Mode.TRACKING_STABLE
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 2.0, "scale_y": 1.0, "offset_x": 100.0, "offset_y": 0.0},
+                "points": [{"x": 500, "y": 500, "visited": False}],
+            }
+        })
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            controller.jump_to_route_node("route-1")
+
+        self.assertEqual(len(window.map_view.focus_calls), 1)
+        fx, fy = window.map_view.focus_calls[0]
+        self.assertEqual(fx, 1100)
+        self.assertEqual(fy, 500)
+
+    def test_paused_jump_preview_uses_current_coords_for_calibrated_route(self) -> None:
+        window = _FakeWindow("")
+        window._mode = _Mode.PAUSED
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 2.0, "scale_y": 1.0, "offset_x": 100.0, "offset_y": 0.0},
+                "points": [{"x": 500, "y": 500}],
+            }
+        })
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            controller.jump_to_route_node("route-1")
+
+        self.assertEqual(window.tracker.anchor_calls, [(500, 500)])
+        self.assertEqual(window.map_view.preview_relocate_calls, [(1100, 500)])
+
+    def test_current_route_id_uses_same_coord_space(self) -> None:
+        window = _FakeWindow("")
+        window._last_player_xy = (1100, 500)
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 2.0, "scale_y": 1.0, "offset_x": 100.0, "offset_y": 0.0},
+                "points": [{"x": 500, "y": 500, "visited": False}],
+            },
+            "route-2": {
+                "id": "route-2",
+                "category": "cat-a",
+                "display_name": "Route B",
+                "points": [{"x": 1200, "y": 500, "visited": False}],
+            },
+        })
+        window.route_mgr.visibility = {"route-1": True, "route-2": True}
+        controller = self._controller_for(window)
+
+        route_id = controller.current_route_id_by_player_position()
+        self.assertEqual(route_id, "route-1")
+
+    def test_uncalibrated_route_jump_behavior_unchanged(self) -> None:
+        window = _FakeWindow("")
+        window._mode = _Mode.TRACKING_STABLE
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "points": [{"x": 100, "y": 200, "visited": False}],
+            }
+        })
+        controller = self._controller_for(window)
+
+        with patch("ui_island.controllers.route_panel_controller.toast"):
+            controller.jump_to_route_node("route-1")
+
+        self.assertEqual(window.map_view.focus_calls, [(100, 200)])
+        self.assertEqual(window.map_view.preview_relocate_calls, [])
+        self.assertEqual(window.tracker.anchor_calls, [])
+
+    def test_drawing_resource_xy_uses_route_adapter(self) -> None:
+        window = _FakeWindow("")
+        window.route_mgr = _FakeRouteManager({
+            "route-1": {
+                "id": "route-1",
+                "category": "cat-a",
+                "display_name": "Route A",
+                "coord_transform": {"scale_x": 2.0, "scale_y": 1.0, "offset_x": 100.0, "offset_y": 50.0},
+                "points": [],
+            }
+        })
+        controller = self._controller_for(window)
+
+        x, y = controller._drawing_resource_xy(1100, 550, route_id="route-1")
+        self.assertEqual(x, 500)
+        self.assertEqual(y, 500)
+
+    def test_drawing_resource_xy_without_route_id_uses_global_adapter(self) -> None:
+        window = _FakeWindow("")
+        controller = self._controller_for(window)
+
+        x, y = controller._drawing_resource_xy(100, 200)
+        self.assertEqual(x, 100)
+        self.assertEqual(y, 200)
 
 
 if __name__ == "__main__":

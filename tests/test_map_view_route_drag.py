@@ -110,6 +110,108 @@ class MapViewRouteDragTests(unittest.TestCase):
         self.assertNotEqual(view._view_center, QPointF(100, 100))
         self.assertEqual(manual_changes, [True])
 
+    def test_calibration_route_press_drags_route_offsets(self) -> None:
+        view = self._view()
+        deltas: list[tuple[float, float]] = []
+        view.route_calibration_drag_delta_requested.connect(lambda dx, dy: deltas.append((dx, dy)))
+        context = {
+            "active": True,
+            "route_id": "route-1",
+            "route": {"id": "route-1", "points": [{"x": 10, "y": 10}]},
+            "coord_transform": {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+        }
+        view.set_route_calibration_context(context)
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(10, 10)))
+        view.mouseMoveEvent(self._mouse_event(QEvent.Type.MouseMove, QPointF(25, 30), button=Qt.NoButton))
+        updated_context = dict(context)
+        updated_context["coord_transform"] = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 15.0, "offset_y": 20.0}
+        view.set_route_calibration_context(updated_context)
+        view.mouseMoveEvent(self._mouse_event(QEvent.Type.MouseMove, QPointF(35, 45), button=Qt.NoButton))
+        view.mouseReleaseEvent(self._mouse_event(QEvent.Type.MouseButtonRelease, QPointF(25, 30)))
+
+        self.assertEqual(deltas, [(15.0, 20.0), (10.0, 15.0)])
+        self.assertEqual(view._view_center, QPointF(100, 100))
+
+    def test_calibration_blank_drag_keeps_map_pan_behavior(self) -> None:
+        view = self._view()
+        deltas: list[tuple[float, float]] = []
+        manual_changes: list[bool] = []
+        view.route_calibration_drag_delta_requested.connect(lambda dx, dy: deltas.append((dx, dy)))
+        view.manual_view_changed.connect(lambda: manual_changes.append(True))
+        view.set_route_calibration_context({
+            "active": True,
+            "route_id": "route-1",
+            "route": {"id": "route-1", "points": [{"x": 10, "y": 10}]},
+            "coord_transform": {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+        })
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(100, 100)))
+        view.mouseMoveEvent(self._mouse_event(QEvent.Type.MouseMove, QPointF(120, 120), button=Qt.NoButton))
+
+        self.assertEqual(deltas, [])
+        self.assertNotEqual(view._view_center, QPointF(100, 100))
+        self.assertEqual(manual_changes, [True])
+
+    def test_annotation_calibration_drag_continues_across_context_updates(self) -> None:
+        view = self._view()
+        deltas: list[tuple[float, float]] = []
+        view.route_calibration_drag_delta_requested.connect(lambda dx, dy: deltas.append((dx, dy)))
+        context = {
+            "active": True,
+            "target_type": "annotation",
+            "annotation_path": "annotations/test.json",
+            "annotation_points": [{"x": 10, "y": 10, "typeId": "ore"}],
+            "coord_transform": {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+        }
+        view.set_route_calibration_context(context)
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(10, 10)))
+        view.mouseMoveEvent(self._mouse_event(QEvent.Type.MouseMove, QPointF(25, 30), button=Qt.NoButton))
+        updated_context = dict(context)
+        updated_context["coord_transform"] = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 15.0, "offset_y": 20.0}
+        view.set_route_calibration_context(updated_context)
+        view.mouseMoveEvent(self._mouse_event(QEvent.Type.MouseMove, QPointF(35, 45), button=Qt.NoButton))
+
+        self.assertEqual(deltas, [(15.0, 20.0), (10.0, 15.0)])
+        self.assertEqual(view._view_center, QPointF(100, 100))
+
+    def test_annotation_calibration_blank_drag_still_pans_map(self) -> None:
+        view = self._view()
+        deltas: list[tuple[float, float]] = []
+        manual_changes: list[bool] = []
+        view.route_calibration_drag_delta_requested.connect(lambda dx, dy: deltas.append((dx, dy)))
+        view.manual_view_changed.connect(lambda: manual_changes.append(True))
+        view.set_route_calibration_context({
+            "active": True,
+            "target_type": "annotation",
+            "annotation_path": "annotations/test.json",
+            "annotation_points": [{"x": 10, "y": 10, "typeId": "ore"}],
+            "coord_transform": {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+        })
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(100, 100)))
+        view.mouseMoveEvent(self._mouse_event(QEvent.Type.MouseMove, QPointF(120, 120), button=Qt.NoButton))
+
+        self.assertEqual(deltas, [])
+        self.assertNotEqual(view._view_center, QPointF(100, 100))
+        self.assertEqual(manual_changes, [True])
+
+    def test_annotation_calibration_blocks_context_menu(self) -> None:
+        view = self._view()
+        view.set_route_calibration_context({
+            "active": True,
+            "target_type": "annotation",
+            "annotation_path": "annotations/test.json",
+            "annotation_points": [{"x": 10, "y": 10, "typeId": "ore"}],
+            "coord_transform": {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0},
+        })
+        event = self._ContextMenuEvent(QPointF(12, 34))
+
+        view.contextMenuEvent(event)
+
+        self.assertTrue(event.accepted)
+
     def test_drawing_node_drag_keeps_priority_over_route_node_drag(self) -> None:
         view = self._view()
         view.set_route_point_drag_enabled(True)

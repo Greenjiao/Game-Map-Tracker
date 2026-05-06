@@ -9,16 +9,19 @@ import math
 from copy import deepcopy
 
 from PySide6.QtCore import QPoint, QTimer, Qt
-from PySide6.QtGui import QColor, QCursor, QPainter, QPen
+from PySide6.QtGui import QColor, QCursor, QDoubleValidator, QPainter, QPen
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
     QCheckBox,
     QDialog,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -48,6 +51,16 @@ class RouteDrawingToolbarFrame(QFrame):
         painter.setBrush(QColor(28, 28, 30, 236))
         painter.setPen(QPen(QColor(255, 255, 255, 36), 1))
         painter.drawRoundedRect(rect, 8, 8)
+
+
+class RouteCalibrationPanelFrame(QFrame):
+    def paintEvent(self, _event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        rect = self.rect().adjusted(1, 1, -1, -1)
+        painter.setBrush(QColor(28, 28, 30, 214))
+        painter.setPen(QPen(QColor(255, 255, 255, 46), 1))
+        painter.drawRoundedRect(rect, 10, 10)
 
 
 class RoutePanelController:
@@ -262,6 +275,10 @@ QCheckBox::indicator:checked:hover {{
                 ),
                 ContextMenuItem(strings.ROUTE_DRAWING_MENU_LABEL, lambda: self.begin_route_drawing(route_item)),
                 ContextMenuItem(
+                    strings.ROUTE_CALIBRATION_MENU_LABEL,
+                    lambda: self.begin_route_calibration(route_item),
+                ),
+                ContextMenuItem(
                     strings.ROUTE_DELETE,
                     lambda: self.delete_route(route_item.category, route_item.route_name),
                 ),
@@ -285,6 +302,10 @@ QCheckBox::indicator:checked:hover {{
                     strings.ROUTE_CATEGORY_MARK_COMPATIBLE,
                     lambda: self.mark_category_routes_compatible(category),
                 ),
+                ContextMenuItem(
+                    strings.ROUTE_BATCH_CALIBRATION_MENU_LABEL,
+                    lambda: self.begin_batch_route_calibration(category),
+                ),
                 ContextMenuItem.separator_item(),
                 ContextMenuItem(
                     strings.ROUTE_CATEGORY_OPEN_FILE_LOCATION,
@@ -298,11 +319,209 @@ QCheckBox::indicator:checked:hover {{
         mode_enum = self.window._mode.__class__
         return mode_enum.PAUSED, mode_enum.MAXIMIZED
 
+    def begin_route_calibration(self, route_item: RouteListItem) -> None:
+        if self.window._mode not in self._drawing_allowed_modes():
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_CALIBRATION_MODE_REQUIRED)
+            return
+        if not self.confirm_exit_route_drawing():
+            return
+        if not self.confirm_exit_route_calibration():
+            return
+
+        route = self.window.route_mgr.route_for_id(route_item.route_id)
+        if route is None:
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_CALIBRATION_ROUTE_MISSING)
+            return
+
+        transform = self._effective_route_coord_transform(route_item.route_id)
+        self.window.route_calibration_state.begin(
+            route_id=route_item.route_id,
+            category=route_item.category,
+            name=route_item.route_name,
+            coord_transform=transform,
+            route_center=self._route_internal_center(route),
+        )
+        self._sync_route_calibration_ui()
+        toast(self.window, strings.ROUTE_CALIBRATION_ENTERED_FMT.format(name=route_item.route_name))
+
+    def begin_batch_route_calibration(self, category: str) -> None:
+        if self.window._mode not in self._drawing_allowed_modes():
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_CALIBRATION_MODE_REQUIRED)
+            return
+        if not self.confirm_exit_route_drawing():
+            return
+        if not self.confirm_exit_route_calibration():
+            return
+
+        routes = self.window.route_mgr.route_groups.get(category, [])
+        if not routes:
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_BATCH_CALIBRATION_EMPTY_CATEGORY)
+            return
+
+        batch_route_ids: list[str] = []
+        for route in routes:
+            route_id = self.window.route_mgr.route_id(route)
+            if route_id:
+                batch_route_ids.append(route_id)
+
+        if not batch_route_ids:
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_BATCH_CALIBRATION_EMPTY_CATEGORY)
+            return
+
+        first_route = self.window.route_mgr.route_for_id(batch_route_ids[0])
+        if first_route is None:
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_CALIBRATION_ROUTE_MISSING)
+            return
+
+        transform = self._effective_route_coord_transform(batch_route_ids[0])
+        self.window.route_calibration_state.begin(
+            route_id=batch_route_ids[0],
+            category=category,
+            name=category,
+            coord_transform=transform,
+            route_center=self._route_internal_center(first_route),
+            batch=True,
+            batch_route_ids=batch_route_ids,
+        )
+        self._sync_route_calibration_ui()
+        toast(self.window, strings.ROUTE_BATCH_CALIBRATION_ENTERED_FMT.format(name=category))
+
+    def begin_annotation_calibration(
+        self,
+        annotation_path: str,
+        initial_transform: dict | None,
+        *,
+        settings_dialog: object | None = None,
+    ) -> bool:
+        if self.window._mode not in self._drawing_allowed_modes():
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, strings.ROUTE_CALIBRATION_MODE_REQUIRED)
+            return False
+        if not self.confirm_exit_route_drawing():
+            return False
+        if not self.confirm_exit_route_calibration():
+            return False
+
+        path = os.fspath(annotation_path or "")
+        if not path or not os.path.isfile(path):
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, "未能找到当前标注文件，请重新选择后再校准。")
+            return False
+
+        enabled_type_ids = []
+        type_getter = getattr(self.window.route_mgr, "annotation_type_ids", None)
+        if callable(type_getter):
+            enabled_type_ids = [str(type_id) for type_id in type_getter() if str(type_id or "")]
+        if not enabled_type_ids:
+            enabled_type_ids = [str(type_id) for type_id in getattr(self.window, "annotation_type_ids", []) if str(type_id or "")]
+        if not enabled_type_ids:
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, "请先启用至少一种标注类型，再进行手动校准。")
+            return False
+
+        payload = resource_metadata.read_json_payload(path)
+        points_by_type = payload.get("pointsByType") if isinstance(payload, dict) else None
+        if not isinstance(points_by_type, dict):
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, "当前标注文件格式无法读取，请检查标注 JSON。")
+            return False
+
+        calibration_points: list[dict] = []
+        for type_id in enabled_type_ids:
+            points = points_by_type.get(type_id)
+            if not isinstance(points, list):
+                continue
+            for point in points:
+                if not isinstance(point, dict):
+                    continue
+                copied = dict(point)
+                copied["typeId"] = type_id
+                calibration_points.append(copied)
+        if not calibration_points:
+            styled_info(self.window, strings.ROUTE_CALIBRATION_TITLE, "当前启用的标注类型没有可校准的点位。")
+            return False
+
+        name = f"标注数据：{os.path.basename(path)}"
+        self.window.route_calibration_state.begin(
+            route_id="",
+            category="",
+            name=name,
+            coord_transform=initial_transform,
+            route_center=self._route_internal_center({"points": calibration_points}),
+            target_type="annotation",
+            annotation_path=path,
+            annotation_points=calibration_points,
+            annotation_type_ids=enabled_type_ids,
+        )
+        self.window.route_calibration_settings_dialog = settings_dialog
+        self._sync_route_calibration_ui()
+        toast(self.window, strings.ROUTE_CALIBRATION_ENTERED_FMT.format(name=name))
+        return True
+
+    def _effective_route_coord_transform(self, route_id: str) -> dict:
+        adapter = None
+        adapter_getter = getattr(self.window.route_mgr, "route_coordinate_adapter", None)
+        if callable(adapter_getter):
+            fallback = None
+            coordinate_adapter = getattr(self.window.map_view, "coordinate_adapter", None)
+            if callable(coordinate_adapter):
+                fallback = coordinate_adapter()
+            adapter = adapter_getter(route_id, fallback)
+        if adapter is None:
+            coord_getter = getattr(self.window.route_mgr, "route_coord_transform", None)
+            transform = coord_getter(route_id) if callable(coord_getter) else None
+            if isinstance(transform, dict):
+                return self._normalized_calibration_transform(transform)
+            coordinate_adapter = getattr(self.window.map_view, "coordinate_adapter", None)
+            adapter = coordinate_adapter() if callable(coordinate_adapter) else None
+        to_dict = getattr(adapter, "to_dict", None)
+        if callable(to_dict):
+            return self._normalized_calibration_transform(to_dict())
+        return self._normalized_calibration_transform(None)
+
+    def _route_coordinate_adapter(self, route_id: str):
+        adapter_getter = getattr(self.window.route_mgr, "route_coordinate_adapter", None)
+        if callable(adapter_getter):
+            coordinate_adapter = getattr(self.window.map_view, "coordinate_adapter", None)
+            fallback = coordinate_adapter() if callable(coordinate_adapter) else None
+            return adapter_getter(route_id, fallback)
+        coordinate_adapter = getattr(self.window.map_view, "coordinate_adapter", None)
+        return coordinate_adapter() if callable(coordinate_adapter) else None
+
+    @staticmethod
+    def _normalized_calibration_transform(transform: object) -> dict:
+        defaults = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0}
+        result = dict(defaults)
+        if isinstance(transform, dict):
+            for key, default in defaults.items():
+                try:
+                    result[key] = float(transform.get(key, default))
+                except (TypeError, ValueError):
+                    result[key] = default
+        return result
+
+    @staticmethod
+    def _route_internal_center(route: dict) -> tuple[float, float] | None:
+        points = route.get("points") if isinstance(route, dict) else None
+        if not isinstance(points, list):
+            return None
+        xs: list[float] = []
+        ys: list[float] = []
+        for point in points:
+            if not isinstance(point, dict):
+                continue
+            try:
+                xs.append(float(point["x"]))
+                ys.append(float(point["y"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+        if not xs or not ys:
+            return None
+        return (min(xs) + max(xs)) / 2.0, (min(ys) + max(ys)) / 2.0
+
     def begin_route_drawing(self, route_item: RouteListItem) -> None:
         if self.window._mode not in self._drawing_allowed_modes():
             styled_info(self.window, strings.ROUTE_DRAWING_TITLE, strings.ROUTE_DRAWING_MODE_REQUIRED)
             return
         if not self.confirm_exit_route_drawing():
+            return
+        if not self.confirm_exit_route_calibration():
             return
 
         route = self.window.route_mgr.route_for_id(route_item.route_id)
@@ -411,6 +630,7 @@ QCheckBox::indicator:checked:hover {{
             route_color_hex="#1ad1ff",
             annotation_items_provider=self.window.route_mgr.annotation_type_items,
             annotation_icon_path_provider=self.window.route_mgr.point_icon_path_for,
+            include_coord_editors=True,
             annotation_picker_placement="right_of",
             annotation_picker_anchor=toolbar,
         )
@@ -421,6 +641,8 @@ QCheckBox::indicator:checked:hover {{
         node_panel.node_annotation_changed.connect(self._on_drawing_node_panel_annotation_changed)
         node_panel.node_label_changed.connect(self._on_drawing_node_panel_label_changed)
         node_panel.node_label_edit_committed.connect(self._on_drawing_node_panel_label_committed)
+        node_panel.node_coord_changed.connect(self._on_drawing_node_panel_coord_changed)
+        node_panel.node_coord_edit_committed.connect(self._on_drawing_node_panel_coord_committed)
         layout.addWidget(node_panel, stretch=1)
 
         controls = QWidget(toolbar)
@@ -655,11 +877,11 @@ QCheckBox::indicator:checked:hover {{
     def confirm_exit_route_drawing(self) -> bool:
         state = getattr(self.window, "route_drawing_state", None)
         if state is None or not state.active:
-            return True
+            return self.confirm_exit_route_calibration()
         self._mark_drawing_dirty()
         if not state.dirty:
             self.discard_route_drawing()
-            return True
+            return self.confirm_exit_route_calibration()
 
         choice = self._prompt_save_discard_cancel()
         if choice == "cancel":
@@ -667,7 +889,493 @@ QCheckBox::indicator:checked:hover {{
         if choice == "save" and not self.save_route_drawing():
             return False
         self.discard_route_drawing()
+        return self.confirm_exit_route_calibration()
+
+    def _sync_route_calibration_ui(self, *, update_editors: bool = True) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        context = None
+        if state is not None and state.active:
+            self._ensure_route_calibration_controls()
+            if getattr(state, "target_type", "route") == "annotation":
+                context = {
+                    "active": True,
+                    "target_type": "annotation",
+                    "annotation_path": state.annotation_path,
+                    "annotation_points": deepcopy(state.annotation_points),
+                    "annotation_type_ids": list(state.annotation_type_ids),
+                    "name": state.name,
+                    "coord_transform": dict(state.current_transform),
+                }
+            else:
+                route = self.window.route_mgr.route_for_id(state.route_id)
+                context = {
+                    "active": True,
+                    "target_type": "route",
+                    "route_id": state.route_id,
+                    "route": deepcopy(route) if isinstance(route, dict) else None,
+                    "coord_transform": dict(state.current_transform),
+                }
+            hint = getattr(self.window, "state_hint_label", None)
+            if hint is not None:
+                hint.setVisible(True)
+                if getattr(state, "batch", False):
+                    hint.setText(strings.ROUTE_BATCH_CALIBRATION_STATE_FMT.format(name=state.name))
+                else:
+                    hint.setText(strings.ROUTE_CALIBRATION_STATE_FMT.format(name=state.name))
+                hint.setStyleSheet("")
+            for panel_name in (
+                "route_calibration_action_panel",
+                "route_calibration_x_panel",
+                "route_calibration_y_panel",
+            ):
+                panel = getattr(self.window, panel_name, None)
+                if panel is not None:
+                    panel.show()
+                    panel.raise_()
+            if update_editors:
+                self._update_route_calibration_editors()
+            self.position_route_calibration_controls()
+        else:
+            for panel_name in (
+                "route_calibration_action_panel",
+                "route_calibration_x_panel",
+                "route_calibration_y_panel",
+            ):
+                panel = getattr(self.window, panel_name, None)
+                if panel is not None:
+                    panel.hide()
+
+        set_context = getattr(self.window.map_view, "set_route_calibration_context", None)
+        if callable(set_context):
+            set_context(context)
+
+    def _ensure_route_calibration_controls(self) -> None:
+        if getattr(self.window, "route_calibration_action_panel", None) is not None:
+            return
+        map_view = getattr(self.window, "map_view", None)
+        if not isinstance(map_view, QWidget):
+            return
+
+        action_panel = RouteCalibrationPanelFrame(map_view)
+        action_panel.setObjectName("RouteCalibrationActionPanel")
+        action_layout = QVBoxLayout(action_panel)
+        action_layout.setContentsMargins(8, 8, 8, 8)
+        action_layout.setSpacing(6)
+        end_btn = self._calibration_button(strings.ROUTE_CALIBRATION_END)
+        save_btn = self._calibration_button(strings.ROUTE_CALIBRATION_SAVE)
+        end_btn.clicked.connect(self.end_route_calibration)
+        save_btn.clicked.connect(self.save_route_calibration)
+        action_layout.addWidget(end_btn)
+        action_layout.addWidget(save_btn)
+
+        x_panel = self._build_route_calibration_axis_panel(
+            map_view,
+            axis="x",
+            offset_label=strings.ROUTE_CALIBRATION_X_OFFSET,
+            scale_label=strings.ROUTE_CALIBRATION_X_SCALE,
+        )
+        y_panel = self._build_route_calibration_axis_panel(
+            map_view,
+            axis="y",
+            offset_label=strings.ROUTE_CALIBRATION_Y_OFFSET,
+            scale_label=strings.ROUTE_CALIBRATION_Y_SCALE,
+        )
+
+        self.window.route_calibration_action_panel = action_panel
+        self.window.route_calibration_x_panel = x_panel
+        self.window.route_calibration_y_panel = y_panel
+        self.window.route_calibration_editors = {
+            "offset_x": x_panel.findChild(QLineEdit, "RouteCalibration_offset_x"),
+            "scale_x": x_panel.findChild(QLineEdit, "RouteCalibration_scale_x"),
+            "offset_y": y_panel.findChild(QLineEdit, "RouteCalibration_offset_y"),
+            "scale_y": y_panel.findChild(QLineEdit, "RouteCalibration_scale_y"),
+        }
+
+    def _build_route_calibration_axis_panel(
+        self,
+        parent: QWidget,
+        *,
+        axis: str,
+        offset_label: str,
+        scale_label: str,
+    ) -> QFrame:
+        panel = RouteCalibrationPanelFrame(parent)
+        panel.setObjectName(f"RouteCalibration{axis.upper()}Panel")
+        if axis == "y":
+            self._populate_route_calibration_y_panel(panel, offset_label, scale_label)
+            panel.hide()
+            return panel
+        layout = QGridLayout(panel)
+        layout.setContentsMargins(8, 6, 8, 8)
+        layout.setHorizontalSpacing(4)
+        layout.setVerticalSpacing(4)
+
+        labels = (offset_label, scale_label)
+        keys = (f"offset_{axis}", f"scale_{axis}")
+        for column, (label_text, key) in enumerate(zip(labels, keys)):
+            label = QLabel(label_text, panel)
+            label.setObjectName("FieldLabel")
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label, 0, column * 2, 1, 2)
+            editor = QLineEdit(panel)
+            editor.setObjectName(f"RouteCalibration_{key}")
+            editor.setAlignment(Qt.AlignRight)
+            editor.setFixedHeight(26)
+            editor.setFixedWidth(70)
+            editor.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            validator = QDoubleValidator(-1e9, 1e9, 4, editor)
+            validator.setNotation(QDoubleValidator.StandardNotation)
+            editor.setValidator(validator)
+            editor.textEdited.connect(lambda _text, known_key=key: self._on_route_calibration_editor_changed(known_key))
+            editor.editingFinished.connect(lambda known_key=key: self._on_route_calibration_editor_changed(known_key))
+            layout.addWidget(editor, 1, column * 2, 1, 2)
+
+        controls = (
+            (f"offset_{axis}", -1.0, "-"),
+            (f"offset_{axis}", 1.0, "+"),
+            (f"scale_{axis}", -0.01, "缩"),
+            (f"scale_{axis}", 0.01, "放"),
+        )
+        for column, (key, delta, text) in enumerate(controls):
+            button = self._calibration_button(text)
+            button.setFixedWidth(34)
+            button.setToolTip(self._calibration_adjust_tooltip(key, delta))
+            button.clicked.connect(
+                lambda _checked=False, known_key=key, known_delta=delta:
+                self.adjust_route_calibration_value(known_key, known_delta)
+            )
+            layout.addWidget(button, 2, column)
+        panel.hide()
+        return panel
+
+    def _populate_route_calibration_y_panel(
+        self,
+        panel: QFrame,
+        offset_label: str,
+        scale_label: str,
+    ) -> None:
+        layout = QGridLayout(panel)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setHorizontalSpacing(4)
+        layout.setVerticalSpacing(4)
+
+        rows = (
+            (offset_label, "offset_y", "-", "+", 1.0),
+            (scale_label, "scale_y", "缩", "放", 0.01),
+        )
+        for row, (label_text, key, minus_text, plus_text, step) in enumerate(rows):
+            label = QLabel("\n".join(label_text), panel)
+            label.setObjectName("FieldLabel")
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label, row, 0)
+
+            controls = QWidget(panel)
+            controls_layout = QVBoxLayout(controls)
+            controls_layout.setContentsMargins(0, 0, 0, 0)
+            controls_layout.setSpacing(3)
+
+            editor = QLineEdit(controls)
+            editor.setObjectName(f"RouteCalibration_{key}")
+            editor.setAlignment(Qt.AlignRight)
+            editor.setFixedHeight(26)
+            editor.setFixedWidth(70)
+            editor.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            validator = QDoubleValidator(-1e9, 1e9, 4, editor)
+            validator.setNotation(QDoubleValidator.StandardNotation)
+            editor.setValidator(validator)
+            editor.textEdited.connect(lambda _text, known_key=key: self._on_route_calibration_editor_changed(known_key))
+            editor.editingFinished.connect(lambda known_key=key: self._on_route_calibration_editor_changed(known_key))
+            controls_layout.addWidget(editor)
+
+            button_row = QWidget(controls)
+            button_layout = QHBoxLayout(button_row)
+            button_layout.setContentsMargins(0, 0, 0, 0)
+            button_layout.setSpacing(3)
+            for delta, text in ((-step, minus_text), (step, plus_text)):
+                button = self._calibration_button(text)
+                button.setFixedWidth(34)
+                button.setToolTip(self._calibration_adjust_tooltip(key, delta))
+                button.clicked.connect(
+                    lambda _checked=False, known_key=key, known_delta=delta:
+                    self.adjust_route_calibration_value(known_key, known_delta)
+                )
+                button_layout.addWidget(button)
+            controls_layout.addWidget(button_row)
+            layout.addWidget(controls, row, 1)
+
+    @staticmethod
+    def _calibration_button(text: str) -> QPushButton:
+        button = QPushButton(text)
+        button.setObjectName("RouteCalibrationButton")
+        button.setMinimumHeight(28)
+        button.setAutoRepeat(True)
+        button.setAutoRepeatDelay(350)
+        button.setAutoRepeatInterval(45)
+        return button
+
+    @staticmethod
+    def _calibration_adjust_tooltip(key: str, delta: float) -> str:
+        direction = "增加" if delta > 0 else "减少"
+        if key.startswith("offset_"):
+            axis = "X" if key.endswith("_x") else "Y"
+            return f"{direction}{axis}方向偏移"
+        axis = "X" if key.endswith("_x") else "Y"
+        return f"{direction}{axis}方向缩放"
+
+    def position_route_calibration_controls(self) -> None:
+        map_view = getattr(self.window, "map_view", None)
+        if not isinstance(map_view, QWidget):
+            return
+        action_panel = getattr(self.window, "route_calibration_action_panel", None)
+        x_panel = getattr(self.window, "route_calibration_x_panel", None)
+        y_panel = getattr(self.window, "route_calibration_y_panel", None)
+        margin = 2
+        action_margin = 8
+        if action_panel is not None:
+            action_panel.adjustSize()
+            action_panel.move(
+                max(action_margin, map_view.width() - action_panel.width() - action_margin),
+                action_margin,
+            )
+        if x_panel is not None:
+            x_panel.adjustSize()
+            x_panel.move(
+                max(margin, (map_view.width() - x_panel.width()) // 2),
+                max(margin, map_view.height() - x_panel.height() - margin),
+            )
+        if y_panel is not None:
+            y_panel.adjustSize()
+            y_panel.move(
+                max(margin, map_view.width() - y_panel.width() - margin),
+                max(margin, (map_view.height() - y_panel.height()) // 2),
+            )
+
+    def _update_route_calibration_editors(self) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        editors = getattr(self.window, "route_calibration_editors", {}) or {}
+        if state is None or not state.active:
+            return
+        for key, editor in editors.items():
+            if editor is None:
+                continue
+            editor.blockSignals(True)
+            editor.setText(self._format_calibration_value(state.current_transform.get(key, 0.0)))
+            editor.blockSignals(False)
+
+    @staticmethod
+    def _format_calibration_value(value: object) -> str:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            number = 0.0
+        return f"{number:.2f}".rstrip("0").rstrip(".") or "0"
+
+    def _on_route_calibration_editor_changed(self, key: str) -> None:
+        editors = getattr(self.window, "route_calibration_editors", {}) or {}
+        editor = editors.get(key)
+        if editor is None:
+            return
+        text = editor.text().strip()
+        if text in {"", "-", "+", ".", "-.", "+."}:
+            return
+        try:
+            value = float(text)
+        except ValueError:
+            return
+        self.set_route_calibration_value(key, value, update_editors=False)
+
+    def adjust_route_calibration_value(self, key: str, delta: float) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        if state is None or not state.active:
+            return
+        current = float(state.current_transform.get(key, 1.0 if key.startswith("scale_") else 0.0))
+        self.set_route_calibration_value(key, current + float(delta))
+
+    def set_route_calibration_value(self, key: str, value: float, *, update_editors: bool = True) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        if state is None or not state.active or key not in {"offset_x", "offset_y", "scale_x", "scale_y"}:
+            return
+        transform = dict(state.current_transform)
+        if key.startswith("scale_"):
+            value = max(0.001, float(value))
+            offset_key = "offset_x" if key.endswith("_x") else "offset_y"
+            center_index = 0 if key.endswith("_x") else 1
+            center = state.route_center[center_index] if state.route_center is not None else None
+            old_scale = float(transform.get(key, 1.0))
+            old_offset = float(transform.get(offset_key, 0.0))
+            transform[key] = value
+            if center is not None:
+                current_center = center * old_scale + old_offset
+                transform[offset_key] = current_center - center * value
+        else:
+            transform[key] = float(value)
+        state.current_transform = self._normalized_calibration_transform(transform)
+        self._mark_calibration_dirty()
+        self._sync_route_calibration_ui(update_editors=update_editors)
+
+    def apply_route_calibration_drag_delta(self, dx: float, dy: float) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        if state is None or not state.active:
+            return
+        transform = dict(state.current_transform)
+        transform["offset_x"] = float(transform.get("offset_x", 0.0)) + float(dx)
+        transform["offset_y"] = float(transform.get("offset_y", 0.0)) + float(dy)
+        state.current_transform = self._normalized_calibration_transform(transform)
+        self._mark_calibration_dirty()
+        self._sync_route_calibration_ui()
+
+    def _mark_calibration_dirty(self) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        if state is None or not state.active:
+            return
+        state.dirty = (
+            self._normalized_calibration_transform(state.current_transform)
+            != self._normalized_calibration_transform(state.original_transform)
+        )
+
+    def end_route_calibration(self) -> None:
+        self.confirm_exit_route_calibration()
+
+    def save_route_calibration(self) -> bool:
+        state = getattr(self.window, "route_calibration_state", None)
+        if state is None or not state.active:
+            return True
+        if getattr(state, "target_type", "route") == "annotation":
+            writer = getattr(self.window.route_mgr, "save_annotation_calibration", None)
+            saved = bool(callable(writer) and writer(state.annotation_path, dict(state.current_transform)))
+        else:
+            if getattr(state, "batch", False):
+                writer = getattr(self.window.route_mgr, "save_route_calibration", None)
+                if not callable(writer):
+                    styled_info(
+                        self.window,
+                        strings.ROUTE_CALIBRATION_SAVE_FAILED_TITLE,
+                        strings.ROUTE_BATCH_CALIBRATION_SAVE_FAILED_BODY,
+                    )
+                    return False
+                batch_ids = getattr(state, "batch_route_ids", [])
+                if not batch_ids:
+                    return True
+                failed = 0
+                for route_id in batch_ids:
+                    if not writer(route_id, dict(state.current_transform)):
+                        failed += 1
+                if failed:
+                    styled_info(
+                        self.window,
+                        strings.ROUTE_CALIBRATION_SAVE_FAILED_TITLE,
+                        strings.ROUTE_BATCH_CALIBRATION_SAVE_FAILED_BODY,
+                    )
+                    return False
+                saved = True
+            else:
+                writer = getattr(self.window.route_mgr, "save_route_calibration", None)
+                if callable(writer):
+                    saved = writer(state.route_id, dict(state.current_transform))
+                else:
+                    coord_writer = getattr(self.window.route_mgr, "update_route_coord_transform", None)
+                    version_writer = getattr(self.window.route_mgr, "add_current_route_enable_version", None)
+                    saved = bool(callable(coord_writer) and coord_writer(state.route_id, dict(state.current_transform)))
+                    if saved and callable(version_writer):
+                        saved = bool(version_writer(state.route_id))
+        if not saved:
+            styled_info(
+                self.window,
+                strings.ROUTE_CALIBRATION_SAVE_FAILED_TITLE,
+                strings.ROUTE_CALIBRATION_SAVE_FAILED_BODY,
+            )
+            return False
+        saved_name = state.name
+        if getattr(state, "target_type", "route") == "annotation":
+            state.reset()
+            self._sync_route_calibration_ui()
+            try:
+                self.window.route_mgr.invalidate_annotation_cache()
+                self.window.map_view._refresh_from_last_frame()
+            except Exception:
+                pass
+            self._restore_route_calibration_settings_dialog(refresh=True)
+        else:
+            state.original_transform = dict(state.current_transform)
+            state.dirty = False
+            self._sync_route_calibration_ui()
+        try:
+            self.refresh_tracked_routes()
+        except Exception:
+            pass
+        if getattr(state, "batch", False):
+            batch_count = len(getattr(state, "batch_route_ids", []))
+            toast(self.window, strings.ROUTE_BATCH_CALIBRATION_SAVED_FMT.format(name=saved_name, count=batch_count))
+        else:
+            toast(self.window, strings.ROUTE_CALIBRATION_SAVED_FMT.format(name=saved_name))
         return True
+
+    def discard_route_calibration(self) -> None:
+        state = getattr(self.window, "route_calibration_state", None)
+        restore_settings = bool(state is not None and getattr(state, "target_type", "route") == "annotation")
+        if state is not None:
+            state.reset()
+        self._sync_route_calibration_ui()
+        if restore_settings:
+            self._restore_route_calibration_settings_dialog(refresh=True)
+
+    def _restore_route_calibration_settings_dialog(self, *, refresh: bool = False) -> None:
+        dialog = getattr(self.window, "route_calibration_settings_dialog", None)
+        if dialog is None:
+            return
+        self.window.route_calibration_settings_dialog = None
+        if refresh:
+            reloader = getattr(dialog, "_reload_annotation_coord_editors", None)
+            if callable(reloader):
+                try:
+                    reloader()
+                except RuntimeError:
+                    return
+        try:
+            dialog.show()
+            dialog.raise_()
+            dialog.activateWindow()
+        except RuntimeError:
+            return
+
+    def confirm_exit_route_calibration(self) -> bool:
+        state = getattr(self.window, "route_calibration_state", None)
+        if state is None or not state.active:
+            return True
+        self._mark_calibration_dirty()
+        if not state.dirty:
+            self.discard_route_calibration()
+            return True
+        choice = self._prompt_calibration_save_discard_cancel()
+        if choice == "cancel":
+            return False
+        if choice == "save" and not self.save_route_calibration():
+            return False
+        self.discard_route_calibration()
+        return True
+
+    def _prompt_calibration_save_discard_cancel(self) -> str:
+        dialog = StyledDialogBase(self.window, strings.ROUTE_CALIBRATION_EXIT_TITLE, min_width=380, max_width=420)
+        body = QLabel(strings.ROUTE_CALIBRATION_EXIT_UNSAVED_BODY)
+        body.setObjectName("BodyLabel")
+        body.setWordWrap(True)
+        dialog.shell_layout.addWidget(body)
+
+        button_row = QHBoxLayout()
+        button_row.addStretch()
+        result = {"value": "cancel"}
+        for value, text in (
+            ("discard", strings.ROUTE_CALIBRATION_EXIT_DISCARD),
+            ("cancel", strings.ROUTE_CALIBRATION_EXIT_CANCEL),
+            ("save", strings.ROUTE_CALIBRATION_EXIT_SAVE),
+        ):
+            button = QPushButton(text)
+            button.clicked.connect(lambda _checked=False, v=value: (result.__setitem__("value", v), dialog.accept()))
+            button_row.addWidget(button)
+        dialog.shell_layout.addLayout(button_row)
+        center_dialog(dialog, self.window)
+        dialog.exec()
+        return result["value"]
 
     def _prompt_save_discard_cancel(self) -> str:
         dialog = StyledDialogBase(self.window, strings.ROUTE_DRAWING_EXIT_TITLE, min_width=380, max_width=420)
@@ -719,7 +1427,7 @@ QCheckBox::indicator:checked:hover {{
         annotation = external_fields if external_fields else self._drawing_annotation_for_new_point()
         if annotation is False:
             return
-        x, y = self._drawing_resource_xy(x, y)
+        x, y = self._drawing_resource_xy(x, y, route_id=state.route_id)
         point = {
             "id": self.window.route_mgr.new_route_point_id(),
             "x": int(x),
@@ -794,10 +1502,14 @@ QCheckBox::indicator:checked:hover {{
             node_type_override=node_type_override,
         )
 
-    def _drawing_resource_xy(self, x: int | float, y: int | float) -> tuple[int, int]:
+    def _drawing_resource_xy(self, x: int | float, y: int | float, *, route_id: str | None = None) -> tuple[int, int]:
         try:
-            getter = getattr(getattr(self.window, "map_view", None), "coordinate_adapter", None)
-            adapter = getter() if callable(getter) else None
+            adapter = None
+            if route_id is not None:
+                adapter = self._route_coordinate_adapter(route_id)
+            if adapter is None:
+                getter = getattr(getattr(self.window, "map_view", None), "coordinate_adapter", None)
+                adapter = getter() if callable(getter) else None
             if adapter is None:
                 return int(round(float(x))), int(round(float(y)))
             tx, ty = adapter.to_internal(float(x), float(y))
@@ -922,8 +1634,10 @@ QCheckBox::indicator:checked:hover {{
                 point = state.draft_points[index]
                 if isinstance(point, dict):
                     try:
-                        point["x"] = int(float(before["x"]))
-                        point["y"] = int(float(before["y"]))
+                        before_x = float(before["x"])
+                        before_y = float(before["y"])
+                        point["x"] = int(before_x) if before_x.is_integer() else before_x
+                        point["y"] = int(before_y) if before_y.is_integer() else before_y
                     except (KeyError, TypeError, ValueError):
                         pass
         elif op == "reorder":
@@ -1006,7 +1720,7 @@ QCheckBox::indicator:checked:hover {{
         if not isinstance(point, dict):
             return False
         try:
-            next_x, next_y = self._drawing_resource_xy(x, y)
+            next_x, next_y = self._drawing_resource_xy(x, y, route_id=state.route_id)
         except (TypeError, ValueError):
             return False
 
@@ -1040,8 +1754,8 @@ QCheckBox::indicator:checked:hover {{
         if not isinstance(point, dict):
             return False
         try:
-            before = self._drawing_resource_xy(before_x, before_y)
-            after = self._drawing_resource_xy(after_x, after_y)
+            before = self._drawing_resource_xy(before_x, before_y, route_id=state.route_id)
+            after = self._drawing_resource_xy(after_x, after_y, route_id=state.route_id)
         except (TypeError, ValueError):
             return False
         if before == after:
@@ -1153,6 +1867,80 @@ QCheckBox::indicator:checked:hover {{
             "index": point_index,
             "before": before,
             "after": after,
+        })
+        self._mark_drawing_dirty()
+        self._sync_route_drawing_ui()
+
+    def _on_drawing_node_panel_coord_changed(
+        self,
+        point_index: int,
+        key: str,
+        _before: object,
+        after: object,
+    ) -> None:
+        state = self.window.route_drawing_state
+        if (
+            not state.active
+            or key not in {"x", "y"}
+            or not isinstance(point_index, int)
+            or not (0 <= point_index < len(state.draft_points))
+        ):
+            return
+        point = state.draft_points[point_index]
+        if not isinstance(point, dict):
+            return
+        if point.get(key) == after:
+            return
+        point[key] = after
+        self._mark_drawing_dirty()
+        context = {
+            "active": True,
+            "paused": state.paused,
+            "route_id": state.route_id,
+            "name": state.name,
+            "points": deepcopy(state.draft_points),
+            "node_type": state.node_type,
+            "insert_at_end": state.insert_at_end,
+            "add_node_annotation": state.add_node_annotation,
+            "same_annotation_type": state.same_annotation_type,
+            "annotation_type": state.annotation_type,
+            "annotation_type_id": state.annotation_type_id,
+            "hide_other_routes": state.hide_other_routes,
+            "loop": state.loop,
+        }
+        try:
+            self.window.map_view.set_route_drawing_context(context)
+        except Exception:
+            pass
+
+    def _on_drawing_node_panel_coord_committed(
+        self,
+        point_index: int,
+        key: str,
+        before: object,
+        after: object,
+    ) -> None:
+        state = self.window.route_drawing_state
+        if (
+            not state.active
+            or key not in {"x", "y"}
+            or before == after
+            or not isinstance(point_index, int)
+            or not (0 <= point_index < len(state.draft_points))
+        ):
+            return
+        point = state.draft_points[point_index]
+        if not isinstance(point, dict):
+            return
+        before_point = dict(point)
+        before_point[key] = before
+        after_point = dict(point)
+        after_point[key] = after
+        state.undo_stack.append({
+            "op": "move",
+            "index": point_index,
+            "before": {"x": before_point.get("x"), "y": before_point.get("y")},
+            "after": {"x": after_point.get("x"), "y": after_point.get("y")},
         })
         self._mark_drawing_dirty()
         self._sync_route_drawing_ui()
@@ -2243,13 +3031,19 @@ QCheckBox::indicator:checked:hover {{
         except (KeyError, TypeError, ValueError):
             return None
 
-    def _route_jump_target(self, route: dict, *, paused: bool) -> tuple[int, int, int, bool] | None:
+    def _route_jump_target(self, route: dict, *, paused: bool, route_adapter=None) -> tuple[int, int, int, bool] | None:
         valid_points: list[tuple[int, int, int, dict]] = []
         for index, point in enumerate(route.get("points") or []):
             xy = self._route_point_xy(point)
             if xy is None:
                 continue
-            valid_points.append((index, xy[0], xy[1], point))
+            raw_x, raw_y = xy
+            if route_adapter is not None:
+                cx, cy = route_adapter.to_current(float(raw_x), float(raw_y))
+                x, y = int(round(cx)), int(round(cy))
+            else:
+                x, y = raw_x, raw_y
+            valid_points.append((index, x, y, point))
         if not valid_points:
             return None
 
@@ -2283,7 +3077,8 @@ QCheckBox::indicator:checked:hover {{
             return
 
         paused = self._is_paused_route_jump_mode()
-        target = self._route_jump_target(route, paused=paused)
+        route_adapter = self._route_coordinate_adapter(route_id)
+        target = self._route_jump_target(route, paused=paused, route_adapter=route_adapter)
         if target is None:
             styled_info(
                 self.window,
@@ -2292,11 +3087,30 @@ QCheckBox::indicator:checked:hover {{
             )
             return
 
-        point_index, x, y, completed = target
+        point_index, display_x, display_y, completed = target
+
         if paused:
-            self.window._on_relocate(x, y)
+            raw_target = self._route_jump_target(route, paused=paused, route_adapter=None)
+            if raw_target is not None:
+                _raw_idx, raw_x, raw_y, _raw_completed = raw_target
+                self.window.tracker.set_anchor(raw_x, raw_y)
+                self.window._last_player_xy = (raw_x, raw_y)
+                self.window.coord_label.setText(f"{raw_x} , {raw_y}")
+                self.window.tracking_state.display_stable_xy = (raw_x, raw_y)
+                self.window.tracking_state.display_pending_locked_xy = None
+                self.window.tracking_state.display_pending_locked_count = 0
+                self.window.tracking_state.display_needs_lock_confirmation = False
+            from ui_island.state.tracking import TrackState
+            self.window.map_view.preview_relocate(display_x, display_y, TrackState.SEARCHING)
         else:
-            self.window.map_view.focus_map_position(x, y)
+            global_adapter = getattr(self.window.map_view, "coordinate_adapter", None)
+            if callable(global_adapter):
+                global_adapter = global_adapter()
+            if global_adapter is not None:
+                ix, iy = global_adapter.to_internal(float(display_x), float(display_y))
+            else:
+                ix, iy = float(display_x), float(display_y)
+            self.window.map_view.focus_map_position(int(round(ix)), int(round(iy)))
 
         message = (
             strings.ROUTE_TRACKED_JUMP_COMPLETED_FMT
@@ -2319,7 +3133,8 @@ QCheckBox::indicator:checked:hover {{
             route_id = self.window.route_mgr.route_id(route)
             if not route_id:
                 continue
-            target = self._route_jump_target(route, paused=paused)
+            route_adapter = self._route_coordinate_adapter(route_id)
+            target = self._route_jump_target(route, paused=paused, route_adapter=route_adapter)
             if target is None:
                 continue
             _point_index, x, y, _completed = target

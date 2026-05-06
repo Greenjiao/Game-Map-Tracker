@@ -89,6 +89,11 @@ def _format_coord_value(value: float) -> str:
     return formatted or "0"
 
 
+def _format_annotation_coord_value(value: float) -> str:
+    formatted = f"{float(value):.2f}".rstrip("0").rstrip(".")
+    return formatted or "0"
+
+
 _COORD_FIELD_KEYS = {field.key for field in COORD_FIELDS}
 
 
@@ -100,6 +105,7 @@ def _style_compact_coord_editor(editor: QLineEdit, *, width: int) -> None:
 _MAP_FILE_PLACEHOLDER = "请选择底图"
 _ANNOTATION_FILE_PLACEHOLDER = "请选择标注文件"
 _ROUTE_CONVERSION_LOG_LIMIT = 40
+_COMMON_TAB_ROW_SPACING = 10
 _HOTKEY_EDITOR_WIDTH = 98
 _HOTKEY_LABEL_WIDTH = 82
 _HOTKEY_BUTTON_WIDTH = 58
@@ -1102,6 +1108,7 @@ class SettingsDialog(QDialog):
     applied = Signal()
     restart_requested = Signal()
     annotation_refresh_requested = Signal()
+    annotation_calibration_requested = Signal(object)
     update_check_finished = Signal(object)
     update_install_finished = Signal(object)
     update_progress_changed = Signal(str)
@@ -1439,7 +1446,14 @@ class SettingsDialog(QDialog):
         _add_tab("路线与颜色", self._build_common_tab_page(route_rows))
         _add_tab("交互", self._build_common_tab_page(interaction_rows))
         _add_tab("参数", self._build_common_tab_page_fields(param_fields))
-        _add_tab("坐标", self._build_common_tab_page_fields(COORD_FIELDS, narrow_editor=False))
+        _add_tab(
+            "坐标",
+            self._build_common_tab_page_fields(
+                COORD_FIELDS,
+                narrow_editor=False,
+                hint_text="若无法确定路线来源一致，请不改动此处全局坐标变换参数。",
+            ),
+        )
 
         tab_bar_layout.addStretch(1)
         card_layout.addWidget(tab_bar)
@@ -1455,17 +1469,31 @@ class SettingsDialog(QDialog):
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 4, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(_COMMON_TAB_ROW_SPACING)
         for row in rows:
             layout.addWidget(row)
         layout.addStretch(1)
         return page
 
-    def _build_common_tab_page_fields(self, fields: list[Field], *, narrow_editor: bool = True) -> QWidget:
+    def _build_common_tab_page_fields(
+        self,
+        fields: list[Field],
+        *,
+        narrow_editor: bool = True,
+        hint_text: str = "",
+    ) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 4, 0, 0)
-        layout.setSpacing(10)
+        layout.setSpacing(_COMMON_TAB_ROW_SPACING)
+        if hint_text:
+            hint_label = QLabel(hint_text)
+            hint_label.setObjectName("StatLabel")
+            hint_label.setProperty("settingsCoordTransformHint", True)
+            hint_label.setProperty("class", "StatLabel")
+            hint_label.setWordWrap(True)
+            hint_label.setStyleSheet("color: rgba(255, 255, 255, 0.62); font-size: 11px;")
+            layout.addWidget(hint_label)
         outer = QHBoxLayout()
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(18)
@@ -1826,6 +1854,7 @@ class SettingsDialog(QDialog):
             )
         )
         lock_checkbox.setToolTip("开启后进入或退出导航时锁定状态保持不变")
+        lock_checkbox.clicked.connect(self._on_window_lock_follows_guide_toggled)
         self._window_lock_follows_guide_checkbox = lock_checkbox
         layout.addWidget(lock_checkbox)
 
@@ -1837,6 +1866,14 @@ class SettingsDialog(QDialog):
 
         layout.addStretch()
         return row
+
+    def _on_window_lock_follows_guide_toggled(self, checked: bool) -> None:
+        if not checked:
+            return
+        editor = self._action_hotkey_editors.get("terminate_navigation")
+        if editor is not None and editor.keySequence().isEmpty():
+            styled_info(self, "锁定状态流转", "开启锁定状态流转前，请先设置终止导航快捷键。")
+            self._window_lock_follows_guide_checkbox.setChecked(False)
 
     def _build_annotation_panel_follow_row(self) -> QWidget:
         row = QWidget()
@@ -2208,9 +2245,10 @@ class SettingsDialog(QDialog):
 
     def _build_annotation_file_row(self) -> QWidget:
         container = QWidget()
+        container.setObjectName("AnnotationFileSettingsContainer")
         outer = QVBoxLayout(container)
         outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(4)
+        outer.setSpacing(_COMMON_TAB_ROW_SPACING)
 
         row = QWidget(container)
         layout = QHBoxLayout(row)
@@ -2292,6 +2330,11 @@ class SettingsDialog(QDialog):
         reset_btn.setToolTip("清除该标注文件的坐标变换覆盖。")
         reset_btn.clicked.connect(self._reset_annotation_coord_editors)
         layout.addWidget(reset_btn)
+        calibrate_btn = QPushButton("手动校准", row)
+        calibrate_btn.setFixedHeight(26)
+        calibrate_btn.setToolTip("隐藏设置窗口，并在地图中手动校准当前标注文件坐标。")
+        calibrate_btn.clicked.connect(self._request_annotation_coord_calibration)
+        layout.addWidget(calibrate_btn)
         layout.addStretch()
         return row
 
@@ -2321,7 +2364,7 @@ class SettingsDialog(QDialog):
         values = explicit if explicit is not None else defaults
         for key, editor in editors.items():
             editor.blockSignals(True)
-            editor.setText(_format_coord_value(values.get(key, defaults[key])))
+            editor.setText(_format_annotation_coord_value(values.get(key, defaults[key])))
             editor.blockSignals(False)
         self._annotation_coord_dirty = False
         self._annotation_coord_initial_explicit = explicit is not None
@@ -2330,10 +2373,36 @@ class SettingsDialog(QDialog):
         defaults = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0}
         for key, editor in self._annotation_coord_editors.items():
             editor.blockSignals(True)
-            editor.setText(_format_coord_value(defaults[key]))
+            editor.setText(_format_annotation_coord_value(defaults[key]))
             editor.blockSignals(False)
         self._annotation_coord_dirty = True
         self._annotation_coord_pending_clear = True
+
+    def _annotation_coord_transform_from_editors(self) -> dict[str, float]:
+        defaults = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0}
+        transform: dict[str, float] = {}
+        editors = getattr(self, "_annotation_coord_editors", {}) or {}
+        for key, default in defaults.items():
+            editor = editors.get(key)
+            text = editor.text().strip() if editor is not None else ""
+            try:
+                transform[key] = float(text) if text else default
+            except ValueError:
+                transform[key] = default
+        return transform
+
+    def _request_annotation_coord_calibration(self) -> None:
+        path = self._annotation_current_payload_path()
+        if not path or not os.path.isfile(path):
+            styled_info(self, "校准坐标", "请先选择一个可用的标注数据文件。")
+            return
+        self.annotation_calibration_requested.emit(
+            {
+                "dialog": self,
+                "annotation_path": path,
+                "coord_transform": self._annotation_coord_transform_from_editors(),
+            }
+        )
 
     def _on_choose_annotation_file(self) -> None:
         selected, _selected_filter = QFileDialog.getOpenFileName(
@@ -3298,6 +3367,7 @@ def open_settings_dialog(
     on_applied: Callable[[], None] | None = None,
     on_closed: Callable[[], None] | None = None,
     on_annotation_refresh_requested: Callable[[], None] | None = None,
+    on_annotation_calibration_requested: Callable[[object], None] | None = None,
 ) -> None:
     global _active_dialog
     if _active_dialog is not None:
@@ -3317,6 +3387,8 @@ def open_settings_dialog(
         dialog.applied.connect(on_applied)
     if on_annotation_refresh_requested is not None:
         dialog.annotation_refresh_requested.connect(on_annotation_refresh_requested)
+    if on_annotation_calibration_requested is not None:
+        dialog.annotation_calibration_requested.connect(on_annotation_calibration_requested)
     if parent is not None and hasattr(parent, "restart_app_from_settings"):
         dialog.restart_requested.connect(parent.restart_app_from_settings)
 

@@ -121,6 +121,83 @@ class RouteDrawingState:
 
 
 @dataclass
+class RouteCalibrationState:
+    active: bool = False
+    target_type: str = "route"
+    route_id: str = ""
+    category: str = ""
+    name: str = ""
+    annotation_path: str = ""
+    annotation_points: list[dict] = field(default_factory=list)
+    annotation_type_ids: list[str] = field(default_factory=list)
+    original_transform: dict | None = None
+    current_transform: dict = field(default_factory=dict)
+    route_center: tuple[float, float] | None = None
+    batch: bool = False
+    batch_route_ids: list[str] = field(default_factory=list)
+    dirty: bool = False
+
+    def reset(self) -> None:
+        self.active = False
+        self.target_type = "route"
+        self.route_id = ""
+        self.category = ""
+        self.name = ""
+        self.annotation_path = ""
+        self.annotation_points = []
+        self.annotation_type_ids = []
+        self.original_transform = None
+        self.current_transform = {}
+        self.route_center = None
+        self.batch = False
+        self.batch_route_ids = []
+        self.dirty = False
+
+    def begin(
+        self,
+        *,
+        route_id: str,
+        category: str,
+        name: str,
+        coord_transform: dict | None,
+        route_center: tuple[float, float] | None = None,
+        target_type: str = "route",
+        annotation_path: str = "",
+        annotation_points: list[dict] | None = None,
+        annotation_type_ids: list[str] | None = None,
+        batch: bool = False,
+        batch_route_ids: list[str] | None = None,
+    ) -> None:
+        self.reset()
+        self.active = True
+        self.target_type = "annotation" if target_type == "annotation" else "route"
+        self.route_id = route_id
+        self.category = category
+        self.name = name
+        self.annotation_path = str(annotation_path or "")
+        self.annotation_points = [dict(point) for point in annotation_points or [] if isinstance(point, dict)]
+        self.annotation_type_ids = [str(type_id) for type_id in annotation_type_ids or [] if str(type_id or "")]
+        self.original_transform = dict(coord_transform) if isinstance(coord_transform, dict) else None
+        self.current_transform = _normalized_coord_transform(coord_transform)
+        self.route_center = route_center
+        self.batch = batch
+        self.batch_route_ids = list(batch_route_ids) if batch_route_ids is not None else []
+        self.dirty = False
+
+
+def _normalized_coord_transform(transform: object) -> dict:
+    defaults = {"scale_x": 1.0, "scale_y": 1.0, "offset_x": 0.0, "offset_y": 0.0}
+    result = dict(defaults)
+    if isinstance(transform, dict):
+        for key, default in defaults.items():
+            try:
+                result[key] = float(transform.get(key, default))
+            except (TypeError, ValueError):
+                result[key] = default
+    return result
+
+
+@dataclass
 class TrackingState:
     locked: bool = False
     running: bool = True

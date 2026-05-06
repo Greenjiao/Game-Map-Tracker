@@ -45,6 +45,7 @@ class MapView(QWidget):
     route_point_move_requested = Signal(str, int, int, int)
     route_point_move_finished = Signal(str, int, int, int, int, int)
     route_point_move_undo_requested = Signal()
+    route_calibration_drag_delta_requested = Signal(float, float)
 
     _ABSOLUTE_MIN_ZOOM = 0.05
     _MAX_ZOOM = 3.5
@@ -77,6 +78,8 @@ class MapView(QWidget):
         self._left_dragging = False
         self._hover_map_pos: tuple[float, float] | None = None
         self._drawing_context: dict | None = None
+        self._route_calibration_context: dict | None = None
+        self._route_calibration_drag_last_map: tuple[float, float] | None = None
         self._drawing_drag_index: int | None = None
         self._drawing_drag_start_map: tuple[int, int] | None = None
         self._drawing_drag_current_map: tuple[int, int] | None = None
@@ -229,9 +232,17 @@ class MapView(QWidget):
         self._last_draw_rect = QRectF(draw_x, draw_y, float(render_w), float(render_h))
 
         drawing_route = self._drawing_route_payload()
+        calibration_route = self._route_calibration_payload()
+        overlay_route = drawing_route if drawing_route is not None else calibration_route
+        overlay_active = overlay_route is not None
+        annotation_calibration_active = bool(
+            self._is_route_calibration_active()
+            and isinstance(self._route_calibration_context, dict)
+            and self._route_calibration_context.get("target_type") == "annotation"
+        )
         drawing_active = drawing_route is not None
-        draw_player_x = None if drawing_active else cx
-        draw_player_y = None if drawing_active else cy
+        draw_player_x = None if overlay_active else cx
+        draw_player_y = None if overlay_active else cy
         scale_x = render_w / float(viewport_w)
         scale_y = render_h / float(viewport_h)
         self.route_mgr.draw_on(
@@ -241,7 +252,7 @@ class MapView(QWidget):
             max(crop_w, crop_h),
             draw_player_x,
             draw_player_y,
-            drawing_route=drawing_route,
+            drawing_route=overlay_route,
             auto_visit=auto_visit,
             coord_adapter=self._coord_adapter,
             viewport_width=viewport_w,
@@ -249,8 +260,9 @@ class MapView(QWidget):
             scale_x=scale_x,
             scale_y=scale_y,
             map_pixels_per_screen_px=map_pixels_per_screen_px,
+            skip_annotations=annotation_calibration_active,
         )
-        if drawing_active:
+        if overlay_active:
             self.guide_hint_changed.emit(None)
         else:
             self.guide_hint_changed.emit(
@@ -267,7 +279,7 @@ class MapView(QWidget):
 
         local_x = int(round((cx - vx1) * scale_x))
         local_y = int(round((cy - vy1) * scale_y))
-        if not drawing_active and 0 <= local_x < crop.shape[1] and 0 <= local_y < crop.shape[0]:
+        if not overlay_active and 0 <= local_x < crop.shape[1] and 0 <= local_y < crop.shape[0]:
             if state == TrackState.INERTIAL:
                 # 惯性态无新截图：黄圈降级显示
                 cv2.circle(crop, (local_x, local_y), 10, (0, 255, 255), -1)
@@ -456,11 +468,41 @@ class MapView(QWidget):
             self._reset_route_point_drag()
         self._refresh_from_last_frame()
 
+    def set_route_calibration_context(self, context: dict | None) -> None:
+        previous_key = (
+            self._route_calibration_context_key(self._route_calibration_context)
+            if isinstance(self._route_calibration_context, dict)
+            else ""
+        )
+        next_context = dict(context) if isinstance(context, dict) and context.get("active") else None
+        next_key = self._route_calibration_context_key(next_context) if isinstance(next_context, dict) else ""
+        self._route_calibration_context = next_context
+        if next_context is None or next_key != previous_key:
+            self._route_calibration_drag_last_map = None
+        if self._route_calibration_context is not None:
+            self._reset_route_point_drag()
+        self._refresh_from_last_frame()
+
+    @staticmethod
+    def _route_calibration_context_key(context: dict | None) -> str:
+        if not isinstance(context, dict):
+            return ""
+        target_type = str(context.get("target_type") or "route")
+        if target_type == "annotation":
+            return f"annotation:{context.get('annotation_path') or ''}"
+        return f"route:{context.get('route_id') or ''}"
+
     def _is_drawing_active(self) -> bool:
         return bool(isinstance(self._drawing_context, dict) and self._drawing_context.get("active"))
 
     def _is_drawing_paused(self) -> bool:
         return bool(self._is_drawing_active() and self._drawing_context and self._drawing_context.get("paused"))
+
+    def _is_route_calibration_active(self) -> bool:
+        return bool(
+            isinstance(self._route_calibration_context, dict)
+            and self._route_calibration_context.get("active")
+        )
 
     def _reset_drawing_node_drag(self) -> None:
         self._drawing_drag_index = None
@@ -500,7 +542,14 @@ class MapView(QWidget):
         if not isinstance(point, dict):
             return None
         try:
-            return int(float(point["x"])), int(float(point["y"]))
+            route_id = str(context.get("route_id") or "") if context else ""
+            adapter = self._coord_adapter
+            if route_id:
+                adapter_getter = getattr(self.route_mgr, "route_coordinate_adapter", None)
+                if callable(adapter_getter):
+                    adapter = adapter_getter(route_id, self._coord_adapter) or self._coord_adapter
+            x, y = adapter.to_current(float(point["x"]), float(point["y"]))
+            return int(x), int(y)
         except (KeyError, TypeError, ValueError):
             return None
 
@@ -514,6 +563,78 @@ class MapView(QWidget):
             "loop": bool(self._drawing_context.get("loop")),
             "_hide_other_routes": bool(self._drawing_context.get("hide_other_routes")),
         }
+
+    def _route_calibration_payload(self) -> dict | None:
+        if not self._is_route_calibration_active() or not self._route_calibration_context:
+            return None
+        if self._route_calibration_context.get("target_type") == "annotation":
+            points = self._route_calibration_context.get("annotation_points")
+            if not isinstance(points, list):
+                return None
+            transform = self._route_calibration_context.get("coord_transform")
+            return {
+                "id": "__annotation_calibration__",
+                "display_name": self._route_calibration_context.get("name") or "",
+                "points": [dict(point) for point in points if isinstance(point, dict)],
+                "coord_transform": dict(transform) if isinstance(transform, dict) else {},
+                "_hide_other_routes": True,
+                "_annotation_calibration": True,
+            }
+        route = self._route_calibration_context.get("route")
+        if not isinstance(route, dict):
+            return None
+        copied = dict(route)
+        transform = self._route_calibration_context.get("coord_transform")
+        copied["coord_transform"] = dict(transform) if isinstance(transform, dict) else {}
+        copied["_hide_other_routes"] = True
+        return copied
+
+    def _route_calibration_widget_bounds(self) -> QRectF | None:
+        route = self._route_calibration_payload()
+        if route is None:
+            return None
+        adapter = MapCoordinateAdapter.from_dict(route.get("coord_transform"))
+        points: list[QPointF] = []
+        for point in route.get("points") or []:
+            if not isinstance(point, dict):
+                continue
+            try:
+                x, y = adapter.to_current(float(point["x"]), float(point["y"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+            widget_pos = self._map_to_widget(x, y)
+            if widget_pos is not None:
+                points.append(widget_pos)
+        if not points:
+            return None
+        left = min(point.x() for point in points)
+        right = max(point.x() for point in points)
+        top = min(point.y() for point in points)
+        bottom = max(point.y() for point in points)
+        padding = 18.0
+        return QRectF(left, top, max(1.0, right - left), max(1.0, bottom - top)).adjusted(
+            -padding,
+            -padding,
+            padding,
+            padding,
+        )
+
+    def _route_calibration_hit(self, widget_pos: QPointF) -> bool:
+        bounds = self._route_calibration_widget_bounds()
+        return bool(bounds is not None and bounds.contains(widget_pos))
+
+    def _draw_route_calibration_highlight(self, painter: QPainter) -> None:
+        bounds = self._route_calibration_widget_bounds()
+        if bounds is None:
+            return
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(QColor(26, 210, 255, 42))
+        painter.setPen(QPen(QColor(150, 235, 255, 210), 2))
+        painter.drawRoundedRect(bounds, 12, 12)
+        painter.setPen(QPen(QColor(255, 255, 255, 80), 1))
+        painter.drawRoundedRect(bounds.adjusted(3, 3, -3, -3), 9, 9)
+        painter.restore()
 
     def _draw_drawing_preview(self, painter: QPainter) -> None:
         if (
@@ -571,6 +692,7 @@ class MapView(QWidget):
         draw_rect = self._draw_rect()
         self._last_draw_rect = draw_rect
         painter.drawPixmap(int(draw_rect.left()), int(draw_rect.top()), self._pixmap)
+        self._draw_route_calibration_highlight(painter)
         self._draw_drawing_preview(painter)
         self._draw_missing_map_notice(painter)
 
@@ -598,6 +720,15 @@ class MapView(QWidget):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and self._pixmap is not None:
             self.setFocus(Qt.MouseFocusReason)
+            if self._is_route_calibration_active() and self._route_calibration_hit(event.position()):
+                self._route_calibration_drag_last_map = self._widget_to_map(event.position())
+                self._left_press_pos = event.position()
+                self._left_press_map = None
+                self._left_dragging = False
+                self._drag_last_pos = None
+                self._disable_center_lock()
+                event.accept()
+                return
             if self._is_drawing_active() and not self._is_drawing_paused():
                 draft_hit = self._hit_test_draft_node(event.position())
                 if draft_hit is not None:
@@ -612,7 +743,11 @@ class MapView(QWidget):
                         self._drag_last_pos = None
                         event.accept()
                         return
-            if self._route_point_drag_enabled and not self._is_drawing_active():
+            if (
+                self._route_point_drag_enabled
+                and not self._is_drawing_active()
+                and not self._is_route_calibration_active()
+            ):
                 route_hit = self._hit_test_node(event.position())
                 if route_hit is not None:
                     route_id, point_index = route_hit
@@ -638,6 +773,28 @@ class MapView(QWidget):
 
     def mouseMoveEvent(self, event):
         self._hover_map_pos = self._widget_to_internal_map(event.position())
+
+        if self._route_calibration_drag_last_map is not None:
+            if self._left_press_pos is not None and not self._left_dragging:
+                delta_from_press = event.position() - self._left_press_pos
+                app = QApplication.instance()
+                threshold = app.startDragDistance() if app is not None else QApplication.startDragDistance()
+                threshold = max(1, int(threshold))
+                if max(abs(delta_from_press.x()), abs(delta_from_press.y())) < threshold:
+                    event.accept()
+                    return
+                self._left_dragging = True
+
+            mapped = self._widget_to_map(event.position())
+            if mapped is not None:
+                last_x, last_y = self._route_calibration_drag_last_map
+                dx = mapped[0] - last_x
+                dy = mapped[1] - last_y
+                if not math.isclose(dx, 0.0) or not math.isclose(dy, 0.0):
+                    self._route_calibration_drag_last_map = mapped
+                    self.route_calibration_drag_delta_requested.emit(dx, dy)
+            event.accept()
+            return
 
         if self._drawing_drag_index is not None:
             if self._left_press_pos is not None and not self._left_dragging:
@@ -721,6 +878,15 @@ class MapView(QWidget):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
+            if self._route_calibration_drag_last_map is not None:
+                self._route_calibration_drag_last_map = None
+                self._drag_last_pos = None
+                self._left_press_pos = None
+                self._left_press_map = None
+                self._left_dragging = False
+                event.accept()
+                return
+
             if self._drawing_drag_index is not None:
                 index = self._drawing_drag_index
                 before = self._drawing_drag_start_map
@@ -831,7 +997,7 @@ class MapView(QWidget):
         return 0
 
     def mouseDoubleClickEvent(self, event):
-        if self._is_drawing_active():
+        if self._is_drawing_active() or self._is_route_calibration_active():
             event.accept()
             return
         mapped = self._widget_to_map(event.position())
@@ -899,7 +1065,7 @@ class MapView(QWidget):
             return self.route_mgr.hit_test_annotation_point(mapped[0], mapped[1], map_threshold)
 
     def _route_point_undo_context_items(self) -> list[ContextMenuItem]:
-        if self._is_drawing_active() or not self._route_point_move_undo_available:
+        if self._is_drawing_active() or self._is_route_calibration_active() or not self._route_point_move_undo_available:
             return []
         return [
             ContextMenuItem(
@@ -911,6 +1077,9 @@ class MapView(QWidget):
 
     def contextMenuEvent(self, event):
         pos = QPointF(event.pos())
+        if self._is_route_calibration_active():
+            event.accept()
+            return
         if self._is_drawing_active():
             draft_hit = self._hit_test_draft_node(pos)
             if draft_hit is not None:
