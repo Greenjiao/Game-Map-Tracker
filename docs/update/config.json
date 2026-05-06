@@ -49,6 +49,14 @@
         "key": "QuoteLeft",
         "vk": 192
     },
+    "ACTION_HOTKEYS": {
+        "reset_view": null,
+        "relocate": null,
+        "start_navigation": null,
+        "terminate_navigation": null,
+        "jump_current_route_node": null,
+        "add_current_position_to_current_route": null
+    },
     "ROUTE_VISITED_POINT_OPACITY": 1.0,
     "ROUTE_VISITED_ICON_OPACITY": 0.35,
     "ROUTE_GUIDE_DISABLE_NODE_DRAG": true,
@@ -56,7 +64,8 @@
     "ROUTE_NODE_ICON_SIZE": 20,
     "ANNOTATION_ICON_SIZE": 20,
     "ROUTE_NODE_DOT_SIZE": 5,
-    "WINDOW_LOCK_FOLLOWS_GUIDE": true,
+    "WINDOW_LOCK_FOLLOWS_GUIDE": false,
+    "PURE_NAVIGATION_MODE": false,
     "ROUTE_NOTES_DIALOG_WIDTH": 680,
     "ROUTE_NOTES_NODE_PANEL_WIDTH": 200,
     "WINDOW_LOCKED_OPACITY": 0.8,
@@ -94,5 +103,10 @@
     "ANNOTATION_PANEL_POSITION": {},
     "ANNOTATION_PANEL_MAXIMIZED_POSITION": {},
     "APP_UPDATE_LAST_PROMPTED_VERSION": "",
-    "APP_NOTICE_LAST_ACK_KEY": ""
+    "APP_NOTICE_LAST_ACK_KEY": "",
+    "LICENSE_DATA": {},
+    "COORD_SCALE_X": 1.0,
+    "COORD_SCALE_Y": 1.0,
+    "COORD_OFFSET_X": 0.0,
+    "COORD_OFFSET_Y": 0.0
 }
