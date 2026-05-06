@@ -2180,6 +2180,7 @@
       "GMT-N-0.1.3",
       "sift2",
       "GMT-N-0.1.6"
-    ]
+    ],
+    "LICENSE_PUBLIC_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs9BCbO+DN6SDhfXgRYPm\ncHqymg5VBZR+N+Rsfe7OohfDtqibsOjgjqWdGv6ooZkrbeIqTmOrT+tNxkvxDRzK\nplwk47qz+M3ZNAuEpUXgE36ER2dUZdwIBK2rkiX4SKxuAqskmSsBhzklMpZ1wdv+\nJYeiM0+PWx2rjJBncM2eRxEMXWEmiVXgzdMR/AQupEiAqTt1QiumpoWzoCpKoQUb\n6UkEGLHEND2UO7NZA/LVMenUmPcrewucy+ERBSvRlJEhjpy/LE9YEkvAqyw+SB+N\n4meDr2sFWAR33peiKBl37PoJo+/DyUzHr0EUsfpIqKsceT6BLRsPLKEEaf6Rt5Na\nvwIDAQAB\n-----END PUBLIC KEY-----"
   }
 }

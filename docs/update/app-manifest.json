@@ -1,6 +1,6 @@
 {
   "version": "0.1.6",
-  "notes": "并入一位同学对算法的优化；增加手动校准坐标的功能，不依赖于路线转换功能；增加设置项：纯净导航（导航时不显示其他按钮）,放宽最小宽高限制；增加快捷键：重置视图、重定位、定位下个点、开始导航、终止导航；在当前追踪路线右侧增加清空所有进度按钮；",
+  "notes": "并入一位同学对算法的优化；增加手动校准坐标的功能，不依赖于路线转换功能；增加设置项：纯净导航（导航时不显示其他按钮）,放宽最小宽高限制；增加快捷键：重置视图、重定位、定位下个点、开始导航、终止导航；在当前追踪路线右侧增加清空所有进度按钮；更新错误请先通过夸克网盘更新完整版",
   "app_status": "notice",
   "app_status_message": "提示路线不兼容时，若你觉得坐标准确，可右键路线或分类栏目手动选择兼容；若你觉得坐标偏移，可右键路线或分类栏目手动校准坐标；本工具免费分享禁止二次倒卖，若你付费购买说明是被骗了；本工具免费分享禁止二次倒卖，若你付费购买说明是被骗了；",
   "app_notice_force_prompt": true,
@@ -2151,7 +2151,7 @@
   "runtime_config": {
     "QUARK_DOWNLOAD_URL": "https://pan.quark.cn/s/cf8e31fecd58?pwd=48wL",
     "ROUTE_RESOURCE_URL": "https://www.mapforge.top/",
-    "LICENSE_PUBLIC_KEY": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs9BCbO+DN6SDhfXgRYPmcHqymg5VBZR+N+Rsfe7OohfDtqibsOjgjqWdGv6ooZkrbeIqTmOrT+tNxkvxDRzKplwk47qz+M3ZNAuEpUXgE36ER2dUZdwIBK2rkiX4SKxuAqskmSsBhzklMpZ1wdv+JYeiM0+PWx2rjJBncM2eRxEMXWEmiVXgzdMR/AQupEiAqTt1QiumpoWzoCpKoQUb6UkEGLHEND2UO7NZA/LVMenUmPcrewucy+ERBSvRlJEhjpy/LE9YEkvAqyw+SB+N4meDr2sFWAR33peiKBl37PoJo+/DyUzHr0EUsfpIqKsceT6BLRsPLKEEaf6Rt5NavwIDAQAB",
+    "LICENSE_PUBLIC_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs9BCbO+DN6SDhfXgRYPm\ncHqymg5VBZR+N+Rsfe7OohfDtqibsOjgjqWdGv6ooZkrbeIqTmOrT+tNxkvxDRzK\nplwk47qz+M3ZNAuEpUXgE36ER2dUZdwIBK2rkiX4SKxuAqskmSsBhzklMpZ1wdv+\nJYeiM0+PWx2rjJBncM2eRxEMXWEmiVXgzdMR/AQupEiAqTt1QiumpoWzoCpKoQUb\n6UkEGLHEND2UO7NZA/LVMenUmPcrewucy+ERBSvRlJEhjpy/LE9YEkvAqyw+SB+N\n4meDr2sFWAR33peiKBl37PoJo+/DyUzHr0EUsfpIqKsceT6BLRsPLKEEaf6Rt5Na\nvwIDAQAB\n-----END PUBLIC KEY-----",
     "ROUTE_RESOURCE_LINKS": [
       {
         "name": "地图工坊",
