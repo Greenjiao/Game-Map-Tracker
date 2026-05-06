@@ -48,10 +48,12 @@ DEFAULT_INCLUDE_PATHS: tuple[str, ...] = (
 RUNTIME_CONFIG_STRING_KEYS = (
     "QUARK_DOWNLOAD_URL",
     "ROUTE_RESOURCE_URL",
+    "LICENSE_PUBLIC_KEY",
 )
-RUNTIME_CONFIG_NAMED_LINK_KEYS = ("ROUTE_RESOURCE_LINKS", "FEEDBACK_LINKS")
+RUNTIME_CONFIG_NAMED_LINK_KEYS = ("ROUTE_RESOURCE_LINKS", "FEEDBACK_LINKS", "LICENSE_QQ_GROUPS")
 RUNTIME_CONFIG_LIST_KEYS = ("APP_UPDATE_MANIFEST_URLS",)
 RUNTIME_CONFIG_STRING_LIST_KEYS = ("APP_ENABLE_VERSIONS",)
+RUNTIME_CONFIG_BOOL_KEYS = ("LICENSE_VERIFY_ENABLED",)
 APP_STATUS_NORMAL = "normal"
 APP_STATUS_NOTICE = "notice"
 APP_STATUS_DISABLED = "disabled"
@@ -173,6 +175,11 @@ def sanitize_runtime_config(payload: dict) -> dict:
             clean_values = _dedupe_strings([item for item in value if isinstance(item, str)])
             if clean_values:
                 runtime_config[key] = clean_values
+
+    for key in RUNTIME_CONFIG_BOOL_KEYS:
+        value = payload.get(key)
+        if isinstance(value, bool):
+            runtime_config[key] = value
 
     return runtime_config
 

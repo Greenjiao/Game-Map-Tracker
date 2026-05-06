@@ -343,6 +343,18 @@ def with_update_error_hint(message: str) -> str:
         return text
     return f"{text}\n\n{UPDATE_ERROR_FALLBACK_DOWNLOAD_HINT}"
 
+LICENSE_DIALOG_TITLE = "免费分享禁止倒卖"
+LICENSE_DIALOG_HINT_FMT = "请将以下机器码发给群内机器人获取激活码：\n\n{code}\n\n请加以下QQ群获取密钥："
+LICENSE_DIALOG_PLACEHOLDER = "请输入激活码..."
+LICENSE_DIALOG_CONFIRM = "验证"
+LICENSE_DIALOG_CANCEL = "退出"
+LICENSE_ERROR_INVALID = "激活码无效，请检查后重新输入。"
+LICENSE_ERROR_EXPIRED = "激活码已过期，请联系群内机器人获取新的激活码。"
+LICENSE_ERROR_HW_MISMATCH = "此激活码绑定到其他机器，无法在当前设备上使用。\n如需更换设备，请联系群内机器人获取新的激活码。"
+LICENSE_ERROR_NO_PUBLIC_KEY = "无法获取许可证信息，请检查网络连接后重试。"
+LICENSE_ERROR_NETWORK = "网络连接失败，无法验证许可证。"
+LICENSE_HINT_NO_QQ_GROUPS = "请联系软件提供者获取激活码。"
+
 MINIMAP_PREVIEW_TITLE = "确认小地图截取区域"
 MINIMAP_RETAKE = "重新截取"
 MINIMAP_CONFIRM = "确定"

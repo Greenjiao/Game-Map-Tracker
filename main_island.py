@@ -19,6 +19,7 @@ from PySide6.QtWidgets import QApplication
 
 from Plan_SIFT.hybrid_tracker import HybridTracker
 import config
+from auth import get_machine_fingerprint_display, is_license_valid, verify_license
 
 # 把 C 层崩溃（段错误等）的栈写到日志，否则 Qt native crash 会静默退出
 try:
@@ -94,6 +95,74 @@ def _minimap_is_configured() -> bool:
         return False
     return width > 0 and height > 0 and top >= 0 and left >= 0
         
+def _fetch_license_config() -> bool:
+    try:
+        from ui_island.services.app_updater import check_app_update
+        result = check_app_update(timeout=8.0)
+        return bool(getattr(result, "ok", False))
+    except Exception:
+        return False
+
+
+def _show_license_error(app: QApplication, message: str) -> None:
+    try:
+        from ui_island.dialogs.base import StyledMessage, center_dialog
+        dialog = StyledMessage(None, "许可证验证失败", message)
+        center_dialog(dialog, None)
+        dialog.exec()
+    except Exception:
+        print(f"许可证错误: {message}", file=sys.stderr)
+
+
+def _check_license(app: QApplication) -> bool:
+    _fetch_license_config()
+
+    license_verify_enabled = getattr(config, "LICENSE_VERIFY_ENABLED", False)
+    if not license_verify_enabled:
+        return True
+
+    public_key = getattr(config, "LICENSE_PUBLIC_KEY", "") or ""
+    qq_groups = getattr(config, "LICENSE_QQ_GROUPS", None) or []
+
+    license_data = getattr(config, "LICENSE_DATA", None) or {}
+    if license_data:
+        if is_license_valid(license_data):
+            return True
+        config.save_config({"LICENSE_DATA": {}})
+
+    fingerprint_display = get_machine_fingerprint_display()
+
+    if not public_key:
+        _show_license_error(app, "无法获取许可证信息，请检查网络连接后重试。")
+        return False
+
+    from ui_island.design.strings import (
+        LICENSE_ERROR_EXPIRED,
+        LICENSE_ERROR_HW_MISMATCH,
+        LICENSE_ERROR_INVALID,
+    )
+
+    error_map = {
+        "LICENSE_ERROR_INVALID": LICENSE_ERROR_INVALID,
+        "LICENSE_ERROR_EXPIRED": LICENSE_ERROR_EXPIRED,
+        "LICENSE_ERROR_HW_MISMATCH": LICENSE_ERROR_HW_MISMATCH,
+    }
+
+    while True:
+        from ui_island.dialogs.license_dialog import LicenseDialog
+        code = LicenseDialog.get_activation_code(None, fingerprint_display, qq_groups)
+        if code is None:
+            return False
+
+        error_key, payload = verify_license(public_key, code)
+        if error_key is not None:
+            _show_license_error(app, error_map.get(error_key, "激活码验证失败。"))
+            continue
+
+        config.save_config({"LICENSE_DATA": payload})
+        return True
+
+
 def main() -> int:
     os.chdir(config.BASE_DIR)
     config.ensure_maps_dir()
@@ -120,6 +189,9 @@ def main() -> int:
 
     # Qt 应用必须先于选择器创建 —— 选择器本身就是 Qt 窗口
     app = QApplication(sys.argv)
+
+    if not _check_license(app):
+        return 0
 
     if args.force_selector or (not args.no_selector and not _minimap_is_configured()):
         print(">>> 正在启动小地图选择器...")

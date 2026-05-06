@@ -50,3 +50,6 @@ routes_converted/采样分析添加标注1.json
 
 # 发行脚本读取的本机私有运行时配置（含下发链接等），不应入库
 runtime_config.json
+
+# 许可证/激活码加密相关代码（私钥等不应入库）
+auth/

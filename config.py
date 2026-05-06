@@ -656,6 +656,10 @@ FEEDBACK_LINKS = []
 APP_UPDATE_MANIFEST_URLS = []
 APP_UPDATE_LAST_PROMPTED_VERSION = settings.get("APP_UPDATE_LAST_PROMPTED_VERSION") or ""
 APP_NOTICE_LAST_ACK_KEY = settings.get("APP_NOTICE_LAST_ACK_KEY") or ""
+LICENSE_DATA = settings.get("LICENSE_DATA") or {}
+LICENSE_QQ_GROUPS: list = []
+LICENSE_VERIFY_ENABLED = False
+LICENSE_PUBLIC_KEY = ""
 
 
 def parse_window_geometry(raw) -> dict | None:
