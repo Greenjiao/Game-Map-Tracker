@@ -184,7 +184,7 @@ def load_runtime_config(path: Path | str | None) -> dict:
     if not config_path.exists():
         return {}
     try:
-        with config_path.open("r", encoding="utf-8") as handle:
+        with config_path.open("r", encoding="utf-8-sig") as handle:
             payload = json.load(handle)
     except (OSError, json.JSONDecodeError):
         return {}

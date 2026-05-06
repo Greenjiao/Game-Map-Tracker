@@ -320,21 +320,8 @@ if ($PublishedMapImages.Count -eq 0) {
 }
 
 Write-Host "更新 APP_ENABLE_VERSIONS..."
-$RuntimeConfigPath = Join-Path $Root "runtime_config.json"
 $AppEnabledVersion = "GMT-N-$Version"
-if (Test-Path $RuntimeConfigPath) {
-    $RuntimeConfig = Get-Content -Raw $RuntimeConfigPath | ConvertFrom-Json
-    $existingVersions = @($RuntimeConfig.APP_ENABLE_VERSIONS)
-    if ($AppEnabledVersion -notin $existingVersions) {
-        $RuntimeConfig.APP_ENABLE_VERSIONS = $existingVersions + $AppEnabledVersion
-        $RuntimeConfig | ConvertTo-Json -Depth 10 | Set-Content -Path $RuntimeConfigPath -Encoding UTF8
-        Write-Host "  已追加版本：$AppEnabledVersion"
-    } else {
-        Write-Host "  版本 $AppEnabledVersion 已在列表中，跳过。"
-    }
-} else {
-    Write-Host "  未找到 runtime_config.json，跳过。"
-}
+Invoke-Python "scripts/update_runtime_config.py" $AppEnabledVersion
 
 Write-Host "生成更新清单..."
 $manifestArgs = @(
