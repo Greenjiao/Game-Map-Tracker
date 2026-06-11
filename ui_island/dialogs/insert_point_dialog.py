@@ -6,14 +6,13 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
-    QLabel,
     QSpinBox,
     QVBoxLayout,
     QWidget,
 )
 
-from ..design import strings, tokens
-from ..widgets.factory import make_label, make_scroll_area
+from ..design import strings
+from ..widgets.factory import make_error_label, make_label, make_scroll_area
 from ..widgets.route_widgets import ElidedCheckBox
 from . import StyledDialogBase, center_dialog
 
@@ -62,7 +61,7 @@ class InsertPointDialog(StyledDialogBase):
             checkbox.setChecked(True)
             checkbox.setMinimumWidth(_ROUTE_NAME_MIN_WIDTH)
             checkbox.setMaximumWidth(_ROUTE_NAME_MAX_WIDTH)
-            checkbox.setStyleSheet(f"color: {tokens.FG}; font-size: 12px;")
+            checkbox.setObjectName("InsertPointCheckBox")
             row_layout.addWidget(checkbox, stretch=1)
 
             total = int(cand.get("points_count", 0))
@@ -97,9 +96,7 @@ class InsertPointDialog(StyledDialogBase):
         scroll.setWidget(list_host)
         self.shell_layout.addWidget(scroll, stretch=1)
 
-        self._hint_label = QLabel("")
-        self._hint_label.setObjectName("ErrorLabel")
-        self._hint_label.setVisible(False)
+        self._hint_label = make_error_label()
         self.shell_layout.addWidget(self._hint_label)
 
         self.add_action_row(

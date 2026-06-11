@@ -9,6 +9,8 @@ from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
+from .factory import make_compact_action_button
+
 
 class AnnotationGroupSection(QWidget):
     expanded_changed = Signal(str, bool)
@@ -111,13 +113,14 @@ class AnnotationGroupSection(QWidget):
         return header_button_layout
 
     def _build_header_batch_button(self, text: str, tooltip: str) -> QPushButton:
-        button = QPushButton(text, self.header)
-        button.setObjectName("SectionHeaderBatchButton")
-        button.setProperty("compact", True)
-        button.setToolTip(tooltip)
-        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-        button.setFixedWidth(42)
-        return button
+        return make_compact_action_button(
+            text,
+            tooltip=tooltip,
+            object_name="SectionHeaderBatchButton",
+            compact=True,
+            size_policy=(QSizePolicy.Fixed, QSizePolicy.Expanding),
+            parent=self.header,
+        )
 
     def add_row(self, row: QWidget, index: int) -> None:
         self.grid.addWidget(row, index // self._columns, index % self._columns)

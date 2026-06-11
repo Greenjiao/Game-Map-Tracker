@@ -218,6 +218,24 @@ QLabel#ErrorLabel {{
     font-size: 11px;
     color: #e06e6e;
 }}
+QLabel#DialogTitleLabel {{
+    font-size: 14px;
+    color: {FG_DIM};
+    font-weight: 600;
+}}
+QLabel#SectionTitleLabel {{
+    font-size: 13px;
+    color: {FG_DIM};
+    font-weight: 600;
+}}
+QLabel#SettingsHint {{
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.62);
+}}
+QLabel#TrackedEmptyHint {{
+    font-size: 12px;
+    color: {FG_DIM};
+}}
 QLabel#ToastIcon {{
     color: {DOT_LOCKED};
     font-size: 16px;
@@ -569,6 +587,9 @@ QLineEdit[routePanelInput="true"] {{
     border-radius: 7px;
     padding: 3px 8px;
 }}
+QLineEdit[coordEditor="true"] {{
+    padding: 2px 6px;
+}}
 QLineEdit:focus {{
     border: 1px solid rgba(10, 132, 255, 0.65);
     background: {ACCENT_SOFT};
@@ -884,6 +905,13 @@ QCheckBox::indicator {{
 QCheckBox::indicator:checked {{
     background: {ACCENT};
     border: 1px solid {ACCENT};
+}}
+QCheckBox#InsertPointCheckBox {{
+    font-size: 12px;
+}}
+QLabel#MinimapPreview {{
+    background: black;
+    border-radius: 8px;
 }}
 QWidget[trackedRouteItem="true"] {{
     background: transparent;

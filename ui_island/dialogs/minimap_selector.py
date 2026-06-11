@@ -138,8 +138,8 @@ class _PreviewDialog(StyledDialogBase):
         self.close_btn.clicked.connect(self._on_close)
 
         preview = QLabel()
+        preview.setObjectName("MinimapPreview")
         preview.setAlignment(Qt.AlignCenter)
-        preview.setStyleSheet("background: black; border-radius: 8px;")
         preview.setPixmap(pixmap)
         self.shell_layout.addWidget(preview, alignment=Qt.AlignCenter)
 

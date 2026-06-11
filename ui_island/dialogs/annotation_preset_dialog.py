@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QVBoxLayo
 
 from ..services.annotation_preferences import normalize_type_ids
 from ..widgets.annotation_type_widgets import AnnotationGroupSection, build_annotation_type_button, group_annotation_types
-from ..widgets.factory import make_scroll_area
+from ..widgets.factory import make_error_label, make_scroll_area
 from . import StyledDialogBase, center_dialog
 
 
@@ -56,10 +56,7 @@ class AnnotationPresetDialog(StyledDialogBase):
         else:
             self._build_type_list()
 
-        self._error_label = QLabel("")
-        self._error_label.setObjectName("AnnotationPanelMessage")
-        self._error_label.setWordWrap(True)
-        self._error_label.hide()
+        self._error_label = make_error_label(object_name="AnnotationPanelMessage")
         self.shell_layout.addWidget(self._error_label)
 
         self.add_action_row(confirm_text="保存", cancel_text="取消", on_confirm=self._save)

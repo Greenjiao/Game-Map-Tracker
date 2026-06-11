@@ -45,7 +45,13 @@ from .annotation_type_picker import open_annotation_type_picker
 from ..design import strings
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
 from ..widgets.annotation_type_widgets import annotation_icon_path
-from ..widgets.factory import make_compact_slider, make_route_panel_line_edit, make_scroll_area
+from ..widgets.factory import (
+    color_swatch_qss,
+    make_compact_slider,
+    make_route_panel_line_edit,
+    make_scroll_area,
+    style_coord_editor,
+)
 
 _NODE_ICON_SIZE = 22
 _NODE_NAME_MIN_WIDTH = 80
@@ -94,10 +100,7 @@ def _format_coord_value(value: float) -> str:
 
 
 def _style_coord_editor(editor: QLineEdit, *, width: int) -> None:
-    editor.setFixedHeight(26)
-    editor.setFixedWidth(width)
-    editor.setStyleSheet("padding: 2px 6px;")
-    editor.setAlignment(Qt.AlignRight)
+    style_coord_editor(editor, width=width)
 
 
 def normalize_color_hex(value: object) -> str | None:
@@ -1681,9 +1684,7 @@ class RouteNotesDialog(StyledDialogBase):
             tooltip = strings.ROUTE_NOTES_COLOR_FOLLOW_TOOLTIP
         self.color_button.setText(_COLOR_BUTTON_TEXT)
         self.color_button.setToolTip(tooltip)
-        self.color_button.setStyleSheet(
-            f"background: {effective}; color: {text_color}; border: 1px solid rgba(255, 255, 255, 0.35);"
-        )
+        self.color_button.setStyleSheet(color_swatch_qss(effective, text_color))
         self.reset_color_button.setEnabled(self._color_override is not None)
         self.reset_color_button.setToolTip(strings.ROUTE_NOTES_COLOR_RESET_TOOLTIP)
         panel = getattr(self, "node_panel", None)

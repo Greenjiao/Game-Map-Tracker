@@ -139,3 +139,65 @@ def make_label(
     if selectable:
         label.setTextInteractionFlags(Qt.TextSelectableByMouse)
     return label
+
+
+def style_coord_editor(editor: QLineEdit, *, width: int) -> None:
+    """Apply the compact right-aligned coordinate-editor look to an existing line edit.
+
+    Visual style (padding) lives in QSS via the ``coordEditor`` property selector,
+    so this leaves ``objectName`` free for callers that look editors up by name.
+    """
+    editor.setProperty("coordEditor", "true")
+    editor.setFixedHeight(26)
+    editor.setFixedWidth(width)
+    editor.setAlignment(Qt.AlignRight)
+
+
+def make_coord_editor(*, width: int, parent=None) -> QLineEdit:
+    """Create a compact right-aligned coordinate input styled via QSS."""
+    editor = QLineEdit(parent)
+    style_coord_editor(editor, width=width)
+    return editor
+
+
+def make_error_label(message: str = "", *, object_name: str = "ErrorLabel", parent=None) -> QLabel:
+    """Hidden-by-default word-wrapping label for inline error/hint messages."""
+    label = QLabel(message, parent)
+    label.setObjectName(object_name)
+    label.setWordWrap(True)
+    label.hide()
+    return label
+
+
+def make_compact_action_button(
+    text: str,
+    *,
+    tooltip: str = "",
+    width: int = 42,
+    object_name: str = "",
+    compact: bool = False,
+    size_policy: tuple[QSizePolicy.Policy, QSizePolicy.Policy] | None = None,
+    parent=None,
+) -> QPushButton:
+    """Small fixed-width action button (e.g. 全选/反选/修改/删除 batch controls)."""
+    button = QPushButton(text, parent)
+    if object_name:
+        button.setObjectName(object_name)
+    if compact:
+        button.setProperty("compact", True)
+    if tooltip:
+        button.setToolTip(tooltip)
+    button.setFixedWidth(width)
+    if size_policy is not None:
+        button.setSizePolicy(*size_policy)
+    return button
+
+
+def color_swatch_qss(bg: str, fg: str, *, border: str = "rgba(255, 255, 255, 0.35)") -> str:
+    """Inline QSS for a button whose background reflects a runtime-chosen color.
+
+    This is intentionally inline (not a QSS object selector) because the colors
+    vary per button and change as the user picks colors — a static selector
+    cannot express it. Returns a string byte-equal to the previous hand-written one.
+    """
+    return f"background: {bg}; color: {fg}; border: 1px solid {border};"

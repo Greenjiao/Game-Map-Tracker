@@ -133,7 +133,7 @@ class SettingsDialogMapTests(unittest.TestCase):
 
         self.assertEqual(len(hints), 1)
         self.assertEqual(hints[0].text(), "若无法确定路线来源一致，请不改动此处全局坐标变换参数。")
-        self.assertEqual(hints[0].objectName(), "StatLabel")
+        self.assertEqual(hints[0].objectName(), "SettingsHint")
         dialog.close()
 
     def test_annotation_coord_transform_inputs_are_compact_line_edits(self) -> None:

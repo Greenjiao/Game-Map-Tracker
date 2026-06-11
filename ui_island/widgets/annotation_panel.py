@@ -21,7 +21,7 @@ from ..design import strings, theme
 from ..services.annotation_preferences import normalize_annotation_presets, normalize_type_ids
 from .annotation_type_widgets import AnnotationGroupSection, build_annotation_type_button, group_annotation_types
 from .context_menu import ContextMenuItem, show_context_menu
-from .factory import make_scroll_area
+from .factory import make_compact_action_button, make_scroll_area
 
 
 class AnnotationPanel(QFrame):
@@ -258,12 +258,13 @@ class AnnotationPanel(QFrame):
 
     @staticmethod
     def _build_preset_action_button(text: str, tooltip: str, parent: QWidget) -> QPushButton:
-        button = QPushButton(text, parent)
-        button.setObjectName("AnnotationPresetActionButton")
-        button.setToolTip(tooltip)
-        button.setFixedWidth(42)
-        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        return button
+        return make_compact_action_button(
+            text,
+            tooltip=tooltip,
+            object_name="AnnotationPresetActionButton",
+            size_policy=(QSizePolicy.Fixed, QSizePolicy.Fixed),
+            parent=parent,
+        )
 
     def _add_grouped_type_sections(self, parent_section: AnnotationGroupSection, selected: set[str]) -> None:
         for index, (group_name, group_items) in enumerate(group_annotation_types(self._visible_types())):

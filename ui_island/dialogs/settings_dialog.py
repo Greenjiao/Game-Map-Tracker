@@ -60,7 +60,7 @@ from ..services.hotkey_config import (
 from ..services import resource_metadata
 from ..services.settings_schema import ALL_FIELDS, COMMON_FIELDS, COORD_FIELDS, FIELD_INDEX, SIFT_FIELDS, TOOL_BUTTONS, Field
 from ..widgets.context_menu import ContextMenuItem, show_context_menu
-from ..widgets.factory import make_scroll_area
+from ..widgets.factory import color_swatch_qss, make_scroll_area, style_coord_editor
 
 _DEFAULT_ROUTE_COLOR_HEX = "#1ad1ff"
 _DEFAULT_SPECIAL_LINE_COLOR_HEX = "#ffffff"
@@ -98,10 +98,7 @@ _COORD_FIELD_KEYS = {field.key for field in COORD_FIELDS}
 
 
 def _style_compact_coord_editor(editor: QLineEdit, *, width: int) -> None:
-    editor.setFixedHeight(26)
-    editor.setFixedWidth(width)
-    editor.setStyleSheet("padding: 2px 6px;")
-    editor.setAlignment(Qt.AlignRight)
+    style_coord_editor(editor, width=width)
 _MAP_FILE_PLACEHOLDER = "请选择底图"
 _ANNOTATION_FILE_PLACEHOLDER = "请选择标注文件"
 _ROUTE_CONVERSION_LOG_LIMIT = 40
@@ -1205,8 +1202,7 @@ class SettingsDialog(QDialog):
         title_row.setSpacing(10)
 
         title = QLabel("设置")
-        title.setObjectName("TitleLabel")
-        title.setStyleSheet("font-size: 14px;")
+        title.setObjectName("DialogTitleLabel")
         title.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         title_row.addWidget(title)
 
@@ -1335,8 +1331,7 @@ class SettingsDialog(QDialog):
         card_layout.setSpacing(8)
 
         title_label = QLabel(title)
-        title_label.setObjectName("TitleLabel")
-        title_label.setStyleSheet("font-size: 13px;")
+        title_label.setObjectName("SectionTitleLabel")
         title_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         title_label.setFixedHeight(title_label.sizeHint().height())
         card_layout.addWidget(title_label)
@@ -1413,7 +1408,6 @@ class SettingsDialog(QDialog):
 
         title_label = QLabel("通用设置")
         title_label.setObjectName("TitleLabel")
-        title_label.setStyleSheet("font-size: 12px;")
         title_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         title_label.setFixedHeight(16)
         card_layout.addWidget(title_label)
@@ -1489,11 +1483,9 @@ class SettingsDialog(QDialog):
         layout.setSpacing(_COMMON_TAB_ROW_SPACING)
         if hint_text:
             hint_label = QLabel(hint_text)
-            hint_label.setObjectName("StatLabel")
+            hint_label.setObjectName("SettingsHint")
             hint_label.setProperty("settingsCoordTransformHint", True)
-            hint_label.setProperty("class", "StatLabel")
             hint_label.setWordWrap(True)
-            hint_label.setStyleSheet("color: rgba(255, 255, 255, 0.62); font-size: 11px;")
             layout.addWidget(hint_label)
         outer = QHBoxLayout()
         outer.setContentsMargins(0, 0, 0, 0)
@@ -1529,8 +1521,7 @@ class SettingsDialog(QDialog):
         card_layout.setSpacing(8)
 
         title_label = QLabel(title)
-        title_label.setObjectName("TitleLabel")
-        title_label.setStyleSheet("font-size: 13px;")
+        title_label.setObjectName("SectionTitleLabel")
         card_layout.addWidget(title_label)
 
         body = QLabel(message)
@@ -1568,8 +1559,7 @@ class SettingsDialog(QDialog):
 
     def _section_title_height(self) -> int:
         probe = QLabel("X")
-        probe.setObjectName("TitleLabel")
-        probe.setStyleSheet("font-size: 13px;")
+        probe.setObjectName("SectionTitleLabel")
         return probe.sizeHint().height()
 
     def _estimate_top_section_body_width(self) -> int:
@@ -2060,9 +2050,7 @@ class SettingsDialog(QDialog):
         color = self._normalize_route_color(self._route_default_color)
         text_color = "#000000" if QColor(color).lightness() > 150 else "#ffffff"
         self._route_color_button.setText(color)
-        self._route_color_button.setStyleSheet(
-            f"background: {color}; color: {text_color}; border: 1px solid rgba(255, 255, 255, 0.35);"
-        )
+        self._route_color_button.setStyleSheet(color_swatch_qss(color, text_color))
 
     def _on_pick_route_default_color_legacy(self) -> None:
         current = QColor(self._normalize_route_color(self._route_default_color))
@@ -2529,7 +2517,7 @@ class SettingsDialog(QDialog):
             editor = QLineEdit()
             editor.setFixedHeight(minimap_control_height)
             editor.setFixedWidth(48)
-            editor.setStyleSheet("padding: 2px 6px;")
+            editor.setProperty("coordEditor", "true")
             editor.setAlignment(Qt.AlignRight)
             editor.setValidator(QIntValidator(-10_000, 10_000, editor))
             try:
@@ -2573,7 +2561,6 @@ class SettingsDialog(QDialog):
 
         title_label = QLabel("工具")
         title_label.setObjectName("TitleLabel")
-        title_label.setStyleSheet("font-size: 12px;")
         title_label.setFixedHeight(16)
         card_layout.addWidget(title_label)
 

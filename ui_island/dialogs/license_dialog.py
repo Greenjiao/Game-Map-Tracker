@@ -54,10 +54,6 @@ class LicenseDialog(StyledDialogBase):
 
         self.input_field = QLineEdit()
         self.input_field.setPlaceholderText(LICENSE_DIALOG_PLACEHOLDER)
-        self.input_field.setStyleSheet(
-            "QLineEdit { padding: 6px 10px; border: 1px solid #3a3f4b; border-radius: 4px; "
-            "background: #1e1e2e; color: #cdd6f4; font-size: 13px; }"
-        )
         self.shell_layout.addWidget(self.input_field)
 
         self.activation_code: str | None = None

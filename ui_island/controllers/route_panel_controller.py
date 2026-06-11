@@ -2962,7 +2962,7 @@ QCheckBox::indicator:checked:hover {{
         else:
             empty_label = QLabel(strings.ROUTE_EMPTY_TRACKED)
             empty_label.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-            empty_label.setStyleSheet(f"font-size: 12px; color: {theme.FG_DIM};")
+            empty_label.setObjectName("TrackedEmptyHint")
             self.window.tracked_routes_grid.addWidget(empty_label, 0, 0, 1, 2)
 
         clear_btn = getattr(self.window, "tracked_routes_clear_progress_btn", None)
