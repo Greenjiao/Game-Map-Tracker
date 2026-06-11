@@ -1714,6 +1714,17 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
             self.tracking_state.display_needs_lock_confirmation = False
             return result, True, False
         if state == TrackState.LOST:
+            if bool(getattr(config, "LOST_FREEZE_LAST_FRAME", False)) and stable_xy is not None:
+                # 静默定格：复用 INERTIAL 的"沿用上一帧坐标 + 标点"路径，
+                # 不弹告警、不收窄、不进 TRACKING_LOST 模式，恢复定位后自动刷新。
+                self.tracking_state.display_pending_locked_xy = None
+                self.tracking_state.display_pending_locked_count = 0
+                self.tracking_state.display_needs_lock_confirmation = True
+                display = TrackResult(
+                    TrackState.INERTIAL, stable_xy[0], stable_xy[1],
+                    result.match_count, result.latency_ms,
+                )
+                return display, False, False
             self.tracking_state.display_pending_locked_xy = None
             self.tracking_state.display_pending_locked_count = 0
             self.tracking_state.display_needs_lock_confirmation = stable_xy is not None

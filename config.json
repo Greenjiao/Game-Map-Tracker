@@ -22,6 +22,7 @@
     "MAP_FILE": "maps/卡洛西亚大陆/big_map_new.png",
     "ANNOTATION_FILE": "annotations/points_17173.json",
     "MAX_LOST_FRAMES": 150,
+    "LOST_FREEZE_LAST_FRAME": true,
     "SIFT_REFRESH_RATE": 30,
     "SIFT_CLAHE_LIMIT": 5.0,
     "SIFT_MINIMAP_SIZE": 220,

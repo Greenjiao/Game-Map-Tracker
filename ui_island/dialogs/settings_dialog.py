@@ -1160,6 +1160,7 @@ class SettingsDialog(QDialog):
         self._route_guide_disable_node_drag_checkbox: QCheckBox | None = None
         self._window_lock_follows_guide_checkbox: QCheckBox | None = None
         self._pure_navigation_checkbox: QCheckBox | None = None
+        self._lost_freeze_last_frame_checkbox: QCheckBox | None = None
         self._route_node_icon_size_spin: QSpinBox | None = None
         self._annotation_icon_size_spin: QSpinBox | None = None
         self._route_node_dot_size_spin: QSpinBox | None = None
@@ -1875,6 +1876,12 @@ class SettingsDialog(QDialog):
         annotation_checkbox.setToolTip("开启后标注栏随主窗口移动")
         self._annotation_panel_follow_checkbox = annotation_checkbox
         layout.addWidget(annotation_checkbox)
+
+        lost_freeze_checkbox = QCheckBox("定位丢失时定格画面")
+        lost_freeze_checkbox.setChecked(bool(getattr(config, "LOST_FREEZE_LAST_FRAME", False)))
+        lost_freeze_checkbox.setToolTip("开启后定位丢失不再弹出提示或收窄窗口，而是保持上一帧地图与标点，待重新定位后自动刷新。")
+        self._lost_freeze_last_frame_checkbox = lost_freeze_checkbox
+        layout.addWidget(lost_freeze_checkbox)
 
         layout.addStretch()
         return row
@@ -3130,6 +3137,8 @@ class SettingsDialog(QDialog):
             result["WINDOW_LOCK_FOLLOWS_GUIDE"] = self._window_lock_follows_guide_checkbox.isChecked()
         if self._pure_navigation_checkbox is not None:
             result["PURE_NAVIGATION_MODE"] = self._pure_navigation_checkbox.isChecked()
+        if self._lost_freeze_last_frame_checkbox is not None:
+            result["LOST_FREEZE_LAST_FRAME"] = self._lost_freeze_last_frame_checkbox.isChecked()
         if self._route_node_icon_size_spin is not None:
             result["ROUTE_NODE_ICON_SIZE"] = int(self._route_node_icon_size_spin.value())
         if self._annotation_icon_size_spin is not None:
@@ -3330,6 +3339,10 @@ class SettingsDialog(QDialog):
         if self._pure_navigation_checkbox is not None:
             self._pure_navigation_checkbox.setChecked(
                 bool(config.DEFAULT_CONFIG.get("PURE_NAVIGATION_MODE", False))
+            )
+        if self._lost_freeze_last_frame_checkbox is not None:
+            self._lost_freeze_last_frame_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("LOST_FREEZE_LAST_FRAME", False))
             )
         if self._route_node_icon_size_spin is not None:
             self._route_node_icon_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ROUTE_NODE_ICON_SIZE", 24)))

@@ -694,6 +694,7 @@ VIEW_SIZE = settings.get("VIEW_SIZE")
 MAP_FILE = selected_map_file_from_settings(settings)
 ANNOTATION_FILE = selected_annotation_file_from_settings(settings)
 MAX_LOST_FRAMES = settings.get("MAX_LOST_FRAMES")
+LOST_FREEZE_LAST_FRAME = settings.get("LOST_FREEZE_LAST_FRAME")
 
 # SIFT 专属
 SIFT_REFRESH_RATE = settings.get("SIFT_REFRESH_RATE")
