@@ -87,6 +87,23 @@ def _clamp_int(value: object, default: int, minimum: int, maximum: int) -> int:
     return max(minimum, min(maximum, parsed))
 
 
+def _make_collapse_header_button(parent: QWidget, *, title: str) -> QPushButton:
+    """创建与路线列表分类一致的整行折叠 header 按钮（标题前缀 ▾/▸，整行可点击）。"""
+    button = QPushButton(parent)
+    button.setObjectName("SectionHeader")
+    button.setProperty("compact", True)
+    button.setCheckable(True)
+    button.setChecked(True)
+    button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    button.setFixedHeight(_TITLE_ROW_HEIGHT)
+    button._collapse_title = title
+    return button
+
+
+def _collapse_header_label(title: str, *, collapsed: bool) -> str:
+    return f"{'▸' if collapsed else '▾'} {title}"
+
+
 def _route_notes_config_int(key: str, default: int, minimum: int, maximum: int) -> int:
     value = getattr(config, key, None)
     if value is None:
@@ -281,28 +298,68 @@ def open_route_enable_versions_dialog(
 
 
 class RouteNodeStatsPanel(QWidget):
-    def __init__(self, parent=None, *, include_title: bool = True) -> None:
+    collapsed_changed = Signal(bool)
+
+    def __init__(self, parent=None, *, include_title: bool = True, collapsible: bool = False) -> None:
         super().__init__(parent)
         self._nodes: list[dict] = []
+        self._collapsible = bool(collapsible) and include_title
+        self._collapsed = False
+        self._toggle_btn: QPushButton | None = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(_NODE_PANEL_SPACING)
 
         if include_title:
-            stats_title = QLabel(strings.ROUTE_NOTES_STATS_TITLE)
-            stats_title.setObjectName("FieldLabel")
-            stats_title.setFixedHeight(_TITLE_ROW_HEIGHT)
-            stats_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            layout.addWidget(stats_title)
+            if self._collapsible:
+                self._toggle_btn = _make_collapse_header_button(self, title=strings.ROUTE_NOTES_STATS_TITLE)
+                self._toggle_btn.toggled.connect(self._on_header_toggled)
+                layout.addWidget(self._toggle_btn)
+            else:
+                stats_title = QLabel(strings.ROUTE_NOTES_STATS_TITLE)
+                stats_title.setObjectName("FieldLabel")
+                stats_title.setFixedHeight(_TITLE_ROW_HEIGHT)
+                stats_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                layout.addWidget(stats_title)
 
         self._stats_scroll = make_scroll_area(
             object_name="RouteNotesStatsScroll",
-            horizontal_policy=Qt.ScrollBarAlwaysOff,
+            horizontal_policy=Qt.ScrollBarAsNeeded if self._collapsible else Qt.ScrollBarAlwaysOff,
             vertical_policy=Qt.ScrollBarAsNeeded,
         )
         layout.addWidget(self._stats_scroll)
+        self._sync_collapsed()
         self.set_nodes([])
+
+    def is_collapsible(self) -> bool:
+        return self._collapsible
+
+    def is_collapsed(self) -> bool:
+        return self._collapsed
+
+    def set_collapsed(self, collapsed: bool, *, emit: bool = True) -> None:
+        collapsed = bool(collapsed)
+        if not self._collapsible or collapsed == self._collapsed:
+            return
+        self._collapsed = collapsed
+        self._sync_collapsed()
+        if emit:
+            self.collapsed_changed.emit(self._collapsed)
+
+    def _on_header_toggled(self, checked: bool) -> None:
+        self.set_collapsed(not checked)
+
+    def _sync_collapsed(self) -> None:
+        if not self._collapsible:
+            return
+        self._stats_scroll.setVisible(not self._collapsed)
+        button = self._toggle_btn
+        if button is not None:
+            button.blockSignals(True)
+            button.setChecked(not self._collapsed)
+            button.setText(_collapse_header_label(button._collapse_title, collapsed=self._collapsed))
+            button.blockSignals(False)
 
     def set_nodes(self, nodes: list[dict]) -> None:
         self._nodes = [dict(point) for point in nodes if isinstance(point, dict)]
@@ -342,6 +399,8 @@ class RouteNodeEditorPanel(QWidget):
     node_coord_edit_committed = Signal(int, str, object, object)
     node_annotation_changed = Signal(int, object, object)
     node_order_changed = Signal(int, int)
+    nodes_collapsed_changed = Signal(bool)
+    stats_collapsed_changed = Signal(bool)
 
     def __init__(
         self,
@@ -353,6 +412,7 @@ class RouteNodeEditorPanel(QWidget):
         include_stats: bool = True,
         include_title: bool = True,
         include_coord_editors: bool = False,
+        collapsible: bool = False,
         annotation_picker_placement: str = "center",
         annotation_picker_anchor=None,
     ) -> None:
@@ -363,6 +423,9 @@ class RouteNodeEditorPanel(QWidget):
         self._include_coord_editors = bool(include_coord_editors)
         self._annotation_picker_placement = str(annotation_picker_placement or "center")
         self._annotation_picker_anchor = annotation_picker_anchor
+        self._collapsible = bool(collapsible) and include_title
+        self._nodes_collapsed = False
+        self._nodes_toggle_btn: QPushButton | None = None
         self._nodes: list[dict] = []
         self._node_rows: list[QWidget] = []
         self._drag_candidate: dict | None = None
@@ -379,24 +442,69 @@ class RouteNodeEditorPanel(QWidget):
 
         self._stats_panel = None
         if include_stats:
-            self._stats_panel = RouteNodeStatsPanel(self)
+            self._stats_panel = RouteNodeStatsPanel(self, collapsible=self._collapsible)
+            if self._collapsible:
+                self._stats_panel.collapsed_changed.connect(self.stats_collapsed_changed)
             layout.addWidget(self._stats_panel)
 
         if include_title:
-            nodes_title = QLabel(strings.ROUTE_NOTES_NODE_LIST)
-            nodes_title.setObjectName("FieldLabel")
-            nodes_title.setFixedHeight(_TITLE_ROW_HEIGHT)
-            nodes_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-            layout.addWidget(nodes_title)
+            if self._collapsible:
+                self._nodes_toggle_btn = _make_collapse_header_button(self, title=strings.ROUTE_NOTES_NODE_LIST)
+                self._nodes_toggle_btn.toggled.connect(self._on_nodes_header_toggled)
+                layout.addWidget(self._nodes_toggle_btn)
+            else:
+                nodes_title = QLabel(strings.ROUTE_NOTES_NODE_LIST)
+                nodes_title.setObjectName("FieldLabel")
+                nodes_title.setFixedHeight(_TITLE_ROW_HEIGHT)
+                nodes_title.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                layout.addWidget(nodes_title)
 
         self._nodes_scroll = make_scroll_area(
             object_name="RouteNotesNodeScroll",
-            horizontal_policy=Qt.ScrollBarAlwaysOff,
+            horizontal_policy=Qt.ScrollBarAsNeeded if self._collapsible else Qt.ScrollBarAlwaysOff,
             min_height=_NODE_SCROLL_MIN_HEIGHT,
             size_policy=(QSizePolicy.Expanding, QSizePolicy.Expanding),
         )
         layout.addWidget(self._nodes_scroll, stretch=1)
+        self._sync_nodes_collapsed()
         self._refresh_after_node_change(emit=False)
+
+    @property
+    def stats_panel(self) -> "RouteNodeStatsPanel | None":
+        return self._stats_panel
+
+    def is_collapsible(self) -> bool:
+        return self._collapsible
+
+    def is_nodes_collapsed(self) -> bool:
+        return self._nodes_collapsed
+
+    def set_nodes_collapsed(self, collapsed: bool, *, emit: bool = True) -> None:
+        collapsed = bool(collapsed)
+        if not self._collapsible or collapsed == self._nodes_collapsed:
+            return
+        self._nodes_collapsed = collapsed
+        self._sync_nodes_collapsed()
+        if emit:
+            self.nodes_collapsed_changed.emit(self._nodes_collapsed)
+
+    def set_stats_collapsed(self, collapsed: bool, *, emit: bool = True) -> None:
+        if self._stats_panel is not None:
+            self._stats_panel.set_collapsed(collapsed, emit=emit)
+
+    def _on_nodes_header_toggled(self, checked: bool) -> None:
+        self.set_nodes_collapsed(not checked)
+
+    def _sync_nodes_collapsed(self) -> None:
+        if not self._collapsible:
+            return
+        self._nodes_scroll.setVisible(not self._nodes_collapsed)
+        button = self._nodes_toggle_btn
+        if button is not None:
+            button.blockSignals(True)
+            button.setChecked(not self._nodes_collapsed)
+            button.setText(_collapse_header_label(button._collapse_title, collapsed=self._nodes_collapsed))
+            button.blockSignals(False)
 
     def set_annotation_items_provider(self, provider) -> None:
         self._annotation_items_provider = provider
@@ -424,6 +532,91 @@ class RouteNodeEditorPanel(QWidget):
                 self._refresh_after_node_change(emit=False)
         finally:
             self._syncing = False
+
+    def append_node(self, point: dict) -> bool:
+        """末尾追加单个节点（绘制态最高频路径），只新建一行 + 重排序号，不全量重建。
+
+        仅当面板已完成首次全量渲染（host/host_layout 就绪）时走增量；否则返回 False，
+        调用方应回退到 set_nodes。结构性变更（中间插入、删除、排序）仍走 set_nodes 全量。
+        """
+        if not isinstance(point, dict):
+            return False
+        host_layout = getattr(self, "_nodes_host_layout", None)
+        if host_layout is None:
+            return False
+        self._syncing = True
+        try:
+            had_nodes = bool(self._nodes)
+            self._nodes.append(self._node_with_icon_path(point))
+            self._refresh_stats_section()
+            if not had_nodes:
+                # 之前是空状态（占位 QLabel 而非节点行），结构不同，回退全量。
+                self._refresh_node_rows()
+                return True
+            index = len(self._nodes) - 1
+            display_name = route_node_display_names(self._nodes)[index]
+            row = self._build_node_row(self._nodes[index], index, display_name)
+            self._node_rows.append(row)
+            # 新行插到末尾 stretch 之前（stretch 是 layout 最后一项）。
+            host_layout.insertWidget(host_layout.count() - 1, row)
+            self._renumber_order_inputs()
+            return True
+        finally:
+            self._syncing = False
+
+    def _renumber_order_inputs(self) -> None:
+        """节点总数变化后，就地更新各行序号输入框 '序号/总数' 文本，不重建 widget。"""
+        total = len(self._nodes)
+        for index, row in enumerate(self._node_rows):
+            order_input = row.findChild(QLineEdit, "RouteNotesNodeOrderInput")
+            if order_input is not None:
+                order_input.setText(f"{index + 1}/{total}")
+
+    def update_node_row(self, index: int, *, display_name: str | None = None) -> bool:
+        """就地刷新第 index 行（槽位）的图标/名称/坐标/序号文本，不销毁重建 widget。
+
+        用于拖动结束后的单点坐标同步、reorder 后受影响区间的内容刷新。所有 setText 都
+        blockSignals，避免触发 _set_node_label/_set_node_coord 造成重入或重复 undo。
+        “行=固定槽位”：第 index 行始终对应 self._nodes[index]，子控件闭包绑定的 index 不变，
+        因此 reorder（只改数据顺序、不动 widget 顺序）后闭包仍正确，无需重绑信号。
+        """
+        if not (0 <= index < len(self._node_rows)) or not (0 <= index < len(self._nodes)):
+            return False
+        row = self._node_rows[index]
+        point = self._nodes[index]
+        if display_name is None:
+            display_name = route_node_display_names(self._nodes)[index]
+
+        icon_button = row.findChild(QPushButton, "RouteNotesNodeIcon")
+        if icon_button is not None:
+            pixmap, fallback = route_node_icon_pixmap(point, self._route_color_hex)
+            icon_button.setIcon(QIcon(pixmap))
+            icon_button.setProperty("fallbackIcon", fallback)
+            icon_button.setToolTip(self._node_annotation_tooltip(point))
+
+        name_input = row.findChild(QLineEdit, "RouteNotesNodeName")
+        if name_input is not None:
+            current_label = str(point.get("label") or "").strip()
+            shown = display_name if not current_label or is_auto_route_node_label(current_label) else current_label
+            name_input.blockSignals(True)
+            name_input.setPlaceholderText(display_name)
+            name_input.setText(shown)
+            name_input.blockSignals(False)
+            name_input.setToolTip(display_name)
+            name_input.setProperty("routeNotesLabelBefore", point.get("label", None))
+
+        for key, object_name in (("x", "RouteNotesNodeX"), ("y", "RouteNotesNodeY")):
+            editor = row.findChild(QLineEdit, object_name)
+            if editor is not None:
+                editor.blockSignals(True)
+                editor.setText(self._format_node_coord(point.get(key)))
+                editor.blockSignals(False)
+                editor.setProperty("routeNotesCoordBefore", point.get(key, None))
+
+        order_input = row.findChild(QLineEdit, "RouteNotesNodeOrderInput")
+        if order_input is not None:
+            order_input.setText(f"{index + 1}/{len(self._nodes)}")
+        return True
 
     def nodes(self) -> list[dict]:
         return apply_route_node_auto_labels([_persistable_route_node(point) for point in self._nodes])
@@ -463,6 +656,9 @@ class RouteNodeEditorPanel(QWidget):
         host_layout.setContentsMargins(2, 2, 2, 2)
         host_layout.setSpacing(6)
         self._node_rows = []
+        # 持有 host/layout 引用，供 append_node 增量追加复用，避免每次点击全量重建。
+        self._nodes_host = host
+        self._nodes_host_layout = host_layout
         if not self._nodes:
             empty = QLabel(strings.ROUTE_NOTES_NODE_EMPTY)
             empty.setObjectName("DimLabel")
@@ -713,9 +909,30 @@ class RouteNodeEditorPanel(QWidget):
             return False
         point = self._nodes.pop(from_index)
         self._nodes.insert(target, point)
-        self._refresh_after_node_change()
+        # 改顺序不改节点数量：只就地刷新受影响区间各行内容（图标/名称/坐标/序号），
+        # 不销毁重建上千行 widget。区间外的行内容未变，无需刷新。
+        if not self._reorder_rows_incremental(from_index, target):
+            self._refresh_after_node_change()
+        else:
+            self._refresh_stats_section()
         self.node_order_changed.emit(from_index, target)
         self._emit_nodes_changed()
+        return True
+
+    def _reorder_rows_incremental(self, from_index: int, target: int) -> bool:
+        """reorder 后就地刷新受影响区间 [min,max] 各行内容，不重建 widget。
+
+        行 widget 顺序不动（行=固定槽位），只把每个槽位的显示刷成 self._nodes[i]，
+        子控件 index 闭包仍对应该槽位，无需重绑信号。仅当行数与节点数一致时可走增量。
+        """
+        if len(self._node_rows) != len(self._nodes):
+            return False
+        lo = max(0, min(from_index, target))
+        hi = min(len(self._nodes) - 1, max(from_index, target))
+        display_names = route_node_display_names(self._nodes)
+        for i in range(lo, hi + 1):
+            if not self.update_node_row(i, display_name=display_names[i]):
+                return False
         return True
 
     def _refresh_after_node_change(self, *, emit: bool = False) -> None:
@@ -1336,6 +1553,9 @@ class RouteNotesDialog(StyledDialogBase):
         host_layout.setContentsMargins(2, 2, 2, 2)
         host_layout.setSpacing(6)
         self._node_rows = []
+        # 持有 host/layout 引用，供 append_node 增量追加复用，避免每次点击全量重建。
+        self._nodes_host = host
+        self._nodes_host_layout = host_layout
         if not self._nodes:
             empty = QLabel(strings.ROUTE_NOTES_NODE_EMPTY)
             empty.setObjectName("DimLabel")

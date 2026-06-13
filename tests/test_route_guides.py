@@ -420,19 +420,26 @@ class RouteGuideTests(unittest.TestCase):
 
             draw_arrows.assert_called_once()
 
-    def test_draw_on_route_nodes_use_numeric_order_label(self) -> None:
+    def test_draw_on_route_nodes_render_order_and_name_via_label_sprite(self) -> None:
+        # 节点序号/名称改用带缓存的 PIL 描边 sprite 渲染（支持中文）：
+        # 序号按 "1".."N" 生成 sprite，中文名称也能正常渲染，且整图不再走逐点 cv2.putText。
         with tempfile.TemporaryDirectory() as tmp:
             manager = _manager_with_visible_route(Path(tmp))
             manager.route_for_id("2026010101")["points"][0]["label"] = "宝箱 99"
             canvas = np.zeros((180, 180, 3), dtype=np.uint8)
 
-            with patch("cv2.putText", wraps=__import__("cv2").putText) as put_text:
+            import ui_island.services.route_manager as rm
+
+            with patch.object(
+                rm, "_node_label_sprite", wraps=rm._node_label_sprite
+            ) as label_sprite:
                 manager.draw_on(canvas, 0, 0, 180, auto_visit=False)
 
-            labels = [call.args[1] for call in put_text.call_args_list]
-            self.assertIn("1", labels)
-            self.assertIn("2", labels)
-            self.assertNotIn("宝箱 99", labels)
+            rendered = [call.args[0] for call in label_sprite.call_args_list]
+            self.assertIn("1", rendered)
+            self.assertIn("2", rendered)
+            # 中文名称在 PIL sprite 方案下可正常渲染
+            self.assertIn("宝箱 99", rendered)
 
     def test_config_opacity_clamps_invalid_values(self) -> None:
         with patch("config.ROUTE_VISITED_ICON_OPACITY", 0.35):

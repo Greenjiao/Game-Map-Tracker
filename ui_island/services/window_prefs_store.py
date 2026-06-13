@@ -76,5 +76,17 @@ class WindowPrefsStore:
     def save_route_section_expanded(self, expanded: dict[str, bool]) -> None:
         self._gateway.save({"ROUTE_SECTION_EXPANDED": expanded})
 
+    def load_route_drawing_panel_collapsed(self) -> dict[str, bool]:
+        return self._gateway.get_route_drawing_panel_collapsed()
+
+    def save_route_drawing_panel_collapsed(self, collapsed: dict[str, bool]) -> None:
+        self._gateway.save({"ROUTE_DRAWING_PANEL_COLLAPSED": collapsed})
+
+    def load_route_drawing_show_detail(self) -> bool:
+        return self._gateway.get_route_drawing_show_detail()
+
+    def save_route_drawing_show_detail(self, enabled: bool) -> None:
+        self._gateway.save({"ROUTE_DRAWING_SHOW_DETAIL": bool(enabled)})
+
     def save_payload(self, payload: dict) -> None:
         self._gateway.save(payload)

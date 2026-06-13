@@ -5,7 +5,7 @@ import math
 
 import cv2
 import numpy as np
-from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -78,6 +78,17 @@ class MapView(QWidget):
         self._left_dragging = False
         self._hover_map_pos: tuple[float, float] | None = None
         self._drawing_context: dict | None = None
+        # 绘制态高频重绘（尤其拖拽节点时 mouseMove 每帧触发）合并到下一事件循环 tick，
+        # 多次 set_route_drawing_context 只实际渲染一次，避免连续全量重绘叠加卡顿。
+        self._drawing_refresh_pending = False
+        self._drawing_refresh_timer = QTimer(self)
+        self._drawing_refresh_timer.setSingleShot(True)
+        self._drawing_refresh_timer.setInterval(0)
+        self._drawing_refresh_timer.timeout.connect(self._flush_drawing_refresh)
+        # 底图 crop 缓存：视口/缩放/底图不变时复用上帧 resize 结果，跳过 cv2.resize。
+        # 缓存的是 draw_on 叠加绘制之前的纯底图，每帧从中 copy 出来再画叠加层。
+        self._crop_cache_key: tuple | None = None
+        self._crop_cache: np.ndarray | None = None
         self._route_calibration_context: dict | None = None
         self._route_calibration_drag_last_map: tuple[float, float] | None = None
         self._drawing_drag_index: int | None = None
@@ -219,11 +230,17 @@ class MapView(QWidget):
         my1 = max(0, min(mipmap.shape[0] - 1, int(math.floor(vy1 / mip_divisor))))
         mx2 = max(mx1 + 1, min(mipmap.shape[1], int(math.ceil(vx2 / mip_divisor))))
         my2 = max(my1 + 1, min(mipmap.shape[0], int(math.ceil(vy2 / mip_divisor))))
-        crop = cv2.resize(
-            mipmap[my1:my2, mx1:mx2],
-            (render_w, render_h),
-            interpolation=cv2.INTER_AREA if map_pixels_per_screen_px >= 1.0 else cv2.INTER_LINEAR,
-        )
+        crop_key = (id(mipmap), mipmap.shape, mx1, my1, mx2, my2, render_w, render_h)
+        if self._crop_cache_key == crop_key and self._crop_cache is not None:
+            crop = self._crop_cache.copy()
+        else:
+            crop = cv2.resize(
+                mipmap[my1:my2, mx1:mx2],
+                (render_w, render_h),
+                interpolation=cv2.INTER_AREA if map_pixels_per_screen_px >= 1.0 else cv2.INTER_LINEAR,
+            )
+            self._crop_cache_key = crop_key
+            self._crop_cache = crop.copy()
 
         self._last_vx1, self._last_vy1 = vx1, vy1
         self._last_crop_size = (viewport_w, viewport_h)
@@ -461,11 +478,26 @@ class MapView(QWidget):
         return self._map_to_widget(current_x, current_y)
 
     def set_route_drawing_context(self, context: dict | None) -> None:
+        was_active = self._is_drawing_active()
         self._drawing_context = dict(context) if isinstance(context, dict) else None
         if not self._is_drawing_active() or self._is_drawing_paused():
             self._reset_drawing_node_drag()
         if self._is_drawing_active():
             self._reset_route_point_drag()
+        # 进入/退出绘制态属关键切换，立即渲染保证即时反馈；绘制态内的高频更新合并到 timer。
+        if self._is_drawing_active() and was_active:
+            self._schedule_drawing_refresh()
+        else:
+            self._flush_drawing_refresh()
+
+    def _schedule_drawing_refresh(self) -> None:
+        self._drawing_refresh_pending = True
+        if not self._drawing_refresh_timer.isActive():
+            self._drawing_refresh_timer.start()
+
+    def _flush_drawing_refresh(self) -> None:
+        self._drawing_refresh_timer.stop()
+        self._drawing_refresh_pending = False
         self._refresh_from_last_frame()
 
     def set_route_calibration_context(self, context: dict | None) -> None:

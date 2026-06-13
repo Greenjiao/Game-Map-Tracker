@@ -65,6 +65,15 @@ class SettingsGateway:
             return {}
         return {str(name): bool(expanded) for name, expanded in raw.items()}
 
+    def get_route_drawing_panel_collapsed(self) -> dict[str, bool]:
+        raw = getattr(config, "ROUTE_DRAWING_PANEL_COLLAPSED", None)
+        if not isinstance(raw, dict):
+            return {}
+        return {str(name): bool(collapsed) for name, collapsed in raw.items()}
+
+    def get_route_drawing_show_detail(self) -> bool:
+        return bool(getattr(config, "ROUTE_DRAWING_SHOW_DETAIL", True))
+
     def get_annotation_type_ids(self) -> list[str]:
         return normalize_type_ids(getattr(config, "ANNOTATION_TYPE_IDS", []))
 

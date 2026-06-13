@@ -1,11 +1,16 @@
 {
     "CONFIG_VERSION": 5,
-    "MINIMAP": {},
+    "MINIMAP": {
+        "top": 62,
+        "left": 2300,
+        "width": 212,
+        "height": 212
+    },
     "WINDOW_GEOMETRY": {
-        "x": 1040,
-        "y": 87,
+        "x": 1055,
+        "y": 198,
         "width": 612,
-        "height": 410
+        "height": 454
     },
     "LOCKED_VIEW_SIZE": {
         "width": 538,
@@ -13,15 +18,16 @@
     },
     "PAUSED_VIEW_SIZE": {
         "width": 612,
-        "height": 410
+        "height": 454
     },
     "SIDEBAR_COLLAPSED": false,
-    "SIDEBAR_WIDTH": 247,
+    "SIDEBAR_WIDTH": 231,
     "PAUSED_SIDEBAR_WIDTH": 231,
     "VIEW_SIZE": 400,
     "MAP_FILE": "maps/卡洛西亚大陆/big_map_new.png",
     "ANNOTATION_FILE": "annotations/points_17173.json",
     "MAX_LOST_FRAMES": 150,
+    "LOST_FREEZE_LAST_FRAME": true,
     "SIFT_REFRESH_RATE": 30,
     "SIFT_CLAHE_LIMIT": 5.0,
     "SIFT_MINIMAP_SIZE": 220,
@@ -109,13 +115,14 @@
     "ROUTE_VISITED_ICON_OPACITY": 0.35,
     "ROUTE_GUIDE_DISABLE_NODE_DRAG": true,
     "ROUTE_NODE_ORDER_VISIBLE": false,
+    "ROUTE_NODE_NAME_VISIBLE": true,
     "ROUTE_NODE_ICON_SIZE": 20,
     "ANNOTATION_ICON_SIZE": 20,
     "ROUTE_NODE_DOT_SIZE": 5,
     "WINDOW_LOCK_FOLLOWS_GUIDE": true,
     "PURE_NAVIGATION_MODE": false,
-    "ROUTE_NOTES_DIALOG_WIDTH": 860,
-    "ROUTE_NOTES_NODE_PANEL_WIDTH": 365,
+    "ROUTE_NOTES_DIALOG_WIDTH": 880,
+    "ROUTE_NOTES_NODE_PANEL_WIDTH": 285,
     "WINDOW_LOCKED_OPACITY": 0.78,
     "WINDOW_NORMAL_OPACITY": 1.0,
     "ROUTE_SECTION_EXPANDED": {
@@ -126,6 +133,11 @@
         "特定精灵球": false,
         "奔波鼠路线-一枕月眠": false
     },
+    "ROUTE_DRAWING_PANEL_COLLAPSED": {
+        "stats": false,
+        "nodes": false
+    },
+    "ROUTE_DRAWING_SHOW_DETAIL": true,
     "ANNOTATION_TYPE_IDS": [
         "17310030001",
         "17310030002",

@@ -68,6 +68,9 @@ class RoutePanelController:
         self.window = window
         self.state = window.route_panel_state
         self._route_notes_session: dict | None = None
+        # 节点面板增量追加提示：末尾追加单点时由 append_drawing_point 设置，
+        # _update_route_drawing_toolbar 读取后清空（见对应方法注释）。
+        self._pending_appended_node: dict | None = None
 
     @staticmethod
     def matches_route(route_name: str, term: str) -> bool:
@@ -541,6 +544,12 @@ QCheckBox::indicator:checked:hover {{
             points=points,
             loop=bool(route.get("loop", False)),
         )
+        try:
+            self.window.route_drawing_state.show_detail_panel = bool(
+                self.window.window_prefs_store.load_route_drawing_show_detail()
+            )
+        except Exception as e:
+            print(f"Load route drawing show detail state failed: {e}")
         self._sync_route_drawing_ui()
         toast(self.window, strings.ROUTE_DRAWING_ENTERED_FMT.format(name=route_item.route_name))
 
@@ -567,26 +576,36 @@ QCheckBox::indicator:checked:hover {{
     def _mark_drawing_dirty(self) -> None:
         self.window.route_drawing_state.dirty = not self._drawing_points_equal_original()
 
+    def _build_drawing_context(self) -> dict:
+        """构造绘制态地图 overlay 的 context（供渲染用）。
+
+        points 用浅拷贝：下游（map_view 渲染 / draw_on）只读这些点、不原地改 dict，
+        draw_on 的 visited 写入对 drawing_route 已 continue 跳过。避免每帧 deepcopy 全部点。
+        供 _sync_route_drawing_ui / 拖动预览 / 坐标编辑联动共用，保持一致。
+        """
+        state = self.window.route_drawing_state
+        return {
+            "active": True,
+            "paused": state.paused,
+            "route_id": state.route_id,
+            "name": state.name,
+            "points": list(state.draft_points),
+            "node_type": state.node_type,
+            "insert_at_end": state.insert_at_end,
+            "add_node_annotation": state.add_node_annotation,
+            "same_annotation_type": state.same_annotation_type,
+            "annotation_type": state.annotation_type,
+            "annotation_type_id": state.annotation_type_id,
+            "hide_other_routes": state.hide_other_routes,
+            "loop": state.loop,
+        }
+
     def _sync_route_drawing_ui(self) -> None:
         state = self.window.route_drawing_state
         context = None
         if state.active:
             self._ensure_route_drawing_toolbar()
-            context = {
-                "active": True,
-                "paused": state.paused,
-                "route_id": state.route_id,
-                "name": state.name,
-                "points": deepcopy(state.draft_points),
-                "node_type": state.node_type,
-                "insert_at_end": state.insert_at_end,
-                "add_node_annotation": state.add_node_annotation,
-                "same_annotation_type": state.same_annotation_type,
-                "annotation_type": state.annotation_type,
-                "annotation_type_id": state.annotation_type_id,
-                "hide_other_routes": state.hide_other_routes,
-                "loop": state.loop,
-            }
+            context = self._build_drawing_context()
             self.window.state_hint_label.setVisible(True)
             self.window.state_hint_label.setText(strings.ROUTE_DRAWING_STATE_FMT.format(name=state.name))
             self.window.state_hint_label.setStyleSheet("")
@@ -631,19 +650,23 @@ QCheckBox::indicator:checked:hover {{
             annotation_items_provider=self.window.route_mgr.annotation_type_items,
             annotation_icon_path_provider=self.window.route_mgr.point_icon_path_for,
             include_coord_editors=True,
+            collapsible=True,
             annotation_picker_placement="right_of",
             annotation_picker_anchor=toolbar,
         )
         node_panel.setObjectName("RouteDrawingNodeEditorPanel")
         node_panel.setMinimumWidth(300)
         node_panel.setMaximumWidth(380)
+        self._apply_route_drawing_panel_collapsed(node_panel)
+        node_panel.stats_collapsed_changed.connect(self.save_route_drawing_panel_collapsed)
+        node_panel.nodes_collapsed_changed.connect(self.save_route_drawing_panel_collapsed)
         node_panel.node_order_changed.connect(self.reorder_drawing_point)
         node_panel.node_annotation_changed.connect(self._on_drawing_node_panel_annotation_changed)
         node_panel.node_label_changed.connect(self._on_drawing_node_panel_label_changed)
         node_panel.node_label_edit_committed.connect(self._on_drawing_node_panel_label_committed)
         node_panel.node_coord_changed.connect(self._on_drawing_node_panel_coord_changed)
         node_panel.node_coord_edit_committed.connect(self._on_drawing_node_panel_coord_committed)
-        layout.addWidget(node_panel, stretch=1)
+        layout.addWidget(node_panel, stretch=1, alignment=Qt.AlignTop)
 
         controls = QWidget(toolbar)
         controls.setObjectName("RouteDrawingToolbarControls")
@@ -658,6 +681,7 @@ QCheckBox::indicator:checked:hover {{
         undo_btn = self._drawing_toolbar_button(strings.ROUTE_DRAWING_UNDO)
         clear_btn = self._drawing_toolbar_button(strings.ROUTE_DRAWING_CLEAR)
         hide_routes_btn = self._drawing_toolbar_button(strings.ROUTE_DRAWING_HIDE_OTHER_ROUTES, checkable=True)
+        show_detail_btn = self._drawing_toolbar_button(strings.ROUTE_DRAWING_SHOW_DETAIL, checkable=True)
         end_btn.clicked.connect(self.end_route_drawing)
         save_btn.clicked.connect(self.save_route_drawing)
         pause_btn.clicked.connect(self.toggle_route_drawing_paused)
@@ -666,7 +690,10 @@ QCheckBox::indicator:checked:hover {{
         hide_routes_btn.clicked.connect(
             lambda checked=False: self.set_route_drawing_hide_other_routes(bool(checked))
         )
-        for button in (end_btn, save_btn, pause_btn, undo_btn, clear_btn, hide_routes_btn):
+        show_detail_btn.clicked.connect(
+            lambda checked=False: self.set_route_drawing_show_detail(bool(checked))
+        )
+        for button in (end_btn, save_btn, pause_btn, undo_btn, clear_btn, hide_routes_btn, show_detail_btn):
             controls_layout.addWidget(button)
 
         controls_layout.addWidget(self._drawing_toolbar_separator())
@@ -716,6 +743,7 @@ QCheckBox::indicator:checked:hover {{
             "undo": undo_btn,
             "clear": clear_btn,
             "hide_other_routes": hide_routes_btn,
+            "show_detail": show_detail_btn,
             "collect": collect_btn,
             "teleport": teleport_btn,
             "virtual": virtual_btn,
@@ -725,6 +753,10 @@ QCheckBox::indicator:checked:hover {{
             "same_annotation": same_annotation_check,
             "select_annotation": select_annotation_btn,
         }
+
+        # 固定右侧按钮列宽，使隐藏左侧详细面板后工具栏整体变窄但按钮列宽不变。
+        controls.adjustSize()
+        controls.setFixedWidth(controls.sizeHint().width())
 
     @staticmethod
     def _drawing_toolbar_button(text: str, *, checkable: bool = False) -> QPushButton:
@@ -744,6 +776,9 @@ QCheckBox::indicator:checked:hover {{
         state = self.window.route_drawing_state
         toolbar = getattr(self.window, "route_drawing_toolbar", None)
         buttons = getattr(self.window, "route_drawing_toolbar_buttons", {})
+        # 取出并清空增量提示：仅 append_drawing_point 末尾追加时设置，其它路径走全量刷新。
+        appended_point = getattr(self, "_pending_appended_node", None)
+        self._pending_appended_node = None
         if toolbar is None or not buttons:
             return
         node_panel = getattr(self.window, "route_drawing_node_panel", None)
@@ -755,7 +790,17 @@ QCheckBox::indicator:checked:hover {{
             focus = QApplication.focusWidget()
             editing_in_panel = focus is not None and node_panel.isAncestorOf(focus)
             if not editing_in_panel:
-                node_panel.set_nodes(state.draft_points)
+                # 末尾追加单点时走增量（只加一行+重排序号），避免每次点击全量重建 100+ 行 widget。
+                # appended_point 必须正是 draft_points 的最后一个元素才安全走增量，否则回退全量。
+                appended_ok = (
+                    appended_point is not None
+                    and state.draft_points
+                    and state.draft_points[-1] is appended_point
+                    and callable(getattr(node_panel, "append_node", None))
+                    and node_panel.append_node(appended_point)
+                )
+                if not appended_ok:
+                    node_panel.set_nodes(state.draft_points)
 
         buttons["pause"].setText(strings.ROUTE_DRAWING_RESUME if state.paused else strings.ROUTE_DRAWING_PAUSE)
         node_button = buttons.get(state.node_type) or buttons["collect"]
@@ -774,6 +819,13 @@ QCheckBox::indicator:checked:hover {{
             hide_routes_btn.blockSignals(True)
             hide_routes_btn.setChecked(bool(state.hide_other_routes))
             hide_routes_btn.blockSignals(False)
+        show_detail_btn = buttons.get("show_detail")
+        if show_detail_btn is not None:
+            show_detail_btn.blockSignals(True)
+            show_detail_btn.setChecked(bool(state.show_detail_panel))
+            show_detail_btn.blockSignals(False)
+        if node_panel is not None:
+            node_panel.setVisible(bool(state.show_detail_panel))
         insert_at_end_check = buttons.get("insert_at_end")
         if insert_at_end_check is not None:
             insert_at_end_check.blockSignals(True)
@@ -797,7 +849,12 @@ QCheckBox::indicator:checked:hover {{
         if state is None or toolbar is None or not state.active:
             return
 
-        toolbar.adjustSize()
+        # 显式按 sizeHint 重排：adjustSize() 对已显示的顶层窗口往往只增不减，
+        # 隐藏左侧详细面板后窗口不会收缩，导致右侧留出大片空白。
+        tb_layout = toolbar.layout()
+        if tb_layout is not None:
+            tb_layout.activate()
+        toolbar.resize(toolbar.sizeHint())
         margin = 12
         if self.window.isMaximized():
             anchor = self.window.map_view.mapToGlobal(QPoint(margin, 0))
@@ -1456,10 +1513,14 @@ QCheckBox::indicator:checked:hover {{
             except (TypeError, ValueError):
                 index = self._drawing_insert_index(x, y)
             index = max(0, min(len(state.draft_points), index))
+        appended_at_end = index == len(state.draft_points)
         state.draft_points.insert(index, point)
         state.undo_stack.append({"op": "add", "index": index, "point": deepcopy(point)})
         state.added_count += 1
         self._mark_drawing_dirty()
+        # 仅末尾追加时提示节点面板走增量更新；中间插入仍走全量重建（低频，保证序号闭包正确）。
+        # 通过实例属性传递而非函数参数，保持 _sync_route_drawing_ui 签名不变（测试 mock 兼容）。
+        self._pending_appended_node = point if appended_at_end else None
         self._sync_route_drawing_ui()
 
     def append_drawing_point_from_context_menu(
@@ -1683,6 +1744,41 @@ QCheckBox::indicator:checked:hover {{
         state.hide_other_routes = bool(enabled)
         self._sync_route_drawing_ui()
 
+    def set_route_drawing_show_detail(self, enabled: bool) -> None:
+        state = self.window.route_drawing_state
+        state.show_detail_panel = bool(enabled)
+        node_panel = getattr(self.window, "route_drawing_node_panel", None)
+        if node_panel is not None:
+            node_panel.setVisible(bool(enabled))
+        self.position_route_drawing_toolbar()
+        try:
+            self.window.window_prefs_store.save_route_drawing_show_detail(bool(enabled))
+        except Exception as e:
+            print(f"Save route drawing show detail state failed: {e}")
+
+    def _apply_route_drawing_panel_collapsed(self, node_panel) -> None:
+        try:
+            collapsed = self.window.window_prefs_store.load_route_drawing_panel_collapsed()
+        except Exception as e:
+            print(f"Load route drawing panel collapsed state failed: {e}")
+            return
+        node_panel.set_stats_collapsed(bool(collapsed.get("stats", False)), emit=False)
+        node_panel.set_nodes_collapsed(bool(collapsed.get("nodes", False)), emit=False)
+
+    def save_route_drawing_panel_collapsed(self, _collapsed: bool = False) -> None:
+        node_panel = getattr(self.window, "route_drawing_node_panel", None)
+        if node_panel is None:
+            return
+        stats_panel = node_panel.stats_panel
+        payload = {
+            "stats": bool(stats_panel.is_collapsed()) if stats_panel is not None else False,
+            "nodes": bool(node_panel.is_nodes_collapsed()),
+        }
+        try:
+            self.window.window_prefs_store.save_route_drawing_panel_collapsed(payload)
+        except Exception as e:
+            print(f"Save route drawing panel collapsed state failed: {e}")
+
     def set_route_drawing_loop(self, enabled: bool) -> None:
         state = self.window.route_drawing_state
         if not state.active:
@@ -1736,7 +1832,14 @@ QCheckBox::indicator:checked:hover {{
         point["y"] = next_y
         self._mark_drawing_dirty()
         if sync:
-            self._sync_route_drawing_ui()
+            # 拖动预览高频路径：只重绘地图 overlay，不走 _sync_route_drawing_ui（它会全量重建
+            # 上千行节点面板，1000+ 点时每帧重建导致卡死）。重绘已被 map_view 的 timer 合并。
+            # 与普通模式 move_route_point_preview(refresh_panel=False) 对齐。面板坐标在拖动
+            # 结束时由 finish_move_drawing_point 就地更新被拖那一行。
+            try:
+                self.window.map_view.set_route_drawing_context(self._build_drawing_context())
+            except Exception:
+                pass
         return True
 
     def finish_move_drawing_point(
@@ -1770,8 +1873,35 @@ QCheckBox::indicator:checked:hover {{
             "after": {"x": after[0], "y": after[1]},
         })
         self._mark_drawing_dirty()
-        self._sync_route_drawing_ui()
+        # 拖动结束：重绘地图 + 只就地更新被拖那一行的坐标文本，不全量重建上千行面板。
+        try:
+            self.window.map_view.set_route_drawing_context(self._build_drawing_context())
+        except Exception:
+            pass
+        if not self._drawing_panel_update_node_row(index):
+            # 增量失败（面板未初始化等）回退全量，保证数据一致。
+            self._sync_route_drawing_ui()
         return True
+
+    def _drawing_panel_update_node_row(self, index: int) -> bool:
+        """把 draft_points 同步给绘制态节点面板并就地刷新第 index 行，不重建 widget。
+
+        仅用于"节点数量不变、只改单行内容"（拖动改坐标）的场景。面板正在编辑时跳过，
+        避免打断用户输入；增量不适用时返回 False 由调用方回退全量。
+        """
+        state = self.window.route_drawing_state
+        node_panel = getattr(self.window, "route_drawing_node_panel", None)
+        if node_panel is None or not callable(getattr(node_panel, "update_node_row", None)):
+            return False
+        focus = QApplication.focusWidget()
+        if focus is not None and node_panel.isAncestorOf(focus):
+            return False
+        # set_nodes(refresh=False) 只更新面板内部 _nodes 数据、不重建行；行数不变时 index 对应安全。
+        try:
+            node_panel.set_nodes(state.draft_points, refresh=False)
+            return node_panel.update_node_row(index)
+        except Exception:
+            return False
 
     def reorder_drawing_point(self, from_index: int, to_index: int) -> bool:
         state = self.window.route_drawing_state
@@ -1793,7 +1923,12 @@ QCheckBox::indicator:checked:hover {{
             "to": target,
         })
         self._mark_drawing_dirty()
-        self._sync_route_drawing_ui()
+        # 此方法由面板 node_order_changed 触发，面板已就地增量刷新自己的行；这里只需同步
+        # draft_points 顺序 + 重绘地图 overlay，不再走 _sync_route_drawing_ui 全量重建面板。
+        try:
+            self.window.map_view.set_route_drawing_context(self._build_drawing_context())
+        except Exception:
+            pass
         return True
 
     def set_drawing_point_label(self, point_index: int, label: object, *, record_undo: bool = True) -> bool:
@@ -1893,23 +2028,8 @@ QCheckBox::indicator:checked:hover {{
             return
         point[key] = after
         self._mark_drawing_dirty()
-        context = {
-            "active": True,
-            "paused": state.paused,
-            "route_id": state.route_id,
-            "name": state.name,
-            "points": deepcopy(state.draft_points),
-            "node_type": state.node_type,
-            "insert_at_end": state.insert_at_end,
-            "add_node_annotation": state.add_node_annotation,
-            "same_annotation_type": state.same_annotation_type,
-            "annotation_type": state.annotation_type,
-            "annotation_type_id": state.annotation_type_id,
-            "hide_other_routes": state.hide_other_routes,
-            "loop": state.loop,
-        }
         try:
-            self.window.map_view.set_route_drawing_context(context)
+            self.window.map_view.set_route_drawing_context(self._build_drawing_context())
         except Exception:
             pass
 

@@ -72,6 +72,7 @@ class RouteDrawingState:
     annotation_type: str = ""
     annotation_type_id: str = ""
     hide_other_routes: bool = False
+    show_detail_panel: bool = True
     undo_stack: list[dict] = field(default_factory=list)
     dirty: bool = False
     added_count: int = 0
@@ -94,6 +95,7 @@ class RouteDrawingState:
         self.annotation_type = ""
         self.annotation_type_id = ""
         self.hide_other_routes = False
+        self.show_detail_panel = True
         self.undo_stack = []
         self.dirty = False
         self.added_count = 0

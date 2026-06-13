@@ -29,6 +29,8 @@ COMMON_FIELDS: list[Field] = [
     Field("ROUTE_GUIDE_NODE_DISTANCE", "导航节点偏离距离", int, "20~300 px"),
     Field("ROUTE_GUIDE_SEGMENT_DISTANCE", "导航线段吸附距离", int, "10~150 px"),
     Field("ROUTE_GUIDE_POINTER_SPACING", "导航指针间隔", int, "12~80 px"),
+    Field("ROUTE_NODE_NAME_HIDE_RATIO", "节点文字隐藏阈值", int, "1~10", "地图缩小到此倍率后隐藏节点序号与名称，仅留圆点"),
+    Field("ANNOTATION_CLUSTER_RATIO", "标注聚合阈值", int, "2~10", "地图缩小到此倍率后聚合标注，越大越晚聚合"),
 ]
 
 COORD_FIELDS: list[Field] = [

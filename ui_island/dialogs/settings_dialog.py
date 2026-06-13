@@ -1157,6 +1157,7 @@ class SettingsDialog(QDialog):
         self._route_strict_guide_checkbox: QCheckBox | None = None
         self._route_sequential_guide_checkbox: QCheckBox | None = None
         self._route_node_order_visible_checkbox: QCheckBox | None = None
+        self._route_node_name_visible_checkbox: QCheckBox | None = None
         self._route_guide_disable_node_drag_checkbox: QCheckBox | None = None
         self._window_lock_follows_guide_checkbox: QCheckBox | None = None
         self._pure_navigation_checkbox: QCheckBox | None = None
@@ -1683,6 +1684,12 @@ class SettingsDialog(QDialog):
         order_checkbox.setToolTip("关闭后路线节点旁的顺序数字（1、2、3 …）不再显示。")
         self._route_node_order_visible_checkbox = order_checkbox
         toggle_layout.addWidget(order_checkbox)
+
+        name_checkbox = QCheckBox("显示节点名称")
+        name_checkbox.setChecked(bool(getattr(config, "ROUTE_NODE_NAME_VISIBLE", True)))
+        name_checkbox.setToolTip("开启后在地图节点旁显示节点名称；若同时显示节点顺序，名称换行显示在序号下方。")
+        self._route_node_name_visible_checkbox = name_checkbox
+        toggle_layout.addWidget(name_checkbox)
 
         disable_drag_checkbox = QCheckBox("导航中禁止拖动节点")
         disable_drag_checkbox.setChecked(bool(getattr(config, "ROUTE_GUIDE_DISABLE_NODE_DRAG", True)))
@@ -3131,6 +3138,8 @@ class SettingsDialog(QDialog):
             result["ANNOTATION_PANEL_FOLLOW_WINDOW"] = self._annotation_panel_follow_checkbox.isChecked()
         if self._route_node_order_visible_checkbox is not None:
             result["ROUTE_NODE_ORDER_VISIBLE"] = self._route_node_order_visible_checkbox.isChecked()
+        if self._route_node_name_visible_checkbox is not None:
+            result["ROUTE_NODE_NAME_VISIBLE"] = self._route_node_name_visible_checkbox.isChecked()
         if self._route_guide_disable_node_drag_checkbox is not None:
             result["ROUTE_GUIDE_DISABLE_NODE_DRAG"] = self._route_guide_disable_node_drag_checkbox.isChecked()
         if self._window_lock_follows_guide_checkbox is not None:
@@ -3327,6 +3336,10 @@ class SettingsDialog(QDialog):
         if self._route_node_order_visible_checkbox is not None:
             self._route_node_order_visible_checkbox.setChecked(
                 bool(config.DEFAULT_CONFIG.get("ROUTE_NODE_ORDER_VISIBLE", True))
+            )
+        if self._route_node_name_visible_checkbox is not None:
+            self._route_node_name_visible_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("ROUTE_NODE_NAME_VISIBLE", True))
             )
         if self._route_guide_disable_node_drag_checkbox is not None:
             self._route_guide_disable_node_drag_checkbox.setChecked(

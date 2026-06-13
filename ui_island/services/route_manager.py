@@ -13,6 +13,7 @@ import secrets
 import shutil
 import time
 import uuid
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -969,6 +970,98 @@ def _guide_hint_font() -> ImageFont.ImageFont:
             continue
     _GUIDE_HINT_FONT = ImageFont.load_default()
     return _GUIDE_HINT_FONT
+
+
+_NODE_LABEL_FONT_SIZE = 13
+_NODE_LABEL_FONT: ImageFont.ImageFont | None = None
+
+# 节点文字描边小位图缓存：键为 (文字, fill_rgb)，值为 BGRA ndarray。
+# 同一序号/名称+颜色只用 PIL 描边渲染一次，后续帧直接 numpy alpha 贴图复用，
+# 避免每帧整图 cvtColor + 逐点 draw.text 的高开销（100+ 节点绘制卡顿的最大单项）。
+_NODE_LABEL_SPRITE_CACHE: "OrderedDict[tuple[str, tuple[int, int, int]], np.ndarray]" = OrderedDict()
+_NODE_LABEL_SPRITE_CACHE_MAX = 512
+_NODE_LABEL_STROKE_WIDTH = 2
+
+
+def _node_label_sprite(text: str, fill_rgb: tuple[int, int, int]) -> np.ndarray:
+    """返回单行文字的描边 BGRA 小位图（带 LRU 缓存）。
+
+    透明背景、黑色描边、彩色前景，几何与原 ``draw.text(stroke_width=2)`` 一致。
+    BGRA 顺序与 canvas（BGR）一致，便于直接 alpha 贴图。
+    """
+    key = (text, fill_rgb)
+    cached = _NODE_LABEL_SPRITE_CACHE.get(key)
+    if cached is not None:
+        _NODE_LABEL_SPRITE_CACHE.move_to_end(key)
+        return cached
+
+    font = _node_label_font()
+    stroke = _NODE_LABEL_STROKE_WIDTH
+    # 在原点 (0,0) 渲染，sprite 内部沿用与 draw.text((0,0)) 相同的坐标系，
+    # 这样贴到 (text_x, line_y) 与原 draw.text((text_x, line_y)) 几何完全等价。
+    # 留 1px 余量防止抗锯齿/描边被裁。
+    measure = Image.new("RGBA", (1, 1))
+    bbox = ImageDraw.Draw(measure).textbbox(
+        (0, 0), text, font=font, stroke_width=stroke
+    )
+    width = max(1, bbox[2] + 1)
+    height = max(1, bbox[3] + 1)
+    sprite_img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    ImageDraw.Draw(sprite_img).text(
+        (0, 0),
+        text,
+        font=font,
+        fill=(int(fill_rgb[0]), int(fill_rgb[1]), int(fill_rgb[2]), 255),
+        stroke_width=stroke,
+        stroke_fill=(0, 0, 0, 255),
+    )
+    rgba = np.array(sprite_img)  # RGBA
+    # 转 BGRA 与 canvas 的 BGR 对齐（仅交换 R/B 通道，A 不变）。
+    bgra = rgba[:, :, [2, 1, 0, 3]].copy()
+
+    _NODE_LABEL_SPRITE_CACHE[key] = bgra
+    _NODE_LABEL_SPRITE_CACHE.move_to_end(key)
+    if len(_NODE_LABEL_SPRITE_CACHE) > _NODE_LABEL_SPRITE_CACHE_MAX:
+        _NODE_LABEL_SPRITE_CACHE.popitem(last=False)
+    return bgra
+
+
+def _blit_bgra_topleft(canvas: np.ndarray, sprite: np.ndarray, x: int, y: int) -> None:
+    """以左上角 (x, y) 为锚点把 BGRA sprite alpha 混合贴到 canvas，越界自动裁剪。"""
+    sh, sw = sprite.shape[:2]
+    x1 = max(0, x)
+    y1 = max(0, y)
+    x2 = min(canvas.shape[1], x + sw)
+    y2 = min(canvas.shape[0], y + sh)
+    if x1 >= x2 or y1 >= y2:
+        return
+    sx1 = x1 - x
+    sy1 = y1 - y
+    crop = sprite[sy1:sy1 + (y2 - y1), sx1:sx1 + (x2 - x1)]
+    alpha = crop[:, :, 3:4].astype(np.float32) / 255.0
+    rgb = crop[:, :, :3].astype(np.float32)
+    roi = canvas[y1:y2, x1:x2].astype(np.float32)
+    canvas[y1:y2, x1:x2] = (rgb * alpha + roi * (1.0 - alpha)).astype(np.uint8)
+
+
+def _node_label_font() -> ImageFont.ImageFont:
+    global _NODE_LABEL_FONT
+    if _NODE_LABEL_FONT is not None:
+        return _NODE_LABEL_FONT
+
+    candidates = [
+        os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "msyh.ttc"),
+        os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "simhei.ttf"),
+        os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "msyhbd.ttc"),
+    ]
+    for path in candidates:
+        try:
+            _NODE_LABEL_FONT = ImageFont.truetype(path, _NODE_LABEL_FONT_SIZE)
+            return _NODE_LABEL_FONT
+        except Exception:
+            continue
+    _NODE_LABEL_FONT = ImageFont.load_default()
+    return _NODE_LABEL_FONT
 
 
 def _text_size(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont) -> tuple[int, int]:
@@ -2959,6 +3052,15 @@ class RouteManager:
                     size=_config_int("ROUTE_GUIDE_POINTER_SIZE", 10, 5),
                     color=self.pointer_arrow_color(),
                 )
+        node_label_draws: list = []
+        show_order = _config_bool("ROUTE_NODE_ORDER_VISIBLE", True)
+        show_name = _config_bool("ROUTE_NODE_NAME_VISIBLE", True)
+        # 缩小地图时节点文字会糊成一团且 PIL 描边渲染开销大，缩到阈值后序号与名称一并隐藏，仅留圆点/图标。
+        # map_pixels_per_screen_px 表示每屏幕像素对应多少地图像素，缩小地图时该值变大。
+        name_hide_ratio = _config_int("ROUTE_NODE_NAME_HIDE_RATIO", 2, 1)
+        labels_hidden = float(map_pixels_per_screen_px or 1.0) >= name_hide_ratio
+        show_order_effective = show_order and not labels_hidden
+        show_name_effective = show_name and not labels_hidden
         for _route, color, local_points, _map_points, points, _is_drawing_route in draw_records:
             is_annotation_calibration = bool(_route.get("_annotation_calibration"))
             for index, (local_point, point_data) in enumerate(zip(local_points, points)):
@@ -3000,32 +3102,45 @@ class RouteManager:
 
                 if is_annotation_calibration:
                     continue
-                if not _config_bool("ROUTE_NODE_ORDER_VISIBLE", True):
+
+                if not show_order_effective and not show_name_effective:
                     continue
 
-                label = str(index + 1)
-                text_x = local_point[0] + (10 if point_icon is not None else 7)
-                text_y = local_point[1] - (9 if point_icon is not None else 4)
-                cv2.putText(
-                    canvas,
-                    label,
-                    (text_x, text_y),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.45,
-                    (0, 0, 0),
-                    1,
-                    cv2.LINE_AA,
-                )
-                cv2.putText(
-                    canvas,
-                    label,
-                    (text_x, text_y),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.45,
-                    text_color,
-                    1,
-                    cv2.LINE_AA,
-                )
+                lines: list[str] = []
+                if show_order_effective:
+                    lines.append(str(index + 1))
+                if show_name_effective:
+                    node_name = str(point_data.get("label") or "").strip()
+                    if node_name:
+                        lines.append(node_name)
+                if not lines:
+                    continue
+
+                text_x = int(local_point[0] + (10 if point_icon is not None else 7))
+                # PIL 的 text 锚点为左上角（cv2 为左下基线），这里以节点为基准上移半个字高，
+                # 让首行文字大致落在节点右上方，与原序号视觉位置相当。
+                text_y = int(local_point[1] - (16 if point_icon is not None else 11))
+                # text_color 为 BGR，PIL 需要 RGB
+                fill_rgb = (int(text_color[2]), int(text_color[1]), int(text_color[0]))
+                node_label_draws.append((text_x, text_y, tuple(lines), fill_rgb))
+
+        if node_label_draws:
+            self._draw_node_labels(canvas, node_label_draws)
+
+    def _draw_node_labels(self, canvas, draws: list) -> None:
+        """用 PIL 批量绘制节点序号/名称文字（支持中文，避免 cv2 渲染成问号）。
+
+        ``draws`` 中每项为 ``(text_x, text_y, lines, fill_rgb)``；多行文字逐行向下排布，
+        实现"名称换行显示在序号下方"。整图只做一次 BGR<->RGB 转换以保证性能。
+        """
+        line_height = _NODE_LABEL_FONT_SIZE + 2
+        for text_x, text_y, lines, fill_rgb in draws:
+            fill_key = (int(fill_rgb[0]), int(fill_rgb[1]), int(fill_rgb[2]))
+            for line_index, line in enumerate(lines):
+                line_y = text_y + line_index * line_height
+                # 描边小位图按 (文字, 颜色) 缓存，直接 alpha 贴到 canvas，避免每帧 PIL 整图渲染。
+                sprite = _node_label_sprite(line, fill_key)
+                _blit_bgra_topleft(canvas, sprite, int(text_x), int(line_y))
 
     def _draw_annotations(
         self,
@@ -3066,8 +3181,9 @@ class RouteManager:
         if not entries:
             return
 
+        cluster_ratio = _config_int("ANNOTATION_CLUSTER_RATIO", int(_ANNOTATION_CLUSTER_RATIO_THRESHOLD), 2)
         should_cluster = (
-            float(map_pixels_per_screen_px) >= _ANNOTATION_CLUSTER_RATIO_THRESHOLD
+            float(map_pixels_per_screen_px) >= cluster_ratio
             or len(entries) > _ANNOTATION_CLUSTER_VISIBLE_THRESHOLD
         )
         if should_cluster:
