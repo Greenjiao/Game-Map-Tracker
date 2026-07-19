@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
@@ -13,8 +14,17 @@ from PIL import Image
 
 TILE_SIZE = 256
 
-# 旧版 wiki 瓦片源，保留给对比用。
-WIKI_BASE_URL = "https://wiki-dev-patch-oss.oss-cn-hangzhou.aliyuncs.com/res/lkwg/map-3.0/7/tile-{x}_{y}.png"
+# Bwiki 大地图页面当前仍引用 map-3.0，而不是 map-4.1。
+# 页面配置: https://wiki.biligame.com/rocom/大地图
+BWIKI_MAP_PAGE_URL = "https://wiki.biligame.com/rocom/%E5%A4%A7%E5%9C%B0%E5%9B%BE"
+BWIKI_FALLBACK_TILE_URL = (
+    "https://wiki-dev-patch-oss.oss-cn-hangzhou.aliyuncs.com/"
+    "res/lkwg/map-3.0/{z}/tile-{x}_{y}.png"
+)
+BWIKI_MIN_ZOOM = 4
+BWIKI_MAX_ZOOM = 8
+# 已按 OSS 返回确认的 z=8 原始瓦片最大矩形，输出 12288 x 9216。
+BWIKI_MAX_TILE_RANGE = (-24, 23, -18, 17)  # x_min, x_max, y_min, y_max
 
 # 17173 页面配置: https://map.17173.com/rocom/maps/shijie
 # 前端的 mapMaxzoom 是 13，所以 z=13 是当前 17173 源能拿到的最高清瓦片。
@@ -39,6 +49,44 @@ HEADERS_17173 = {
     "Origin": "https://map.17173.com",
 }
 
+HEADERS_BWIKI = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Referer": BWIKI_MAP_PAGE_URL,
+}
+
+
+def _extract_bwiki_map_config(
+    *,
+    timeout: int = 20,
+) -> tuple[str, int, int, str]:
+    """Return Bwiki ground-layer tile URL, min zoom, max zoom and map version."""
+    try:
+        response = requests.get(BWIKI_MAP_PAGE_URL, headers=HEADERS_BWIKI, timeout=timeout)
+        response.raise_for_status()
+        html = response.text
+    except requests.RequestException:
+        return BWIKI_FALLBACK_TILE_URL, BWIKI_MIN_ZOOM, BWIKI_MAX_ZOOM, "map-3.0"
+
+    tile_match = re.search(
+        r'tileUrl:\s*"(?P<url>https://wiki-dev-patch-oss\.oss-cn-hangzhou\.aliyuncs\.com/'
+        r'res/lkwg/map-[^"]+/\{z\}/tile-\{x\}_\{y\}\.png)"',
+        html,
+    )
+    tile_url = tile_match.group("url") if tile_match else BWIKI_FALLBACK_TILE_URL
+
+    min_zoom_match = re.search(r"\bminZoom:\s*(?P<zoom>\d+)", html)
+    max_zoom_match = re.search(r"\bmaxZoom:\s*(?P<zoom>\d+)", html)
+    min_zoom = int(min_zoom_match.group("zoom")) if min_zoom_match else BWIKI_MIN_ZOOM
+    max_zoom = int(max_zoom_match.group("zoom")) if max_zoom_match else BWIKI_MAX_ZOOM
+
+    version_match = re.search(r"/res/lkwg/(?P<version>map-[^/]+)/", tile_url)
+    version = version_match.group("version") if version_match else "map-3.0"
+    return tile_url, min_zoom, max_zoom, version
+
 
 def _lon_to_tile_x(longitude: float, zoom: int) -> int:
     return int(math.floor((longitude + 180.0) / 360.0 * (2**zoom)))
@@ -61,6 +109,22 @@ def _tile_range_from_bounds(
     y_min = _lat_to_tile_y(north, zoom)
     y_max = _lat_to_tile_y(south + epsilon, zoom)
     return x_min, x_max, y_min, y_max
+
+
+def _bwiki_tile_range_for_zoom(zoom: int) -> tuple[int, int, int, int]:
+    if zoom > BWIKI_MAX_ZOOM:
+        raise ValueError(f"Bwiki 当前最高 zoom 是 {BWIKI_MAX_ZOOM}")
+    if zoom < BWIKI_MIN_ZOOM:
+        raise ValueError(f"Bwiki 当前最低 zoom 是 {BWIKI_MIN_ZOOM}")
+
+    x_min, x_max, y_min, y_max = BWIKI_MAX_TILE_RANGE
+    scale = 2 ** (BWIKI_MAX_ZOOM - zoom)
+    return (
+        math.floor(x_min / scale),
+        math.floor(x_max / scale),
+        math.floor(y_min / scale),
+        math.floor(y_max / scale),
+    )
 
 
 def _fetch_tile(
@@ -175,20 +239,37 @@ def download_17173_highres_map(
     )
 
 
-def download_and_stitch() -> Path:
-    """Legacy wiki downloader kept for comparison with the old source."""
-    x_min, x_max = -12, 11
-    y_min, y_max = -11, 11
+def download_bwiki_map(
+    *,
+    zoom: int | None = None,
+    save_path: str | Path | None = None,
+    max_workers: int = 16,
+    tile_range: tuple[int, int, int, int] | None = None,
+) -> Path:
+    """Download the Bwiki raw tile map at the given zoom level."""
+    tile_url, min_zoom, max_zoom, version = _extract_bwiki_map_config()
+    if zoom is None:
+        zoom = max_zoom
+    if zoom > max_zoom:
+        raise ValueError(f"Bwiki 页面当前最高 zoom 是 {max_zoom}")
+    if zoom < min_zoom:
+        raise ValueError(f"Bwiki 页面当前最低 zoom 是 {min_zoom}")
+
+    x_min, x_max, y_min, y_max = tile_range or _bwiki_tile_range_for_zoom(zoom)
+    if save_path is None:
+        save_path = Path(__file__).with_name(f"map_bwiki_{version}_z{zoom}_raw.png")
+
+    print(f"Bwiki 地表瓦片: {version}, zoom={zoom}, range=({x_min}..{x_max}, {y_min}..{y_max})")
     return stitch_tiles(
-        tile_url=WIKI_BASE_URL,
-        zoom=0,
+        tile_url=tile_url,
+        zoom=zoom,
         x_min=x_min,
         x_max=x_max,
         y_min=y_min,
         y_max=y_max,
-        save_path=Path(__file__).with_name("test_map_wiki.png"),
-        headers=HEADERS_17173,
-        max_workers=8,
+        save_path=save_path,
+        headers=HEADERS_BWIKI,
+        max_workers=max_workers,
     )
 
 
@@ -196,15 +277,23 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="下载并拼接地图瓦片")
     parser.add_argument(
         "--source",
-        choices=("17173", "wiki"),
-        default="17173",
-        help="地图来源，默认下载 17173",
+        choices=("bwiki", "wiki", "17173"),
+        default="bwiki",
+        help="地图来源，默认下载 Bwiki；wiki 是 bwiki 的兼容别名",
     )
     parser.add_argument(
         "--zoom",
         type=int,
-        default=ROCOM_17173_MAX_ZOOM,
-        help="17173 瓦片缩放等级，最高为 13",
+        default=None,
+        help="瓦片缩放等级；Bwiki 默认使用页面最高等级，17173 默认 13",
+    )
+    parser.add_argument(
+        "--tile-range",
+        metavar=("X_MIN", "X_MAX", "Y_MIN", "Y_MAX"),
+        nargs=4,
+        type=int,
+        default=None,
+        help="手动指定瓦片范围，默认使用当前 Bwiki z=8 原始最大矩形",
     )
     parser.add_argument("--out", default=None, help="输出 PNG 路径")
     parser.add_argument("--workers", type=int, default=16, help="并发下载线程数")
@@ -213,17 +302,24 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Iterable[str] | None = None) -> int:
     args = build_parser().parse_args(list(argv) if argv is not None else None)
-    if args.source == "wiki":
-        download_and_stitch()
+    if args.source in ("bwiki", "wiki"):
+        tile_range = tuple(args.tile_range) if args.tile_range else None
+        download_bwiki_map(
+            zoom=args.zoom,
+            save_path=args.out,
+            max_workers=args.workers,
+            tile_range=tile_range,
+        )
         return 0
 
-    if args.zoom > ROCOM_17173_MAX_ZOOM:
+    zoom = args.zoom if args.zoom is not None else ROCOM_17173_MAX_ZOOM
+    if zoom > ROCOM_17173_MAX_ZOOM:
         raise ValueError(f"17173 当前最高 zoom 是 {ROCOM_17173_MAX_ZOOM}")
 
-    if args.zoom == ROCOM_17173_MAX_ZOOM:
+    if zoom == ROCOM_17173_MAX_ZOOM:
         download_17173_highres_map(args.out, max_workers=args.workers)
     else:
-        download_17173_map(zoom=args.zoom, save_path=args.out, max_workers=args.workers)
+        download_17173_map(zoom=zoom, save_path=args.out, max_workers=args.workers)
     return 0
 
 
