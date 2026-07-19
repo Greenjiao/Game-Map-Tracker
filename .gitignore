@@ -8,15 +8,14 @@ __pycache__/
 venv/
 env/
 
-# 忽略巨型地图文件 (github不支持大于25MB的文件，因此底图无法直接上传到源代码)
-*.png
-*.jpg
-!docs/test/maps/卡洛西亚大陆/big_map_17173.png
-!docs/test/maps/卡洛西亚大陆/big_map_17173带传送图标.png
-!docs/update/maps/卡洛西亚大陆/big_map_17173.png
-!docs/update/maps/卡洛西亚大陆/big_map_17173带传送图标.png
-!docs/update/tools/points_icon/*.png
-!img/    # 但是保留 img 文件夹里的小图标
+# 所有发布通道中的底图均不提交，由 Gitee Release 提供
+**/maps/**/*.png
+**/maps/**/*.jpg
+**/maps/**/*.jpeg
+**/maps/**/*.webp
+
+# 测试通道不提交任何 PNG
+/docs/test/**/*.png
 
 # 忽略调试生成的图片
 debug_minimap.png
@@ -53,3 +52,6 @@ runtime_config.json
 
 # 许可证/激活码加密相关代码（私钥等不应入库）
 auth/
+
+# 下载脚本不提交
+tools/download_map.py
