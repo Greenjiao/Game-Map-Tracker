@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: cryptography
-Version: 46.0.6
+Version: 48.0.1
 Classifier: Development Status :: 5 - Production/Stable
 Classifier: Intended Audience :: Developers
 Classifier: Natural Language :: English
@@ -12,7 +12,6 @@ Classifier: Operating System :: Microsoft :: Windows
 Classifier: Programming Language :: Python
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3 :: Only
-Classifier: Programming Language :: Python :: 3.8
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
@@ -23,51 +22,23 @@ Classifier: Programming Language :: Python :: Implementation :: CPython
 Classifier: Programming Language :: Python :: Implementation :: PyPy
 Classifier: Programming Language :: Python :: Free Threading :: 3 - Stable
 Classifier: Topic :: Security :: Cryptography
-Requires-Dist: cffi>=1.14 ; python_full_version == '3.8.*' and platform_python_implementation != 'PyPy'
-Requires-Dist: cffi>=2.0.0 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
+Requires-Dist: cffi>=2.0.0 ; platform_python_implementation != 'PyPy'
 Requires-Dist: typing-extensions>=4.13.2 ; python_full_version < '3.11'
 Requires-Dist: bcrypt>=3.1.5 ; extra == 'ssh'
-Requires-Dist: nox[uv]>=2024.4.15 ; extra == 'nox'
-Requires-Dist: cryptography-vectors==46.0.6 ; extra == 'test'
-Requires-Dist: pytest>=7.4.0 ; extra == 'test'
-Requires-Dist: pytest-benchmark>=4.0 ; extra == 'test'
-Requires-Dist: pytest-cov>=2.10.1 ; extra == 'test'
-Requires-Dist: pytest-xdist>=3.5.0 ; extra == 'test'
-Requires-Dist: pretend>=0.7 ; extra == 'test'
-Requires-Dist: certifi>=2024 ; extra == 'test'
-Requires-Dist: pytest-randomly ; extra == 'test-randomorder'
-Requires-Dist: sphinx>=5.3.0 ; extra == 'docs'
-Requires-Dist: sphinx-rtd-theme>=3.0.0 ; extra == 'docs'
-Requires-Dist: sphinx-inline-tabs ; extra == 'docs'
-Requires-Dist: pyenchant>=3 ; extra == 'docstest'
-Requires-Dist: readme-renderer>=30.0 ; extra == 'docstest'
-Requires-Dist: sphinxcontrib-spelling>=7.3.1 ; extra == 'docstest'
-Requires-Dist: build>=1.0.0 ; extra == 'sdist'
-Requires-Dist: ruff>=0.11.11 ; extra == 'pep8test'
-Requires-Dist: mypy>=1.14 ; extra == 'pep8test'
-Requires-Dist: check-sdist ; extra == 'pep8test'
-Requires-Dist: click>=8.0.1 ; extra == 'pep8test'
 Provides-Extra: ssh
-Provides-Extra: nox
-Provides-Extra: test
-Provides-Extra: test-randomorder
-Provides-Extra: docs
-Provides-Extra: docstest
-Provides-Extra: sdist
-Provides-Extra: pep8test
 License-File: LICENSE
 License-File: LICENSE.APACHE
 License-File: LICENSE.BSD
 Summary: cryptography is a package which provides cryptographic recipes and primitives to Python developers.
 Author-email: The Python Cryptographic Authority and individual contributors <cryptography-dev@python.org>
 License-Expression: Apache-2.0 OR BSD-3-Clause
-Requires-Python: >=3.8, !=3.9.0, !=3.9.1
+Requires-Python: >=3.9, !=3.9.0, !=3.9.1
 Description-Content-Type: text/x-rst; charset=UTF-8
-Project-URL: homepage, https://github.com/pyca/cryptography
-Project-URL: documentation, https://cryptography.io/
-Project-URL: source, https://github.com/pyca/cryptography/
-Project-URL: issues, https://github.com/pyca/cryptography/issues
 Project-URL: changelog, https://cryptography.io/en/latest/changelog/
+Project-URL: documentation, https://cryptography.io/
+Project-URL: homepage, https://github.com/pyca/cryptography
+Project-URL: issues, https://github.com/pyca/cryptography/issues
+Project-URL: source, https://github.com/pyca/cryptography/
 
 pyca/cryptography
 =================
@@ -85,7 +56,7 @@ pyca/cryptography
 
 ``cryptography`` is a package which provides cryptographic recipes and
 primitives to Python developers. Our goal is for it to be your "cryptographic
-standard library". It supports Python 3.8+ and PyPy3 7.3.11+.
+standard library". It supports Python 3.9+ and PyPy3 7.3.11+.
 
 ``cryptography`` includes both high level recipes and low level interfaces to
 common cryptographic algorithms such as symmetric ciphers, message digests, and
