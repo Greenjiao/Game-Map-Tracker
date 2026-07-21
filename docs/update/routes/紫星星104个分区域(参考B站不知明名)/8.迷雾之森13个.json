@@ -1,0 +1,171 @@
+{
+  "id": "9765775484176",
+  "format_version": "GMT-N-0.1.6",
+  "enable_versions": [
+    "GMT-N-0.1.5",
+    "GMT-N-0.1.3",
+    "sift2",
+    "GMT-N-0.1.6"
+  ],
+  "name": "8.迷雾之森13个",
+  "notes": "",
+  "loop": false,
+  "points": [
+    {
+      "id": "1ffc4b1578734c6e9d9232e01f58c25e",
+      "x": 4778,
+      "y": 1964,
+      "node_type": "collect",
+      "typeId": "5",
+      "type": "魔力之源",
+      "label": "魔力之源",
+      "manual": true
+    },
+    {
+      "id": "6dfd639460964efdb608621ca0022f9c",
+      "x": 4678,
+      "y": 1767,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6703659
+    },
+    {
+      "id": "64c2f11a31b749c297a9df8bad3f77c6",
+      "x": 4777,
+      "y": 1788,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6702716
+    },
+    {
+      "id": "cae26b652bf14cd8a439e07c20338a05",
+      "x": 4809,
+      "y": 1741,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6703661
+    },
+    {
+      "id": "6c5da32fa40c4adc97206dba0ba18d6e",
+      "x": 4815,
+      "y": 1738,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6702714
+    },
+    {
+      "id": "458c74473f5f44bea65c7ea28defd052",
+      "x": 4890,
+      "y": 1623,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "manual": true
+    },
+    {
+      "id": "5a913486e33b43238bf6a876034429da",
+      "x": 4708,
+      "y": 2722,
+      "node_type": "teleport",
+      "typeId": "8",
+      "type": "稀兽花种",
+      "label": "夜宵BOSS"
+    },
+    {
+      "id": "b66b8066e2334a3b80decffc6781ab7d",
+      "x": 4772,
+      "y": 2484,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6702708
+    },
+    {
+      "id": "0339a0fa02bf4135aa6dd9929b7bac27",
+      "x": 4824,
+      "y": 2453,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6702717
+    },
+    {
+      "id": "7ddea2f882094ba790fa054252632a63",
+      "x": 4767,
+      "y": 2291,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6702719
+    },
+    {
+      "id": "5ceaddb462ef4519af86151ee64748b2",
+      "x": 4791,
+      "y": 2290,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "manual": true
+    },
+    {
+      "id": "547865e363f04b46a30f7879bc5dc3e8",
+      "x": 4651,
+      "y": 2185,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "manual": true
+    },
+    {
+      "id": "b37b1b4da22f459ab04d9fda69765182",
+      "x": 4913,
+      "y": 2277,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "manual": true
+    },
+    {
+      "id": "320a1d9b0cc94e76ae71094acc4679ca",
+      "x": 4873,
+      "y": 2114,
+      "node_type": "virtual",
+      "label": "引路点 1"
+    },
+    {
+      "id": "56e0c031304b481f9b0297d3362157d2",
+      "x": 4800,
+      "y": 2044,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6703658
+    },
+    {
+      "id": "5c90bbb916454c0c940e15dd185cb716",
+      "x": 4864,
+      "y": 1979,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 6702718
+    }
+  ]
+}

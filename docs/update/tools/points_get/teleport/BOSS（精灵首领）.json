@@ -1,7 +1,7 @@
 {
   "name": "BOSS（精灵首领）",
   "loop": false,
-  "notes": "来源：当前游戏配置 MEGAMAP_CONF → MEGAMAP_GATHERING_CONF(index_method=5) → NPC_REFRESH_CONTENT_CONF → AREA_CONF；场景：10003；坐标系：8192×8192；数量：18。",
+  "notes": "坐标系：8192×8192；数量：18。",
   "annotationTypes": [
     "BOSS（精灵首领）"
   ],

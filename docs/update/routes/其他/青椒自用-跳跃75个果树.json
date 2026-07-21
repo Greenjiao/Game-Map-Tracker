@@ -1,0 +1,902 @@
+{
+  "id": "6153175987464",
+  "format_version": "GMT-N-0.1.5",
+  "enable_versions": [
+    "GMT-N-0.1.5",
+    "GMT-N-0.1.3",
+    "sift2",
+    "GMT-N-0.1.6"
+  ],
+  "name": "青椒自用-跳跃75个果树",
+  "notes": "来源标注：果树（17310030002）；算法生成 100 个点位；平面距离 81839 -> 22515（减少 72.5%）。规划最优不代表实际最优，因为无法考虑高低差等绕路因素，可参考自行修改节点。",
+  "loop": false,
+  "points": [
+    {
+      "id": "a68408b93db54e4ea9b9d9cc296a2edf",
+      "x": 2442,
+      "y": 3627,
+      "node_type": "collect",
+      "typeId": "5",
+      "type": "魔力之源",
+      "label": "风眠圣所的魔力之源",
+      "sourceId": 346072334336
+    },
+    {
+      "x": 2498,
+      "y": 3619,
+      "label": "可可果树 1",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801105,
+      "node_type": "collect"
+    },
+    {
+      "x": 2518,
+      "y": 3650,
+      "label": "可可果树 2",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801119,
+      "node_type": "collect"
+    },
+    {
+      "x": 2515,
+      "y": 3666,
+      "label": "可可果树 3",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801120,
+      "node_type": "collect"
+    },
+    {
+      "id": "4b9b97dee4304113a6eba97f9fe05b30",
+      "x": 1954,
+      "y": 3697,
+      "node_type": "teleport",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 613320286208
+    },
+    {
+      "x": 1981,
+      "y": 3646,
+      "label": "可可果树 4",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801118,
+      "node_type": "collect"
+    },
+    {
+      "x": 1992,
+      "y": 3661,
+      "label": "可可果树 5",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801117,
+      "node_type": "collect"
+    },
+    {
+      "id": "917dc908317c4a5aa09de96aaa9bab5f",
+      "x": 2173,
+      "y": 4319,
+      "node_type": "collect",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 656158617600
+    },
+    {
+      "x": 2233,
+      "y": 4194,
+      "label": "可可果树 6",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801100,
+      "node_type": "collect"
+    },
+    {
+      "x": 2222,
+      "y": 4201,
+      "label": "可可果树 7",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801098,
+      "node_type": "collect"
+    },
+    {
+      "x": 2213,
+      "y": 4196,
+      "label": "可可果树 8",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801110,
+      "node_type": "collect"
+    },
+    {
+      "id": "06a27811d83645ec8c1196e4179223a9",
+      "x": 1708,
+      "y": 4463,
+      "node_type": "teleport",
+      "typeId": "6",
+      "type": "炼金釜",
+      "label": "炼金台",
+      "sourceId": 355557134336
+    },
+    {
+      "id": "799e9018f8304a4fbe1fa93562512393",
+      "label": "可可果树 9",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2301131,
+      "node_type": "collect",
+      "x": 1710,
+      "y": 4486
+    },
+    {
+      "id": "4cb2cceec519414b85058a0bfa5ad70b",
+      "x": 1710,
+      "y": 4538,
+      "node_type": "virtual",
+      "label": "引路点 1"
+    },
+    {
+      "id": "03fe5afe921c4962a0225e72fbaf6083",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 1773,
+      "y": 4543,
+      "label": "无花果树 1"
+    },
+    {
+      "x": 1757,
+      "y": 4547,
+      "label": "可可果树 10",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801109,
+      "node_type": "collect"
+    },
+    {
+      "id": "70e3e07f77cb4d3d9a4ecd8ae0d92fdf",
+      "node_type": "virtual",
+      "x": 1661,
+      "y": 4511,
+      "label": "引路点 2"
+    },
+    {
+      "x": 1634,
+      "y": 4469,
+      "label": "可可果树 11",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801081,
+      "node_type": "collect"
+    },
+    {
+      "x": 1610,
+      "y": 4466,
+      "label": "可可果树 12",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801079,
+      "node_type": "collect"
+    },
+    {
+      "id": "9e22fe5450ec4ad3ba15467f71d24fa5",
+      "label": "可可果树 13",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2201114,
+      "node_type": "collect",
+      "x": 1728,
+      "y": 4396
+    },
+    {
+      "id": "64cef22ba46548908dc38c9e33b5140c",
+      "label": "可可果树 14",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2201115,
+      "node_type": "collect",
+      "x": 1779,
+      "y": 4388
+    },
+    {
+      "x": 1828,
+      "y": 4363,
+      "label": "可可果树 15",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801080,
+      "node_type": "collect"
+    },
+    {
+      "id": "3c8dff3a4fc24bb59043314611066250",
+      "label": "月牙湖岸魔力之源",
+      "type": "魔力之源",
+      "typeId": "5",
+      "sourceId": 130309,
+      "node_type": "teleport",
+      "x": 2428,
+      "y": 5078
+    },
+    {
+      "x": 2141,
+      "y": 5048,
+      "label": "可可果树 16",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801088,
+      "node_type": "collect"
+    },
+    {
+      "x": 2138,
+      "y": 5057,
+      "label": "可可果树 17",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801089,
+      "node_type": "collect"
+    },
+    {
+      "id": "82c7c130b52649e684c135c54c457ccb",
+      "x": 2129,
+      "y": 5084,
+      "node_type": "virtual",
+      "label": "引路点 3"
+    },
+    {
+      "x": 2154,
+      "y": 5218,
+      "label": "可可果树 18",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801112,
+      "node_type": "collect"
+    },
+    {
+      "x": 2142,
+      "y": 5241,
+      "label": "可可果树 19",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 801087,
+      "node_type": "collect"
+    },
+    {
+      "id": "b94675d6c3d84b62a31b6fe495f6d7a5",
+      "label": "无花果树 2",
+      "type": "无花果树",
+      "typeId": "100212",
+      "sourceId": 801086,
+      "node_type": "collect",
+      "x": 2152,
+      "y": 5253
+    },
+    {
+      "id": "7e85915ff33e471dac010a3918efe896",
+      "x": 3677,
+      "y": 4769,
+      "node_type": "teleport",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 940570103808
+    },
+    {
+      "x": 3576,
+      "y": 4793,
+      "label": "可可果树 20",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703362,
+      "node_type": "collect"
+    },
+    {
+      "id": "30fc65e28fd44678a96b49ea8f8c61fc",
+      "x": 3512,
+      "y": 4785,
+      "node_type": "virtual",
+      "label": "引路点 4"
+    },
+    {
+      "x": 3458,
+      "y": 4718,
+      "label": "可可果树 21",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703361,
+      "node_type": "collect"
+    },
+    {
+      "x": 3557,
+      "y": 4659,
+      "label": "可可果树 22",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703360,
+      "node_type": "collect"
+    },
+    {
+      "x": 3645,
+      "y": 4616,
+      "label": "可可果树 23",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703295,
+      "node_type": "collect"
+    },
+    {
+      "id": "f70e3afa0656404f8f2d1891211bc16c",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 3619,
+      "y": 4566,
+      "label": "无花果树 3"
+    },
+    {
+      "x": 3620,
+      "y": 4541,
+      "label": "可可果树 24",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703296,
+      "node_type": "collect"
+    },
+    {
+      "id": "87d87f6ad2f44be5bf2fbebf2e6654fa",
+      "x": 4142,
+      "y": 4337,
+      "node_type": "collect",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "眠枭庇护所",
+      "sourceId": 106355511296
+    },
+    {
+      "x": 4195,
+      "y": 4220,
+      "label": "可可果树 25",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703304,
+      "node_type": "collect"
+    },
+    {
+      "x": 4198,
+      "y": 4195,
+      "label": "可可果树 26",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703302,
+      "node_type": "collect"
+    },
+    {
+      "id": "c5f66db28b8c4d479c47ff5abb5abccc",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 4179,
+      "y": 4204,
+      "label": "无花果树 4"
+    },
+    {
+      "x": 4088,
+      "y": 4136,
+      "label": "可可果树 27",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703303,
+      "node_type": "collect"
+    },
+    {
+      "x": 4026,
+      "y": 4168,
+      "label": "可可果树 28",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703370,
+      "node_type": "collect"
+    },
+    {
+      "x": 3907,
+      "y": 4363,
+      "label": "可可果树 29",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703305,
+      "node_type": "collect"
+    },
+    {
+      "x": 3911,
+      "y": 4408,
+      "label": "可可果树 30",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703306,
+      "node_type": "collect"
+    },
+    {
+      "id": "4abca1d08f954e209ae7d933341d4c9f",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 3869,
+      "y": 4415,
+      "label": "无花果树 5"
+    },
+    {
+      "x": 3788,
+      "y": 4359,
+      "label": "可可果树 31",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703308,
+      "node_type": "collect"
+    },
+    {
+      "x": 3754,
+      "y": 4409,
+      "label": "可可果树 32",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703373,
+      "node_type": "collect"
+    },
+    {
+      "id": "46de6f3290d347f493dc91bacd37bd7f",
+      "x": 3860,
+      "y": 3802,
+      "node_type": "teleport",
+      "typeId": "5",
+      "type": "魔力之源",
+      "label": "回填山涧的魔力之源",
+      "sourceId": 966919262208
+    },
+    {
+      "x": 3825,
+      "y": 3836,
+      "label": "可可果树 33",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703380,
+      "node_type": "collect"
+    },
+    {
+      "x": 3922,
+      "y": 3803,
+      "label": "可可果树 34",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703316,
+      "node_type": "collect"
+    },
+    {
+      "id": "8f761b26077f4a8fa5868c72de1ada65",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 3880,
+      "y": 3869,
+      "label": "无花果树 6"
+    },
+    {
+      "id": "579460c7d165418d99329b40da4ce895",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 3915,
+      "y": 3884,
+      "label": "无花果树 7"
+    },
+    {
+      "x": 3862,
+      "y": 3891,
+      "label": "可可果树 35",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703315,
+      "node_type": "collect"
+    },
+    {
+      "x": 3803,
+      "y": 3960,
+      "label": "可可果树 36",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703371,
+      "node_type": "collect"
+    },
+    {
+      "x": 3739,
+      "y": 3965,
+      "label": "可可果树 37",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703384,
+      "node_type": "collect"
+    },
+    {
+      "id": "5aa6b6f033364367990079fddfb8a5d8",
+      "x": 4139,
+      "y": 4902,
+      "node_type": "teleport",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 216584224768
+    },
+    {
+      "x": 4214,
+      "y": 4956,
+      "label": "可可果树 38",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703369,
+      "node_type": "collect"
+    },
+    {
+      "x": 4076,
+      "y": 4772,
+      "label": "可可果树 39",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703366,
+      "node_type": "collect"
+    },
+    {
+      "x": 4011,
+      "y": 4765,
+      "label": "可可果树 40",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703368,
+      "node_type": "collect"
+    },
+    {
+      "x": 4035,
+      "y": 4853,
+      "label": "可可果树 41",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703367,
+      "node_type": "collect"
+    },
+    {
+      "id": "7894b9f2dfc44064aad11bc1b338f2f8",
+      "x": 4594,
+      "y": 4187,
+      "node_type": "teleport",
+      "typeId": "6",
+      "type": "炼金釜",
+      "label": "炼金台",
+      "sourceId": 50670624768
+    },
+    {
+      "x": 4598,
+      "y": 4267,
+      "label": "可可果树 42",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703359,
+      "node_type": "collect"
+    },
+    {
+      "id": "de1e55e6a700455a82c136e30893bef8",
+      "x": 4626,
+      "y": 4260,
+      "node_type": "virtual",
+      "label": "引路点 5"
+    },
+    {
+      "x": 4678,
+      "y": 4207,
+      "label": "可可果树 43",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703358,
+      "node_type": "collect"
+    },
+    {
+      "id": "b5c4c9bb7581494e8fb2597712ae8a45",
+      "node_type": "virtual",
+      "x": 4715,
+      "y": 4153,
+      "label": "引路点 6"
+    },
+    {
+      "id": "93b484a5f1584d96bb9cecec1c3f0b9c",
+      "x": 4754,
+      "y": 4044,
+      "node_type": "collect",
+      "label": "无花果树 8",
+      "typeId": "100212",
+      "type": "无花果树"
+    },
+    {
+      "x": 4694,
+      "y": 3988,
+      "label": "可可果树 44",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703355,
+      "node_type": "collect"
+    },
+    {
+      "x": 4796,
+      "y": 3965,
+      "label": "可可果树 45",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703354,
+      "node_type": "collect"
+    },
+    {
+      "id": "f7cd1b34639f4fa7814f8f491b85b519",
+      "x": 4607,
+      "y": 3412,
+      "node_type": "teleport",
+      "typeId": "6",
+      "type": "炼金釜",
+      "label": "炼金台",
+      "sourceId": 766696529920
+    },
+    {
+      "x": 4581,
+      "y": 3414,
+      "label": "可可果树 46",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703350,
+      "node_type": "collect"
+    },
+    {
+      "x": 4565,
+      "y": 3433,
+      "label": "可可果树 47",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703353,
+      "node_type": "collect"
+    },
+    {
+      "id": "6415fe13566946b1b2f693c0856ff3e9",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 4618,
+      "y": 3442,
+      "label": "无花果树 9"
+    },
+    {
+      "x": 4651,
+      "y": 3437,
+      "label": "可可果树 48",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703351,
+      "node_type": "collect"
+    },
+    {
+      "id": "34cce10760644ff48eac2a9d95fb8293",
+      "x": 5178,
+      "y": 4464,
+      "node_type": "teleport",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 517060579328
+    },
+    {
+      "id": "defb061ba3ca41f089b7cb4e2e77c412",
+      "label": "无花果树 10",
+      "type": "无花果树",
+      "typeId": "100212",
+      "sourceId": 2703333,
+      "node_type": "collect",
+      "x": 5267,
+      "y": 4502
+    },
+    {
+      "id": "7150630904984fd78e91c771f7923e7d",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 5236,
+      "y": 4355,
+      "label": "无花果树 11"
+    },
+    {
+      "id": "54c760962f1341448d1ad8eaf778c46d",
+      "type": "无花果树",
+      "typeId": "100212",
+      "node_type": "collect",
+      "x": 5339,
+      "y": 4356,
+      "label": "无花果树 12"
+    },
+    {
+      "x": 5296,
+      "y": 4344,
+      "label": "可可果树 49",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703398,
+      "node_type": "collect"
+    },
+    {
+      "x": 5174,
+      "y": 4257,
+      "label": "可可果树 50",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703346,
+      "node_type": "collect"
+    },
+    {
+      "x": 5124,
+      "y": 4187,
+      "label": "可可果树 51",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703349,
+      "node_type": "collect"
+    },
+    {
+      "x": 4940,
+      "y": 4207,
+      "label": "可可果树 52",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703347,
+      "node_type": "collect"
+    },
+    {
+      "x": 4931,
+      "y": 4126,
+      "label": "可可果树 53",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703348,
+      "node_type": "collect"
+    },
+    {
+      "id": "88543363cd57405984d80eefa9ba8dfe",
+      "x": 5452,
+      "y": 5016,
+      "node_type": "teleport",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 364741033984
+    },
+    {
+      "x": 5495,
+      "y": 5003,
+      "label": "可可果树 54",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703391,
+      "node_type": "collect"
+    },
+    {
+      "x": 5582,
+      "y": 5004,
+      "label": "可可果树 55",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703392,
+      "node_type": "collect"
+    },
+    {
+      "id": "6bf9b047b8d74b59b038c919f0893192",
+      "node_type": "virtual",
+      "x": 5595,
+      "y": 5038,
+      "label": "引路点 7"
+    },
+    {
+      "id": "039c7b4eea124d1d9a1f00ab63f53e3d",
+      "type": "魔力果树",
+      "typeId": "100213",
+      "node_type": "collect",
+      "x": 5659,
+      "y": 5081,
+      "label": "魔力果树 1"
+    },
+    {
+      "id": "fc1818cfcabc423cbe6b398d4e9fb976",
+      "x": 5858,
+      "y": 4807,
+      "node_type": "teleport",
+      "typeId": "5",
+      "type": "魔力之源",
+      "label": "望风半岛的魔力之源",
+      "sourceId": 122760921088
+    },
+    {
+      "x": 5875,
+      "y": 4797,
+      "label": "可可果树 56",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703388,
+      "node_type": "collect"
+    },
+    {
+      "x": 5932,
+      "y": 4803,
+      "label": "可可果树 57",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703387,
+      "node_type": "collect"
+    },
+    {
+      "id": "f7e847a20ebd4b489ae2ae8100d27976",
+      "x": 5895,
+      "y": 4783,
+      "node_type": "virtual",
+      "label": "引路点 8"
+    },
+    {
+      "x": 5730,
+      "y": 4741,
+      "label": "可可果树 58",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703386,
+      "node_type": "collect"
+    },
+    {
+      "id": "18c277e14a7040faa86406e68f4e068e",
+      "x": 6377,
+      "y": 4395,
+      "node_type": "teleport",
+      "typeId": "9",
+      "type": "大型眠枭庇护所",
+      "label": "大型眠枭庇护所",
+      "sourceId": 884771729408
+    },
+    {
+      "id": "a91ad39718454bcc84e1275778f167fb",
+      "label": "无花果树 13",
+      "type": "无花果树",
+      "typeId": "100212",
+      "sourceId": 2703321,
+      "node_type": "collect",
+      "x": 6437,
+      "y": 4316
+    },
+    {
+      "x": 6332,
+      "y": 4254,
+      "label": "可可果树 59",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703401,
+      "node_type": "collect"
+    },
+    {
+      "x": 6195,
+      "y": 4308,
+      "label": "可可果树 60",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703399,
+      "node_type": "collect"
+    },
+    {
+      "x": 6076,
+      "y": 4398,
+      "label": "可可果树 61",
+      "type": "可可果树",
+      "typeId": "100211",
+      "sourceId": 2703400,
+      "node_type": "collect"
+    }
+  ]
+}

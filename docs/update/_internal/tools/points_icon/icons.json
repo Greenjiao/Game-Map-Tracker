@@ -49,6 +49,13 @@
     "iconPath": "稀兽花种_8.png"
   },
   {
+    "typeId": "boss",
+    "type": "BOSS（精灵首领）",
+    "groupId": "3",
+    "group": "战斗首领",
+    "iconPath": "BOSS（精灵首领）_boss.png"
+  },
+  {
     "typeId": "15",
     "type": "迷你挑战",
     "groupId": "4",
