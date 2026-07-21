@@ -206,6 +206,14 @@ def _teleport_source_names(teleport_dir: str | Path) -> set[str]:
         name = _normalized_name(payload.get("name"))
         if name:
             names.add(name)
+        aliases = payload.get("annotationTypes")
+        if isinstance(aliases, list):
+            for alias in aliases:
+                if not isinstance(alias, str):
+                    continue
+                normalized_alias = _normalized_name(alias)
+                if normalized_alias:
+                    names.add(normalized_alias)
     return names
 
 
