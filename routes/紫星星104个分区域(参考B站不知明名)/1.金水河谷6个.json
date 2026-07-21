@@ -1,0 +1,85 @@
+{
+  "id": "6808360148943",
+  "format_version": "GMT-N-0.1.6",
+  "enable_versions": [
+    "GMT-N-0.1.5",
+    "GMT-N-0.1.3",
+    "sift2",
+    "GMT-N-0.1.6"
+  ],
+  "name": "1.金水河谷6个",
+  "notes": "",
+  "loop": false,
+  "points": [
+    {
+      "id": "dfa6380787d9431eba9c8bef3ba941b3",
+      "x": 5532,
+      "y": 3385,
+      "node_type": "collect",
+      "typeId": "5",
+      "type": "魔力之源",
+      "sourceId": 5400475,
+      "label": "起点"
+    },
+    {
+      "id": "f3b210fe29cd4c699bdf1a9df8e2af94",
+      "x": 5616,
+      "y": 3438,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 7900002
+    },
+    {
+      "id": "964bbb3f031a4a65a8277896974d0c4b",
+      "x": 5634,
+      "y": 3071,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 5461209
+    },
+    {
+      "id": "ef36c2787ec14a5c9a50f681781fb2dc",
+      "x": 5809,
+      "y": 3242,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 7900004
+    },
+    {
+      "id": "9327cf1983a4491db741a4b55f70f26a",
+      "x": 5819,
+      "y": 3232,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 5461207
+    },
+    {
+      "id": "91e4598841ef473b853c44b93863c67f",
+      "x": 5836,
+      "y": 3192,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "sourceId": 5461210
+    },
+    {
+      "id": "7e29f764b7e14cbc9c595c20f5679fec",
+      "x": 5938,
+      "y": 3206,
+      "node_type": "collect",
+      "typeId": "30004",
+      "type": "眠枭之星（紫）",
+      "label": "眠枭之星（紫）",
+      "manual": true
+    }
+  ]
+}
