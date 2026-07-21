@@ -18,6 +18,7 @@ class _FakeRouteManager:
     def __init__(self) -> None:
         self.routes = {"route-1": {"points": [{"x": 10, "y": 10}]}}
         self.hit_route = True
+        self.annotation_hit = None
 
     def route_for_id(self, route_id: str) -> dict | None:
         return self.routes.get(route_id)
@@ -34,7 +35,7 @@ class _FakeRouteManager:
         return "route-1", 0
 
     def hit_test_annotation_point(self, _x: float, _y: float, _threshold: float):
-        return None
+        return self.annotation_hit
 
 
 class MapViewRouteDragTests(unittest.TestCase):
@@ -313,6 +314,34 @@ class MapViewRouteDragTests(unittest.TestCase):
 
         labels = [item.text for item in captured["items"] if not item.separator and item.visible]
         self.assertNotIn(strings.MAP_ADD_POINT_WITH_ANNOTATION_MENU_LABEL, labels)
+
+    def test_annotation_menu_places_change_label_after_change_annotation_and_emits_signal(self) -> None:
+        route_mgr = _FakeRouteManager()
+        route_mgr.hit_route = False
+        route_mgr.annotation_hit = {"typeId": "flower", "pointIndex": 2}
+        view = self._view(route_mgr)
+        captured: dict[str, object] = {}
+
+        with patch(
+            "ui_island.views.map_view.show_context_menu",
+            lambda _parent, _global_pos, items, *, object_name="": captured.update(
+                {"items": list(items), "object_name": object_name}
+            ),
+        ):
+            view.contextMenuEvent(self._ContextMenuEvent(QPointF(12, 34)))
+
+        items = [item for item in captured["items"] if not item.separator and item.visible]
+        labels = [item.text for item in items]
+        change_index = labels.index(strings.MAP_CHANGE_ANNOTATION_MENU_LABEL)
+        self.assertEqual(labels[change_index + 1], strings.MAP_CHANGE_ANNOTATION_LABEL_MENU_LABEL)
+        self.assertEqual(captured["object_name"], "MapAnnotationContextMenu")
+
+        emitted: list[tuple[str, int]] = []
+        view.change_annotation_label_requested.connect(
+            lambda type_id, point_index: emitted.append((type_id, point_index))
+        )
+        items[change_index + 1].callback()
+        self.assertEqual(emitted, [("flower", 2)])
 
     def test_route_node_menu_includes_change_order_and_emits_signal(self) -> None:
         view = self._view()

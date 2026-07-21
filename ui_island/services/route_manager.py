@@ -48,6 +48,9 @@ _ANNOTATION_QUERY_PADDING_SCREEN_PX = 28
 _ANNOTATION_CLUSTER_GRID_PX = 36
 _ANNOTATION_CLUSTER_RATIO_THRESHOLD = 3.0
 _ANNOTATION_CLUSTER_VISIBLE_THRESHOLD = 600
+_REGION_LABEL_MAP_FONT_SIZE = 60
+_REGION_LABEL_SCALE_SWITCH_RATIO = 2.0
+_REGION_LABEL_SPRITE_CACHE_MAX = 256
 NODE_TYPE_COLLECT = "collect"
 NODE_TYPE_TELEPORT = "teleport"
 NODE_TYPE_VIRTUAL = "virtual"
@@ -85,6 +88,14 @@ class _AnnotationSpatialEntry:
     point_index: int
     point: dict
     xy: tuple[float, float]
+
+
+@dataclass(frozen=True)
+class _RegionLabel:
+    world_map_id: int
+    name: str
+    xy: tuple[float, float]
+    scale_id: int
 
 
 def _color_for_key(key: str) -> tuple[int, int, int]:
@@ -176,6 +187,16 @@ def _config_bool(name: str, default: bool) -> bool:
     if value is None:
         return bool(default)
     return bool(value)
+
+
+def _config_float(name: str, default: float, minimum: float = 0.0) -> float:
+    try:
+        value = float(getattr(config, name, default))
+    except (TypeError, ValueError):
+        value = float(default)
+    if not math.isfinite(value):
+        value = float(default)
+    return max(float(minimum), value)
 
 
 def _clamp_opacity(value: object, default: float) -> float:
@@ -972,6 +993,70 @@ def _guide_hint_font() -> ImageFont.ImageFont:
     return _GUIDE_HINT_FONT
 
 
+_REGION_LABEL_FONT_CACHE: dict[int, ImageFont.ImageFont] = {}
+_REGION_LABEL_SPRITE_CACHE: "OrderedDict[tuple[str, int, int], np.ndarray]" = OrderedDict()
+
+
+def _region_label_font(font_size: int) -> ImageFont.ImageFont:
+    cached = _REGION_LABEL_FONT_CACHE.get(font_size)
+    if cached is not None:
+        return cached
+
+    font_dir = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts")
+    candidates = [
+        os.path.join(font_dir, "msyhbd.ttc"),
+        os.path.join(font_dir, "msyh.ttc"),
+        os.path.join(font_dir, "simhei.ttf"),
+    ]
+    for path in candidates:
+        try:
+            font = ImageFont.truetype(path, font_size)
+            _REGION_LABEL_FONT_CACHE[font_size] = font
+            return font
+        except Exception:
+            continue
+    font = ImageFont.load_default()
+    _REGION_LABEL_FONT_CACHE[font_size] = font
+    return font
+
+
+def _region_label_sprite(text: str, font_size: int, stroke_width: int) -> np.ndarray:
+    """Return a cached BGRA sprite with black text and a white outline."""
+    key = (text, font_size, stroke_width)
+    cached = _REGION_LABEL_SPRITE_CACHE.get(key)
+    if cached is not None:
+        _REGION_LABEL_SPRITE_CACHE.move_to_end(key)
+        return cached
+
+    font = _region_label_font(font_size)
+    measure = Image.new("RGBA", (1, 1))
+    bbox = ImageDraw.Draw(measure).textbbox(
+        (0, 0),
+        text,
+        font=font,
+        stroke_width=stroke_width,
+    )
+    width = max(1, bbox[2] - bbox[0])
+    height = max(1, bbox[3] - bbox[1])
+    image = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    ImageDraw.Draw(image).text(
+        (-bbox[0], -bbox[1]),
+        text,
+        font=font,
+        fill=(0, 0, 0, 255),
+        stroke_width=stroke_width,
+        stroke_fill=(255, 255, 255, 255),
+    )
+    rgba = np.array(image)
+    bgra = rgba[:, :, [2, 1, 0, 3]].copy()
+
+    _REGION_LABEL_SPRITE_CACHE[key] = bgra
+    _REGION_LABEL_SPRITE_CACHE.move_to_end(key)
+    if len(_REGION_LABEL_SPRITE_CACHE) > _REGION_LABEL_SPRITE_CACHE_MAX:
+        _REGION_LABEL_SPRITE_CACHE.popitem(last=False)
+    return bgra
+
+
 _NODE_LABEL_FONT_SIZE = 13
 _NODE_LABEL_FONT: ImageFont.ImageFont | None = None
 
@@ -1235,6 +1320,7 @@ class RouteManager:
         self._point_icon_cache: dict[str, np.ndarray | None] = {}
         self._annotation_icon_cache: dict[str, np.ndarray | None] = {}
         self._annotation_points_cache: dict[str, list[dict]] | None = None
+        self._region_labels_cache: list[_RegionLabel] | None = None
         self._annotation_spatial_index: dict[tuple[int, int], list[_AnnotationSpatialEntry]] | None = None
         self._annotation_coord_transform_cache: object = _UNSET
         self._annotation_type_ids: set[str] = set()
@@ -1380,6 +1466,7 @@ class RouteManager:
 
     def invalidate_annotation_cache(self, *, icons: bool = False) -> None:
         self._annotation_points_cache = None
+        self._region_labels_cache = None
         self._annotation_spatial_index = None
         self._annotation_coord_transform_cache = _UNSET
         if icons:
@@ -1494,6 +1581,47 @@ class RouteManager:
 
     def annotation_type_items(self) -> list[dict]:
         return _load_annotation_type_items()
+
+    def region_labels(self) -> list[_RegionLabel]:
+        cached = getattr(self, "_region_labels_cache", None)
+        if cached is not None:
+            return cached
+
+        labels: list[_RegionLabel] = []
+        loaded = self._load_annotation_payload()
+        payload = loaded[1] if loaded is not None else None
+        raw_labels = payload.get("regionLabels") if isinstance(payload, dict) else None
+        if isinstance(raw_labels, list):
+            for raw in raw_labels:
+                if not isinstance(raw, dict):
+                    continue
+                raw_world_map_id = raw.get("worldMapId")
+                raw_scale_id = raw.get("scaleId")
+                raw_x = raw.get("x")
+                raw_y = raw.get("y")
+                if (
+                    not isinstance(raw_world_map_id, int)
+                    or isinstance(raw_world_map_id, bool)
+                    or not isinstance(raw_scale_id, int)
+                    or isinstance(raw_scale_id, bool)
+                    or not isinstance(raw_x, (int, float))
+                    or isinstance(raw_x, bool)
+                    or not isinstance(raw_y, (int, float))
+                    or isinstance(raw_y, bool)
+                    or not isinstance(raw.get("name"), str)
+                ):
+                    continue
+                world_map_id = raw_world_map_id
+                scale_id = raw_scale_id
+                x = float(raw_x)
+                y = float(raw_y)
+                name = raw["name"].strip()
+                if not name or scale_id not in (3, 4) or not math.isfinite(x) or not math.isfinite(y):
+                    continue
+                labels.append(_RegionLabel(world_map_id, name, (x, y), scale_id))
+
+        self._region_labels_cache = labels
+        return labels
 
     def _load_annotation_payload(self) -> tuple[str, dict] | None:
         file_path = _default_annotation_points_file()
@@ -1702,6 +1830,31 @@ class RouteManager:
         new_points.append(moved)
         self._sync_annotation_count(types, points_by_type, type_id)
         self._sync_annotation_count(types, points_by_type, new_type_id)
+        return self._write_annotation_payload(file_path, payload)
+
+    def change_annotation_point_label(
+        self,
+        type_id: str,
+        point_index: int,
+        new_label: object,
+    ) -> bool:
+        type_id = str(type_id or "").strip()
+        if not type_id or not isinstance(point_index, int):
+            return False
+
+        loaded = self._load_annotation_payload()
+        if loaded is None:
+            return False
+        file_path, payload = loaded
+        points = payload["pointsByType"].get(type_id)
+        if not isinstance(points, list) or not (0 <= point_index < len(points)):
+            return False
+        point = points[point_index]
+        if not isinstance(point, dict) or _point_xy(point) is None:
+            return False
+
+        point["label"] = str(new_label or "").strip()
+        point["manual"] = True
         return self._write_annotation_payload(file_path, payload)
 
     def delete_annotation_point(self, type_id: str, point_index: int) -> bool:
@@ -2941,6 +3094,17 @@ class RouteManager:
         if map_pixels_per_screen_px is None:
             map_pixels_per_screen_px = max(1.0 / max(scale_x, 1e-6), 1.0 / max(scale_y, 1e-6))
         if not skip_annotations:
+            self._draw_region_labels(
+                canvas,
+                vx1,
+                vy1,
+                canvas_width,
+                canvas_height,
+                scale_x=scale_x,
+                scale_y=scale_y,
+                map_pixels_per_screen_px=float(map_pixels_per_screen_px),
+                coord_adapter=coord_adapter,
+            )
             self._draw_annotations(
                 canvas,
                 vx1,
@@ -3127,6 +3291,78 @@ class RouteManager:
         if node_label_draws:
             self._draw_node_labels(canvas, node_label_draws)
 
+    def _draw_region_labels(
+        self,
+        canvas,
+        vx1,
+        vy1,
+        canvas_width: int,
+        canvas_height: int,
+        *,
+        scale_x: float = 1.0,
+        scale_y: float = 1.0,
+        map_pixels_per_screen_px: float = 1.0,
+        coord_adapter=None,
+    ) -> None:
+        major_visible = _config_bool("REGION_LABEL_MAJOR_VISIBLE", True)
+        minor_visible = _config_bool("REGION_LABEL_MINOR_VISIBLE", True)
+        if not major_visible and not minor_visible:
+            return
+
+        labels = self.region_labels()
+        if not labels:
+            return
+
+        switch_ratio = _config_float(
+            "REGION_LABEL_SCALE_SWITCH_RATIO",
+            _REGION_LABEL_SCALE_SWITCH_RATIO,
+            0.01,
+        )
+        if major_visible and minor_visible:
+            active_scale_id = 3 if float(map_pixels_per_screen_px) >= switch_ratio else 4
+        elif major_visible:
+            active_scale_id = 3
+        elif minor_visible:
+            active_scale_id = 4
+        else:
+            return
+
+        font_size_key = (
+            "REGION_LABEL_MAJOR_FONT_SIZE" if active_scale_id == 3 else "REGION_LABEL_MINOR_FONT_SIZE"
+        )
+        map_font_size = _config_int(font_size_key, _REGION_LABEL_MAP_FONT_SIZE, 4)
+        map_to_screen_scale = math.sqrt(
+            abs(float(scale_x or 1.0)) * abs(float(scale_y or 1.0))
+        )
+        font_size = max(1, int(round(map_font_size * map_to_screen_scale)))
+        map_stroke_width = max(2, int(round(map_font_size * 0.1)))
+        stroke_width = max(1, int(round(map_stroke_width * map_to_screen_scale)))
+        effective_adapter = self._annotation_coord_adapter(coord_adapter)
+
+        for label in labels:
+            if label.scale_id != active_scale_id:
+                continue
+            current_xy = _adapter_to_current(effective_adapter, label.xy)
+            center_x = (current_xy[0] - float(vx1)) * float(scale_x or 1.0)
+            center_y = (current_xy[1] - float(vy1)) * float(scale_y or 1.0)
+            estimated_half_width = max(1, len(label.name)) * font_size + stroke_width * 2
+            estimated_half_height = font_size * 2 + stroke_width * 2
+            if (
+                center_x + estimated_half_width <= 0
+                or center_y + estimated_half_height <= 0
+                or center_x - estimated_half_width >= canvas_width
+                or center_y - estimated_half_height >= canvas_height
+            ):
+                continue
+            sprite = _region_label_sprite(label.name, font_size, stroke_width)
+            sprite_height, sprite_width = sprite.shape[:2]
+            left = int(round(center_x - sprite_width / 2.0))
+            top = int(round(center_y - sprite_height / 2.0))
+            rect = (left, top, left + sprite_width, top + sprite_height)
+            if rect[2] <= 0 or rect[3] <= 0 or rect[0] >= canvas_width or rect[1] >= canvas_height:
+                continue
+            _blit_bgra_topleft(canvas, sprite, left, top)
+
     def _draw_node_labels(self, canvas, draws: list) -> None:
         """用 PIL 批量绘制节点序号/名称文字（支持中文，避免 cv2 渲染成问号）。
 
@@ -3190,6 +3426,8 @@ class RouteManager:
             self._draw_annotation_clusters(canvas, entries, float(vx1), float(vy1), scale_x, scale_y)
             return
 
+        show_labels = _config_bool("ANNOTATION_LABEL_VISIBLE", False)
+        label_draws: list[tuple[str, tuple[int, int], int]] = []
         for entry in entries:
             icon = self.annotation_icon_for(entry.type_id)
             if icon is None:
@@ -3201,6 +3439,23 @@ class RouteManager:
             ):
                 continue
             _overlay_bgra_icon(canvas, icon, local_point, opacity=1.0)
+            if show_labels:
+                label = str(entry.point.get("label") or "").strip()
+                if label:
+                    label_draws.append((label, local_point, int(icon.shape[0])))
+
+        self._draw_annotation_labels(canvas, label_draws)
+
+    @staticmethod
+    def _draw_annotation_labels(
+        canvas,
+        draws: list[tuple[str, tuple[int, int], int]],
+    ) -> None:
+        for label, local_point, icon_height in draws:
+            sprite = _node_label_sprite(label, (255, 255, 255))
+            text_x = int(round(local_point[0] - sprite.shape[1] / 2.0))
+            text_y = int(round(local_point[1] - icon_height / 2.0 - sprite.shape[0]))
+            _blit_bgra_topleft(canvas, sprite, text_x, text_y)
 
     def _draw_annotation_clusters(
         self,
@@ -3212,6 +3467,8 @@ class RouteManager:
         scale_y: float,
     ) -> None:
         canvas_height, canvas_width = canvas.shape[:2]
+        show_labels = _config_bool("ANNOTATION_LABEL_VISIBLE", False)
+        label_draws: list[tuple[str, tuple[int, int], int]] = []
         clusters: dict[tuple[int, int], list[tuple[_AnnotationSpatialEntry, tuple[int, int]]]] = {}
         for entry in entries:
             local_point = _map_to_canvas_point(entry.xy, vx1, vy1, scale_x, scale_y)
@@ -3232,6 +3489,10 @@ class RouteManager:
                 icon = self.annotation_icon_for(entry.type_id)
                 if icon is not None:
                     _overlay_bgra_icon(canvas, icon, local_point, opacity=1.0)
+                    if show_labels:
+                        label = str(entry.point.get("label") or "").strip()
+                        if label:
+                            label_draws.append((label, local_point, int(icon.shape[0])))
                 continue
 
             count = len(members)
@@ -3254,6 +3515,8 @@ class RouteManager:
                 1,
                 cv2.LINE_AA,
             )
+
+        self._draw_annotation_labels(canvas, label_draws)
 
     def _assign_route_colors(self) -> None:
         all_route_ids = sorted(

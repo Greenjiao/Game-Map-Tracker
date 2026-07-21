@@ -61,6 +61,12 @@ DEFAULT_CONFIG = {
     "ROUTE_NODE_NAME_VISIBLE": True,
     "ROUTE_NODE_NAME_HIDE_RATIO": 2,
     "ANNOTATION_CLUSTER_RATIO": 3,
+    "REGION_LABEL_MAJOR_VISIBLE": True,
+    "REGION_LABEL_MINOR_VISIBLE": True,
+    "REGION_LABEL_MAJOR_FONT_SIZE": 70,
+    "REGION_LABEL_MINOR_FONT_SIZE": 40,
+    "REGION_LABEL_SCALE_SWITCH_RATIO": 2.0,
+    "ANNOTATION_LABEL_VISIBLE": False,
     "ROUTE_NODE_ICON_SIZE": 20,
     "ANNOTATION_ICON_SIZE": 20,
     "ROUTE_NODE_DOT_SIZE": 5,
@@ -86,22 +92,23 @@ DEFAULT_CONFIG = {
             "id": "preset_3e2f22e82cf14888b6830b2da5047a65",
             "name": "常用传送点",
             "type_ids": [
-                "17310030024",
-                "17310030025",
-                "17310030038",
-                "17310030039",
-                "17310030040",
-                "17310030041"
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "boss"
             ]
         },
         {
             "id": "preset_7eab6eb79ce64b529cc749cbbe0fa6c9",
             "name": "常用采集路线1_只显示矿",
             "type_ids": [
-                "17310030043",
-                "17310030044",
-                "17310030045",
-                "17310030046"
+                "100675",
+                "100676",
+                "100677",
+                "100628"
             ]
         }
     ],
@@ -126,4 +133,6 @@ OBSOLETE_CONFIG_KEYS = {
     "LOGIC_MAP_PATH",
     "ROUTE_RECENT_LIMIT",
     "ANNOTATION_RECENT_TYPE_IDS",
+    "REGION_LABEL_VISIBLE",
+    "REGION_LABEL_FONT_SIZE",
 }

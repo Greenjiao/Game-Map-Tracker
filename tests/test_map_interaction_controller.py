@@ -124,6 +124,7 @@ class _FakeRouteManager:
         }
         self.insert_calls: list[dict] = []
         self.annotation_calls: list[tuple[str, int, str, str, str | None]] = []
+        self.annotation_label_calls: list[tuple[str, int, str]] = []
         self.reorder_calls: list[tuple[str, int, int]] = []
         self.fail_reorder = False
 
@@ -174,6 +175,14 @@ class _FakeRouteManager:
     def annotation_point(self, type_id: str, point_index: int) -> dict | None:
         point = self.annotation_points.get((type_id, point_index))
         return dict(point) if point is not None else None
+
+    def change_annotation_point_label(self, type_id: str, point_index: int, label: str) -> bool:
+        point = self.annotation_points.get((type_id, point_index))
+        if point is None:
+            return False
+        point["label"] = label
+        self.annotation_label_calls.append((type_id, point_index, label))
+        return True
 
     def set_point_annotation(
         self,
@@ -717,6 +726,35 @@ class MapInteractionControllerTests(unittest.TestCase):
         self.assertEqual(args, (12, 34))
         self.assertEqual(kwargs["point_fields"]["typeId"], "flower")
         self.assertEqual(kwargs["point_fields"]["node_type"], "collect")
+
+    def test_change_map_annotation_label_prompts_saves_and_refreshes(self) -> None:
+        controller, window = self._controller()
+
+        with (
+            patch(
+                "ui_island.controllers.map_interaction_controller.prompt_text_input",
+                return_value=(True, "花园入口"),
+            ) as prompt,
+            patch.object(controller, "_refresh_annotation_ui") as refresh,
+            patch("ui_island.controllers.map_interaction_controller.toast") as toast,
+        ):
+            controller.change_map_annotation_label("flower", 0)
+
+        self.assertEqual(prompt.call_args.kwargs["value"], "Field Flower")
+        self.assertEqual(window.route_mgr.annotation_label_calls, [("flower", 0, "花园入口")])
+        refresh.assert_called_once_with()
+        toast.assert_called_once()
+
+    def test_change_map_annotation_label_cancel_keeps_point_unchanged(self) -> None:
+        controller, window = self._controller()
+
+        with patch(
+            "ui_island.controllers.map_interaction_controller.prompt_text_input",
+            return_value=(False, "ignored"),
+        ):
+            controller.change_map_annotation_label("flower", 0)
+
+        self.assertEqual(window.route_mgr.annotation_label_calls, [])
 
     def test_change_saved_point_annotation_syncs_node_type(self) -> None:
         controller, window = self._controller()

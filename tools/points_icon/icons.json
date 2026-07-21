@@ -3,7 +3,7 @@
     "typeId": "104501",
     "type": "不咕钟零件",
     "groupId": "11",
-    "group": "探索道具",
+    "group": "探索",
     "iconPath": "不咕钟零件_104501.png"
   },
   {
@@ -44,22 +44,22 @@
   {
     "typeId": "8",
     "type": "稀兽花种",
-    "groupId": "3",
-    "group": "战斗首领",
+    "groupId": "2",
+    "group": "传送",
     "iconPath": "稀兽花种_8.png"
   },
   {
     "typeId": "boss",
     "type": "BOSS（精灵首领）",
-    "groupId": "3",
-    "group": "战斗首领",
+    "groupId": "2",
+    "group": "传送",
     "iconPath": "BOSS（精灵首领）_boss.png"
   },
   {
     "typeId": "15",
     "type": "迷你挑战",
-    "groupId": "4",
-    "group": "小游戏",
+    "groupId": "11",
+    "group": "探索",
     "iconPath": "迷你挑战_15.png"
   },
   {
@@ -138,6 +138,13 @@
     "groupId": "26",
     "group": "矿物",
     "iconPath": "黑晶琉璃_100628.png"
+  },
+  {
+    "typeId": "100673",
+    "type": "火焰石",
+    "groupId": "26",
+    "group": "矿物",
+    "iconPath": "火焰石_100673.png"
   },
   {
     "typeId": "100675",
@@ -383,5 +390,12 @@
     "groupId": "27",
     "group": "植物",
     "iconPath": "短木莲_100850.png"
+  },
+  {
+    "typeId": "10040",
+    "type": "收录乐谱",
+    "groupId": "11",
+    "group": "探索",
+    "iconPath": "收录乐谱_10040.png"
   }
 ]

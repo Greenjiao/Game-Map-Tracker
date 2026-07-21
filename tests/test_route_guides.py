@@ -1985,6 +1985,45 @@ class RouteGuideTests(unittest.TestCase):
         self.assertEqual(int(canvas[20, 20, 1]), 255)
         self.assertEqual(int(canvas[90, 90, 1]), 255)
 
+    def test_draw_annotations_shows_point_label_when_enabled(self) -> None:
+        manager = RouteManager.__new__(RouteManager)
+        manager._annotation_points_cache = {
+            "flower": [{"x": 50, "y": 50, "typeId": "flower", "label": "花园入口"}]
+        }
+        manager._annotation_spatial_index = None
+        manager._annotation_type_ids = {"flower"}
+        manager._annotation_icon_cache = {"flower": np.full((20, 20, 4), 255, dtype=np.uint8)}
+        canvas = np.zeros((80, 120, 3), dtype=np.uint8)
+        sprite = np.full((10, 30, 4), 255, dtype=np.uint8)
+
+        with (
+            patch("ui_island.services.route_manager.config.ANNOTATION_LABEL_VISIBLE", True),
+            patch("ui_island.services.route_manager._node_label_sprite", return_value=sprite) as label_sprite,
+            patch("ui_island.services.route_manager._blit_bgra_topleft") as blit,
+        ):
+            manager._draw_annotations(canvas, 0, 0, 120, 80, map_pixels_per_screen_px=1.0)
+
+        label_sprite.assert_called_once_with("花园入口", (255, 255, 255))
+        blit.assert_called_once_with(canvas, sprite, 35, 30)
+
+    def test_draw_annotations_hides_point_label_when_disabled(self) -> None:
+        manager = RouteManager.__new__(RouteManager)
+        manager._annotation_points_cache = {
+            "flower": [{"x": 20, "y": 20, "typeId": "flower", "label": "花园入口"}]
+        }
+        manager._annotation_spatial_index = None
+        manager._annotation_type_ids = {"flower"}
+        manager._annotation_icon_cache = {"flower": np.full((20, 20, 4), 255, dtype=np.uint8)}
+        canvas = np.zeros((80, 120, 3), dtype=np.uint8)
+
+        with (
+            patch("ui_island.services.route_manager.config.ANNOTATION_LABEL_VISIBLE", False),
+            patch("ui_island.services.route_manager._node_label_sprite") as label_sprite,
+        ):
+            manager._draw_annotations(canvas, 0, 0, 120, 80, map_pixels_per_screen_px=1.0)
+
+        label_sprite.assert_not_called()
+
     def test_hit_test_annotation_point_uses_spatial_index_and_returns_nearest(self) -> None:
         manager = RouteManager.__new__(RouteManager)
         manager._annotation_points_cache = {
@@ -2066,6 +2105,34 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(point["typeId"], "flower")
             self.assertEqual(point["type"], "Sunflower")
             self.assertTrue(point["manual"])
+
+    def test_change_annotation_point_label_persists_manual_edit_and_top_level_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            points_file = Path(tmp) / "points.json"
+            points_file.write_text(
+                json.dumps(
+                    {
+                        "types": [{"typeId": "flower", "type": "Sunflower", "count": 1}],
+                        "pointsByType": {
+                            "flower": [{"x": 1, "y": 2, "label": "旧标签", "sourceId": 7}]
+                        },
+                        "regionLabels": [{"worldMapId": 6, "name": "风息山口", "x": 3, "y": 4, "scaleId": 3}],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(Path(tmp) / "routes"))
+
+            with patch("ui_island.services.route_manager._default_annotation_points_file", return_value=str(points_file)):
+                self.assertTrue(manager.change_annotation_point_label("flower", 0, "  花园入口  "))
+
+            payload = json.loads(points_file.read_text(encoding="utf-8"))
+            point = payload["pointsByType"]["flower"][0]
+            self.assertEqual(point["label"], "花园入口")
+            self.assertTrue(point["manual"])
+            self.assertEqual(point["sourceId"], 7)
+            self.assertEqual(payload["regionLabels"][0]["name"], "风息山口")
 
     def test_delete_annotation_point_removes_point_and_updates_count(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

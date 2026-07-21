@@ -11,6 +11,7 @@ from ..dialogs.annotation_type_picker import open_annotation_match_candidate_pic
 from ..dialogs.insert_point_dialog import open_insert_point_dialog
 from ..dialogs.point_order_dialog import open_point_order_dialog
 from ..dialogs.settings_dialog import styled_confirm, styled_info
+from ..dialogs.text_input_dialog import prompt_text_input
 from ..services.annotation_preferences import normalize_type_ids
 from ..services.annotation_matcher import (
     AMBIGUOUS_DISTANCE_DELTA,
@@ -359,6 +360,42 @@ class MapInteractionController:
         self.window.window_prefs_store.save_annotation_preferences(selected_type_ids)
         self._refresh_annotation_ui()
         toast(self.window, strings.MAP_ANNOTATION_CHANGE_SUCCESS_FMT.format(name=new_type_name))
+
+    def change_map_annotation_label(self, type_id: str, point_index: int) -> None:
+        point = self.window.route_mgr.annotation_point(type_id, point_index)
+        if point is None:
+            styled_info(
+                self.window,
+                strings.MAP_ANNOTATION_FAIL_TITLE,
+                strings.MAP_ANNOTATION_LABEL_CHANGE_FAIL_BODY,
+            )
+            return
+
+        accepted, new_label = prompt_text_input(
+            self.window,
+            title=strings.MAP_ANNOTATION_LABEL_DIALOG_TITLE,
+            label=strings.MAP_ANNOTATION_LABEL_PROMPT,
+            value=str(point.get("label") or ""),
+            placeholder=str(point.get("type") or type_id),
+            confirm_text="确认修改",
+        )
+        if not accepted:
+            return
+        if not self.window.route_mgr.change_annotation_point_label(type_id, point_index, new_label):
+            styled_info(
+                self.window,
+                strings.MAP_ANNOTATION_FAIL_TITLE,
+                strings.MAP_ANNOTATION_LABEL_CHANGE_FAIL_BODY,
+            )
+            return
+
+        self._refresh_annotation_ui()
+        toast(
+            self.window,
+            strings.MAP_ANNOTATION_LABEL_CHANGE_SUCCESS
+            if new_label
+            else strings.MAP_ANNOTATION_LABEL_CLEAR_SUCCESS,
+        )
 
     def add_annotation_to_route(self, type_id: str, point_index: int) -> None:
         try:

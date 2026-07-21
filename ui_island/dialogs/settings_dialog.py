@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QColorDialog,
     QComboBox,
     QDialog,
+    QDoubleSpinBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -1165,6 +1166,12 @@ class SettingsDialog(QDialog):
         self._route_node_icon_size_spin: QSpinBox | None = None
         self._annotation_icon_size_spin: QSpinBox | None = None
         self._route_node_dot_size_spin: QSpinBox | None = None
+        self._region_label_major_font_size_spin: QSpinBox | None = None
+        self._region_label_minor_font_size_spin: QSpinBox | None = None
+        self._region_label_major_visible_checkbox: QCheckBox | None = None
+        self._region_label_minor_visible_checkbox: QCheckBox | None = None
+        self._region_label_scale_switch_spin: QDoubleSpinBox | None = None
+        self._annotation_label_visible_checkbox: QCheckBox | None = None
         self._route_color_buttons: dict[str, QPushButton] = {}
         self._route_colors = {
             key: self._normalize_route_color(getattr(config, key, default), default)
@@ -2312,12 +2319,104 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         outer.addWidget(row)
 
+        region_label_row = self._build_region_label_settings_row(container)
+        outer.addWidget(region_label_row)
+        region_label_display_row = self._build_region_label_display_settings_row(container)
+        outer.addWidget(region_label_display_row)
+
         coord_row = self._build_annotation_coord_row(container)
         outer.addWidget(coord_row)
 
         self._sync_annotation_file_state()
         self._reload_annotation_coord_editors()
         return container
+
+    def _build_region_label_settings_row(self, parent: QWidget) -> QWidget:
+        row = QWidget(parent)
+        row.setObjectName("RegionLabelSettingsRow")
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(4)
+
+        title = QLabel("区域名称", row)
+        title.setObjectName("FieldLabel")
+        layout.addWidget(title)
+
+        size_label = QLabel("大小", row)
+        size_label.setObjectName("StatLabel")
+        layout.addWidget(size_label)
+
+        for attr_name, prefix, width, key in (
+            ("_region_label_major_font_size_spin", "大区域 ", 112, "REGION_LABEL_MAJOR_FONT_SIZE"),
+            ("_region_label_minor_font_size_spin", "细分区域 ", 126, "REGION_LABEL_MINOR_FONT_SIZE"),
+        ):
+            spin = QSpinBox(row)
+            spin.setObjectName(key)
+            spin.setRange(12, 240)
+            spin.setPrefix(prefix)
+            spin.setFixedSize(width, 26)
+            spin.setAlignment(Qt.AlignRight)
+            spin.setValue(int(getattr(config, key, 60) or 60))
+            spin.setToolTip("大小使用地图像素；缩放地图时，文字会和底图保持相同比例缩放。")
+            setattr(self, attr_name, spin)
+            layout.addWidget(spin)
+
+        annotation_label_visible = QCheckBox("显示标注标签", row)
+        annotation_label_visible.setObjectName("AnnotationLabelVisibleCheckBox")
+        annotation_label_visible.setChecked(bool(getattr(config, "ANNOTATION_LABEL_VISIBLE", False)))
+        annotation_label_visible.setToolTip("在非聚合状态下，在普通标注图标右侧显示该点位的标签。")
+        self._annotation_label_visible_checkbox = annotation_label_visible
+        layout.addWidget(annotation_label_visible)
+
+        layout.addStretch()
+        return row
+
+    def _build_region_label_display_settings_row(self, parent: QWidget) -> QWidget:
+        row = QWidget(parent)
+        row.setObjectName("RegionLabelDisplaySettingsRow")
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 6, 0)
+        layout.setSpacing(8)
+
+        visible_label = QLabel("区域显示", row)
+        visible_label.setObjectName("FieldLabel")
+        layout.addWidget(visible_label)
+
+        major_visible = QCheckBox("大区域", row)
+        major_visible.setObjectName("RegionLabelMajorVisibleCheckBox")
+        major_visible.setChecked(bool(getattr(config, "REGION_LABEL_MAJOR_VISIBLE", True)))
+        major_visible.setToolTip("只勾选此项时，所有缩放倍率都只显示大区域名称。")
+        self._region_label_major_visible_checkbox = major_visible
+        layout.addWidget(major_visible)
+
+        minor_visible = QCheckBox("细分区域", row)
+        minor_visible.setObjectName("RegionLabelMinorVisibleCheckBox")
+        minor_visible.setChecked(bool(getattr(config, "REGION_LABEL_MINOR_VISIBLE", True)))
+        minor_visible.setToolTip("只勾选此项时，所有缩放倍率都只显示细分区域名称。")
+        self._region_label_minor_visible_checkbox = minor_visible
+        layout.addWidget(minor_visible)
+
+        switch_label = QLabel("切换阈值", row)
+        switch_label.setObjectName("StatLabel")
+        switch_label.setToolTip("两个显示选项都勾选时，达到阈值显示大区域，低于阈值显示细分区域。")
+        layout.addWidget(switch_label)
+
+        switch_spin = QDoubleSpinBox(row)
+        switch_spin.setObjectName("RegionLabelScaleSwitchRatioSpin")
+        switch_spin.setRange(0.01, 100.0)
+        switch_spin.setDecimals(2)
+        switch_spin.setSingleStep(0.1)
+        switch_spin.setFixedSize(76, 26)
+        switch_spin.setAlignment(Qt.AlignRight)
+        switch_spin.setValue(float(getattr(config, "REGION_LABEL_SCALE_SWITCH_RATIO", 3.0) or 3.0))
+        switch_spin.setToolTip(
+            "地图像素/屏幕像素。两个显示选项都勾选时，达到阈值显示大区域，低于阈值显示细分区域。"
+        )
+        self._region_label_scale_switch_spin = switch_spin
+        layout.addWidget(switch_spin)
+
+        layout.addStretch()
+        return row
 
     def _build_annotation_coord_row(self, parent: QWidget) -> QWidget:
         row = QWidget(parent)
@@ -3154,6 +3253,29 @@ class SettingsDialog(QDialog):
             result["ANNOTATION_ICON_SIZE"] = int(self._annotation_icon_size_spin.value())
         if self._route_node_dot_size_spin is not None:
             result["ROUTE_NODE_DOT_SIZE"] = int(self._route_node_dot_size_spin.value())
+        if self._region_label_major_font_size_spin is not None:
+            major_font_size = int(self._region_label_major_font_size_spin.value())
+            result["REGION_LABEL_MAJOR_FONT_SIZE"] = major_font_size
+        if self._region_label_minor_font_size_spin is not None:
+            result["REGION_LABEL_MINOR_FONT_SIZE"] = int(self._region_label_minor_font_size_spin.value())
+        major_region_visible = (
+            self._region_label_major_visible_checkbox.isChecked()
+            if self._region_label_major_visible_checkbox is not None
+            else False
+        )
+        minor_region_visible = (
+            self._region_label_minor_visible_checkbox.isChecked()
+            if self._region_label_minor_visible_checkbox is not None
+            else False
+        )
+        result["REGION_LABEL_MAJOR_VISIBLE"] = major_region_visible
+        result["REGION_LABEL_MINOR_VISIBLE"] = minor_region_visible
+        if self._region_label_scale_switch_spin is not None:
+            result["REGION_LABEL_SCALE_SWITCH_RATIO"] = float(
+                self._region_label_scale_switch_spin.value()
+            )
+        if self._annotation_label_visible_checkbox is not None:
+            result["ANNOTATION_LABEL_VISIBLE"] = self._annotation_label_visible_checkbox.isChecked()
         result["ROUTE_POINTER_ARROW_VISIBLE"] = bool(self._route_pointer_arrow_visible)
         for key, _label, default in _ROUTE_COLOR_FIELDS:
             self._route_colors[key] = self._normalize_route_color(self._route_colors.get(key), default)
@@ -3363,6 +3485,30 @@ class SettingsDialog(QDialog):
             self._annotation_icon_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ANNOTATION_ICON_SIZE", 20)))
         if self._route_node_dot_size_spin is not None:
             self._route_node_dot_size_spin.setValue(int(config.DEFAULT_CONFIG.get("ROUTE_NODE_DOT_SIZE", 5)))
+        if self._region_label_major_font_size_spin is not None:
+            self._region_label_major_font_size_spin.setValue(
+                int(config.DEFAULT_CONFIG.get("REGION_LABEL_MAJOR_FONT_SIZE", 60))
+            )
+        if self._region_label_minor_font_size_spin is not None:
+            self._region_label_minor_font_size_spin.setValue(
+                int(config.DEFAULT_CONFIG.get("REGION_LABEL_MINOR_FONT_SIZE", 60))
+            )
+        if self._region_label_major_visible_checkbox is not None:
+            self._region_label_major_visible_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("REGION_LABEL_MAJOR_VISIBLE", True))
+            )
+        if self._region_label_minor_visible_checkbox is not None:
+            self._region_label_minor_visible_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("REGION_LABEL_MINOR_VISIBLE", True))
+            )
+        if self._region_label_scale_switch_spin is not None:
+            self._region_label_scale_switch_spin.setValue(
+                float(config.DEFAULT_CONFIG.get("REGION_LABEL_SCALE_SWITCH_RATIO", 3.0))
+            )
+        if self._annotation_label_visible_checkbox is not None:
+            self._annotation_label_visible_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("ANNOTATION_LABEL_VISIBLE", False))
+            )
         self._route_pointer_arrow_visible = bool(config.DEFAULT_CONFIG.get("ROUTE_POINTER_ARROW_VISIBLE", True))
         for key, _label, default in _ROUTE_COLOR_FIELDS:
             self._route_colors[key] = self._normalize_route_color(config.DEFAULT_CONFIG.get(key, default), default)

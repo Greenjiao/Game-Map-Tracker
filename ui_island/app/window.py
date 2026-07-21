@@ -274,6 +274,9 @@ class IslandWindow(WindowStateBridgeMixin, QWidget):
         self.map_view.change_point_node_type_requested.connect(self.map_interaction_controller.change_point_node_type)
         self.map_view.change_point_order_requested.connect(self.map_interaction_controller.change_point_order)
         self.map_view.change_annotation_requested.connect(self.map_interaction_controller.change_map_annotation)
+        self.map_view.change_annotation_label_requested.connect(
+            self.map_interaction_controller.change_map_annotation_label
+        )
         self.map_view.add_annotation_to_route_requested.connect(self.map_interaction_controller.add_annotation_to_route)
         self.map_view.delete_annotation_requested.connect(self.map_interaction_controller.delete_map_annotation)
         self.map_view.guide_hint_changed.connect(self._on_route_guide_hint_changed)

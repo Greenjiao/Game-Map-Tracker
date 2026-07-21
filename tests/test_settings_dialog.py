@@ -122,6 +122,105 @@ class SettingsDialogMapTests(unittest.TestCase):
         self.assertEqual(container.layout().spacing(), 10)
         dialog.close()
 
+    def test_resource_tab_region_label_row_is_below_annotation_file(self) -> None:
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+
+        container = dialog.findChild(QWidget, "AnnotationFileSettingsContainer")
+        row = dialog.findChild(QWidget, "RegionLabelSettingsRow")
+        display_row = dialog.findChild(QWidget, "RegionLabelDisplaySettingsRow")
+
+        self.assertIsNotNone(container)
+        self.assertIsNotNone(row)
+        self.assertIsNotNone(display_row)
+        self.assertIs(container.layout().itemAt(1).widget(), row)
+        self.assertIs(container.layout().itemAt(2).widget(), display_row)
+        self.assertEqual(dialog._region_label_major_visible_checkbox.text(), "大区域")
+        self.assertEqual(dialog._region_label_minor_visible_checkbox.text(), "细分区域")
+        self.assertEqual(dialog._annotation_label_visible_checkbox.text(), "显示标注标签")
+        dialog.close()
+
+    def test_resource_tab_collects_independent_region_label_settings(self) -> None:
+        with (
+            patch.object(config, "REGION_LABEL_MAJOR_VISIBLE", True, create=True),
+            patch.object(config, "REGION_LABEL_MINOR_VISIBLE", True, create=True),
+            patch.object(config, "REGION_LABEL_MAJOR_FONT_SIZE", 72, create=True),
+            patch.object(config, "REGION_LABEL_MINOR_FONT_SIZE", 54, create=True),
+            patch.object(config, "REGION_LABEL_SCALE_SWITCH_RATIO", 3.5, create=True),
+            patch.object(config, "ANNOTATION_LABEL_VISIBLE", False, create=True),
+        ):
+            dialog = SettingsDialog(None)
+            self._app.processEvents()
+
+            self.assertEqual(dialog._region_label_major_font_size_spin.value(), 72)
+            self.assertEqual(dialog._region_label_minor_font_size_spin.value(), 54)
+            self.assertTrue(dialog._region_label_major_visible_checkbox.isChecked())
+            self.assertTrue(dialog._region_label_minor_visible_checkbox.isChecked())
+            self.assertEqual(dialog._region_label_scale_switch_spin.value(), 3.5)
+            self.assertFalse(dialog._annotation_label_visible_checkbox.isChecked())
+
+            dialog._region_label_major_font_size_spin.setValue(84)
+            dialog._region_label_minor_font_size_spin.setValue(48)
+            dialog._region_label_major_visible_checkbox.setChecked(False)
+            dialog._region_label_minor_visible_checkbox.setChecked(True)
+            dialog._region_label_scale_switch_spin.setValue(4.25)
+            dialog._annotation_label_visible_checkbox.setChecked(True)
+            values = dialog._collect()
+
+            self.assertIsNotNone(values)
+            self.assertEqual(values["REGION_LABEL_MAJOR_FONT_SIZE"], 84)
+            self.assertEqual(values["REGION_LABEL_MINOR_FONT_SIZE"], 48)
+            self.assertFalse(values["REGION_LABEL_MAJOR_VISIBLE"])
+            self.assertTrue(values["REGION_LABEL_MINOR_VISIBLE"])
+            self.assertNotIn("REGION_LABEL_VISIBLE", values)
+            self.assertNotIn("REGION_LABEL_FONT_SIZE", values)
+            self.assertEqual(values["REGION_LABEL_SCALE_SWITCH_RATIO"], 4.25)
+            self.assertTrue(values["ANNOTATION_LABEL_VISIBLE"])
+
+            dialog._region_label_minor_visible_checkbox.setChecked(False)
+            values = dialog._collect()
+            self.assertFalse(values["REGION_LABEL_MAJOR_VISIBLE"])
+            self.assertFalse(values["REGION_LABEL_MINOR_VISIBLE"])
+            dialog.close()
+
+    def test_region_label_settings_reset_to_defaults(self) -> None:
+        dialog = SettingsDialog(None)
+        self._app.processEvents()
+        dialog._region_label_major_font_size_spin.setValue(33)
+        dialog._region_label_minor_font_size_spin.setValue(11)
+        dialog._region_label_major_visible_checkbox.setChecked(False)
+        dialog._region_label_minor_visible_checkbox.setChecked(False)
+        dialog._region_label_scale_switch_spin.setValue(8.0)
+        dialog._annotation_label_visible_checkbox.setChecked(True)
+
+        dialog._on_reset_defaults()
+
+        self.assertEqual(
+            dialog._region_label_major_font_size_spin.value(),
+            config.DEFAULT_CONFIG["REGION_LABEL_MAJOR_FONT_SIZE"],
+        )
+        self.assertEqual(
+            dialog._region_label_minor_font_size_spin.value(),
+            config.DEFAULT_CONFIG["REGION_LABEL_MINOR_FONT_SIZE"],
+        )
+        self.assertEqual(
+            dialog._region_label_major_visible_checkbox.isChecked(),
+            config.DEFAULT_CONFIG["REGION_LABEL_MAJOR_VISIBLE"],
+        )
+        self.assertEqual(
+            dialog._region_label_minor_visible_checkbox.isChecked(),
+            config.DEFAULT_CONFIG["REGION_LABEL_MINOR_VISIBLE"],
+        )
+        self.assertEqual(
+            dialog._region_label_scale_switch_spin.value(),
+            config.DEFAULT_CONFIG["REGION_LABEL_SCALE_SWITCH_RATIO"],
+        )
+        self.assertEqual(
+            dialog._annotation_label_visible_checkbox.isChecked(),
+            config.DEFAULT_CONFIG["ANNOTATION_LABEL_VISIBLE"],
+        )
+        dialog.close()
+
     def test_coord_tab_shows_global_transform_warning_hint_only_there(self) -> None:
         dialog = SettingsDialog(None)
         self._app.processEvents()

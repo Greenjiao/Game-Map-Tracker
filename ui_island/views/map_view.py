@@ -35,6 +35,7 @@ class MapView(QWidget):
     change_point_node_type_requested = Signal(str, int, object)
     change_point_order_requested = Signal(str, int)
     change_annotation_requested = Signal(str, int)
+    change_annotation_label_requested = Signal(str, int)
     add_annotation_to_route_requested = Signal(str, int)
     delete_annotation_requested = Signal(str, int)
     guide_hint_changed = Signal(object)
@@ -1229,6 +1230,11 @@ class MapView(QWidget):
                     ContextMenuItem(
                         strings.MAP_CHANGE_ANNOTATION_MENU_LABEL,
                         lambda tid=type_id, idx=point_index: self.change_annotation_requested.emit(tid, idx),
+                    ),
+                    ContextMenuItem(
+                        strings.MAP_CHANGE_ANNOTATION_LABEL_MENU_LABEL,
+                        lambda tid=type_id, idx=point_index:
+                        self.change_annotation_label_requested.emit(tid, idx),
                     ),
                     ContextMenuItem(
                         strings.MAP_ADD_ANNOTATION_TO_ROUTE_MENU_LABEL,
