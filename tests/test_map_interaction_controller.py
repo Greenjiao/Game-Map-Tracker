@@ -97,6 +97,20 @@ class _FakeRoutePanelController:
             nodes[point_index]["node_type"] = node_type
         return self.update_route_notes_draft_nodes(route_id, nodes)
 
+    def set_route_notes_point_layer(self, route_id: str, point_index: int, layer: str) -> bool:
+        nodes = self.route_notes_draft_nodes(route_id)
+        if nodes is None or not (0 <= point_index < len(nodes)):
+            return False
+        nodes[point_index]["layer"] = str(layer or "").strip()
+        return self.update_route_notes_draft_nodes(route_id, nodes)
+
+    def set_drawing_point_layer(self, point_index: int, layer: str) -> bool:
+        drawing = getattr(self.window, "route_drawing_state", None)
+        if drawing is None or not drawing.active or not (0 <= point_index < len(drawing.draft_points)):
+            return False
+        drawing.draft_points[point_index]["layer"] = str(layer or "").strip()
+        return True
+
 
 class _FakeRouteManager:
     def __init__(self) -> None:
@@ -120,11 +134,14 @@ class _FakeRouteManager:
                 "type": "Sunflower",
                 "label": "Field Flower",
                 "radius": 25,
+                "layer": "地上层",
             }
         }
         self.insert_calls: list[dict] = []
         self.annotation_calls: list[tuple[str, int, str, str, str | None]] = []
         self.annotation_label_calls: list[tuple[str, int, str]] = []
+        self.annotation_layer_calls: list[tuple[str, int, str]] = []
+        self.point_layer_calls: list[tuple[str, int, str]] = []
         self.reorder_calls: list[tuple[str, int, int]] = []
         self.fail_reorder = False
 
@@ -182,6 +199,31 @@ class _FakeRouteManager:
             return False
         point["label"] = label
         self.annotation_label_calls.append((type_id, point_index, label))
+        return True
+
+    def change_annotation_point_layer(self, type_id: str, point_index: int, layer: str) -> bool:
+        point = self.annotation_points.get((type_id, point_index))
+        if point is None:
+            return False
+        point["layer"] = str(layer or "").strip()
+        self.annotation_layer_calls.append((type_id, point_index, str(layer or "").strip()))
+        return True
+
+    def route_point_layer(self, route_id: str, point_index: int) -> str:
+        route = self.routes.get(route_id)
+        points = route.get("points", []) if route is not None else []
+        if not (0 <= point_index < len(points)):
+            return ""
+        return str(points[point_index].get("layer") or "").strip()
+
+    def set_point_layer(self, route_id: str, point_index: int, layer: str) -> bool:
+        route = self.routes.get(route_id)
+        points = route.get("points", []) if route is not None else []
+        if not (0 <= point_index < len(points)):
+            return False
+        normalized = str(layer or "").strip()
+        points[point_index]["layer"] = normalized
+        self.point_layer_calls.append((route_id, point_index, normalized))
         return True
 
     def set_point_annotation(
@@ -700,6 +742,7 @@ class MapInteractionControllerTests(unittest.TestCase):
         self.assertEqual(point_fields["typeId"], "flower")
         self.assertEqual(point_fields["type"], "Sunflower")
         self.assertEqual(point_fields["label"], "Field Flower")
+        self.assertEqual(point_fields["layer"], "地上层")
         self.assertEqual(point_fields["node_type"], "collect")
         self.assertEqual(node_type_override, "collect")
 
@@ -725,6 +768,7 @@ class MapInteractionControllerTests(unittest.TestCase):
         args, kwargs = add_point_to_routes.call_args
         self.assertEqual(args, (12, 34))
         self.assertEqual(kwargs["point_fields"]["typeId"], "flower")
+        self.assertEqual(kwargs["point_fields"]["layer"], "地上层")
         self.assertEqual(kwargs["point_fields"]["node_type"], "collect")
 
     def test_change_map_annotation_label_prompts_saves_and_refreshes(self) -> None:
@@ -755,6 +799,59 @@ class MapInteractionControllerTests(unittest.TestCase):
             controller.change_map_annotation_label("flower", 0)
 
         self.assertEqual(window.route_mgr.annotation_label_calls, [])
+
+    def test_change_map_annotation_layer_prompts_saves_and_can_clear(self) -> None:
+        controller, window = self._controller()
+
+        with (
+            patch(
+                "ui_island.controllers.map_interaction_controller.prompt_text_input",
+                return_value=(True, ""),
+            ) as prompt,
+            patch.object(controller, "_refresh_annotation_ui") as refresh,
+            patch("ui_island.controllers.map_interaction_controller.toast") as toast,
+        ):
+            controller.change_map_annotation_layer("flower", 0)
+
+        self.assertEqual(prompt.call_args.kwargs["value"], "地上层")
+        self.assertEqual(window.route_mgr.annotation_layer_calls, [("flower", 0, "")])
+        refresh.assert_called_once_with()
+        toast.assert_called_once()
+
+    def test_change_saved_route_point_layer_persists_and_refreshes(self) -> None:
+        controller, window = self._controller()
+        window.route_mgr.routes["route-1"]["points"][0]["layer"] = "地上层"
+
+        with (
+            patch(
+                "ui_island.controllers.map_interaction_controller.prompt_text_input",
+                return_value=(True, "  地下层  "),
+            ) as prompt,
+            patch("ui_island.controllers.map_interaction_controller.toast"),
+        ):
+            controller.change_point_layer("route-1", 0)
+
+        self.assertEqual(prompt.call_args.kwargs["value"], "地上层")
+        self.assertEqual(window.route_mgr.point_layer_calls, [("route-1", 0, "地下层")])
+        self.assertEqual(window.map_view.refresh_count, 1)
+        self.assertEqual(window.route_panel_controller.refresh_count, 1)
+
+    def test_change_notes_draft_point_layer_does_not_persist_route_file(self) -> None:
+        controller, window = self._controller()
+        window.route_panel_controller.active_notes_route_id = "route-1"
+        window.route_panel_controller.notes_nodes = [{"x": 1, "y": 2}]
+        window.route_mgr.set_point_layer = lambda *_args: (_ for _ in ()).throw(AssertionError("persisted"))
+
+        with (
+            patch(
+                "ui_island.controllers.map_interaction_controller.prompt_text_input",
+                return_value=(True, "地下层"),
+            ),
+            patch("ui_island.controllers.map_interaction_controller.toast"),
+        ):
+            controller.change_point_layer("route-1", 0)
+
+        self.assertEqual(window.route_panel_controller.notes_nodes[0]["layer"], "地下层")
 
     def test_change_saved_point_annotation_syncs_node_type(self) -> None:
         controller, window = self._controller()

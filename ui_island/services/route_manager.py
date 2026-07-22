@@ -281,6 +281,13 @@ def _point_xy(point: dict) -> tuple[float, float] | None:
         return None
 
 
+def _point_layer(point: object) -> str:
+    if not isinstance(point, dict):
+        return ""
+    value = point.get("layer")
+    return value.strip() if isinstance(value, str) else ""
+
+
 def _adapter_to_current(
     coord_adapter,
     xy: tuple[float, float],
@@ -1702,6 +1709,7 @@ class RouteManager:
             if xy is not None:
                 copied["x"], copied["y"] = effective_adapter.to_current(xy[0], xy[1])
         copied.setdefault("typeId", type_id)
+        copied["layer"] = _point_layer(copied)
         return copied
 
     def hit_test_annotation_point(
@@ -1771,6 +1779,7 @@ class RouteManager:
                 "label": name,
                 "type": name,
                 "typeId": type_id,
+                "layer": "",
                 "id": self._new_manual_annotation_id(),
                 "manual": True,
             }
@@ -1857,6 +1866,31 @@ class RouteManager:
         point["manual"] = True
         return self._write_annotation_payload(file_path, payload)
 
+    def change_annotation_point_layer(
+        self,
+        type_id: str,
+        point_index: int,
+        new_layer: object,
+    ) -> bool:
+        type_id = str(type_id or "").strip()
+        if not type_id or not isinstance(point_index, int):
+            return False
+
+        loaded = self._load_annotation_payload()
+        if loaded is None:
+            return False
+        file_path, payload = loaded
+        points = payload["pointsByType"].get(type_id)
+        if not isinstance(points, list) or not (0 <= point_index < len(points)):
+            return False
+        point = points[point_index]
+        if not isinstance(point, dict) or _point_xy(point) is None:
+            return False
+
+        point["layer"] = str(new_layer or "").strip()
+        point["manual"] = True
+        return self._write_annotation_payload(file_path, payload)
+
     def delete_annotation_point(self, type_id: str, point_index: int) -> bool:
         type_id = str(type_id or "").strip()
         if not type_id or not isinstance(point_index, int):
@@ -1900,6 +1934,7 @@ class RouteManager:
             copied["x"] = int(round(xy[0]))
             copied["y"] = int(round(xy[1]))
             copied.setdefault("typeId", type_id)
+            copied["layer"] = _point_layer(copied)
             points.append(copied)
 
         if not points:
@@ -2217,11 +2252,12 @@ class RouteManager:
                 index = _best_insertion_index(insertion_points, (x, y))
 
             old_labels = [item.get("label", None) if isinstance(item, dict) else None for item in points]
-            new_point = {"id": self.new_route_point_id()}
-            for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type"):
+            new_point = {"id": self.new_route_point_id(), "layer": ""}
+            for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type", "layer"):
                 if isinstance(point_fields, dict) and key in point_fields:
                     new_point[key] = point_fields[key]
             new_point["node_type"] = _node_type(new_point)
+            new_point["layer"] = _point_layer(new_point)
             new_point["x"] = int(round(resource_x))
             new_point["y"] = int(round(resource_y))
             new_point["visited"] = False
@@ -2375,6 +2411,16 @@ class RouteManager:
             return False
         return bool(str(point.get("typeId") or "").strip() or str(point.get("type") or "").strip())
 
+    def route_point_layer(self, route_ref: str, point_index: int) -> str:
+        route_id = self.resolve_route_id(route_ref)
+        if route_id is None:
+            return ""
+        route = self.route_for_id(route_id)
+        points = route.get("points", []) if route is not None else []
+        if not isinstance(point_index, int) or not (0 <= point_index < len(points)):
+            return ""
+        return _point_layer(points[point_index])
+
     def set_point_position(
         self,
         route_ref: str,
@@ -2423,6 +2469,33 @@ class RouteManager:
             else:
                 point["y"] = old_y
             print(f"Set point position failed route_id={route_id} index={point_index}: {e}")
+            return False
+        return True
+
+    def set_point_layer(self, route_ref: str, point_index: int, layer: object) -> bool:
+        route_id = self.resolve_route_id(route_ref)
+        if route_id is None:
+            return False
+        route = self.route_for_id(route_id)
+        category = self.category_for_route_id(route_id)
+        points = route.get("points", []) if route is not None else []
+        if route is None or category is None or not isinstance(point_index, int) or not (0 <= point_index < len(points)):
+            return False
+        point = points[point_index]
+        if not isinstance(point, dict):
+            return False
+
+        had_layer = "layer" in point
+        old_layer = point.get("layer")
+        point["layer"] = str(layer or "").strip()
+        try:
+            self._write_route_file(category, route.get("display_name", ""), route)
+        except Exception as e:
+            if had_layer:
+                point["layer"] = old_layer
+            else:
+                point.pop("layer", None)
+            print(f"Set point layer failed route_id={route_id} index={point_index}: {e}")
             return False
         return True
 
@@ -3217,14 +3290,17 @@ class RouteManager:
                     color=self.pointer_arrow_color(),
                 )
         node_label_draws: list = []
+        point_layer_draws: list = []
         show_order = _config_bool("ROUTE_NODE_ORDER_VISIBLE", True)
         show_name = _config_bool("ROUTE_NODE_NAME_VISIBLE", True)
+        show_layers = _config_bool("POINT_LAYER_VISIBLE", True)
         # 缩小地图时节点文字会糊成一团且 PIL 描边渲染开销大，缩到阈值后序号与名称一并隐藏，仅留圆点/图标。
         # map_pixels_per_screen_px 表示每屏幕像素对应多少地图像素，缩小地图时该值变大。
         name_hide_ratio = _config_int("ROUTE_NODE_NAME_HIDE_RATIO", 2, 1)
         labels_hidden = float(map_pixels_per_screen_px or 1.0) >= name_hide_ratio
         show_order_effective = show_order and not labels_hidden
         show_name_effective = show_name and not labels_hidden
+        show_layers_effective = show_layers and not labels_hidden
         for _route, color, local_points, _map_points, points, _is_drawing_route in draw_records:
             is_annotation_calibration = bool(_route.get("_annotation_calibration"))
             for index, (local_point, point_data) in enumerate(zip(local_points, points)):
@@ -3258,11 +3334,21 @@ class RouteManager:
                         local_point,
                         opacity=visited_icon_opacity if visited else 1.0,
                     )
+                    symbol_height = int(point_icon.shape[0])
                 else:
                     opacity = visited_point_opacity if visited else 1.0
                     dot_radius = _config_int("ROUTE_NODE_DOT_SIZE", 5, 1)
                     _draw_circle_with_opacity(canvas, local_point, dot_radius, dot_color, -1, opacity)
                     _draw_circle_with_opacity(canvas, local_point, dot_radius, border_color, 1, opacity)
+                    symbol_height = dot_radius * 2
+
+                if show_layers_effective:
+                    layer = _point_layer(point_data)
+                    if layer:
+                        layer_color = (255, 255, 255) if is_annotation_calibration else (
+                            int(text_color[2]), int(text_color[1]), int(text_color[0])
+                        )
+                        point_layer_draws.append((layer, local_point, symbol_height, layer_color))
 
                 if is_annotation_calibration:
                     continue
@@ -3290,6 +3376,8 @@ class RouteManager:
 
         if node_label_draws:
             self._draw_node_labels(canvas, node_label_draws)
+        if point_layer_draws:
+            self._draw_point_layers(canvas, point_layer_draws)
 
     def _draw_region_labels(
         self,
@@ -3378,6 +3466,14 @@ class RouteManager:
                 sprite = _node_label_sprite(line, fill_key)
                 _blit_bgra_topleft(canvas, sprite, int(text_x), int(line_y))
 
+    @staticmethod
+    def _draw_point_layers(canvas, draws: list[tuple[str, tuple[int, int], int, tuple[int, int, int]]]) -> None:
+        for layer, local_point, symbol_height, fill_rgb in draws:
+            sprite = _node_label_sprite(layer, fill_rgb)
+            text_x = int(round(local_point[0] - sprite.shape[1] / 2.0))
+            text_y = int(round(local_point[1] + symbol_height / 2.0))
+            _blit_bgra_topleft(canvas, sprite, text_x, text_y)
+
     def _draw_annotations(
         self,
         canvas,
@@ -3427,7 +3523,9 @@ class RouteManager:
             return
 
         show_labels = _config_bool("ANNOTATION_LABEL_VISIBLE", False)
+        show_layers = _config_bool("POINT_LAYER_VISIBLE", True)
         label_draws: list[tuple[str, tuple[int, int], int]] = []
+        layer_draws: list[tuple[str, tuple[int, int], int, tuple[int, int, int]]] = []
         for entry in entries:
             icon = self.annotation_icon_for(entry.type_id)
             if icon is None:
@@ -3443,8 +3541,14 @@ class RouteManager:
                 label = str(entry.point.get("label") or "").strip()
                 if label:
                     label_draws.append((label, local_point, int(icon.shape[0])))
+            if show_layers:
+                layer = _point_layer(entry.point)
+                if layer:
+                    layer_draws.append((layer, local_point, int(icon.shape[0]), (255, 255, 255)))
 
         self._draw_annotation_labels(canvas, label_draws)
+        if layer_draws:
+            self._draw_point_layers(canvas, layer_draws)
 
     @staticmethod
     def _draw_annotation_labels(
@@ -3468,7 +3572,9 @@ class RouteManager:
     ) -> None:
         canvas_height, canvas_width = canvas.shape[:2]
         show_labels = _config_bool("ANNOTATION_LABEL_VISIBLE", False)
+        show_layers = _config_bool("POINT_LAYER_VISIBLE", True)
         label_draws: list[tuple[str, tuple[int, int], int]] = []
+        layer_draws: list[tuple[str, tuple[int, int], int, tuple[int, int, int]]] = []
         clusters: dict[tuple[int, int], list[tuple[_AnnotationSpatialEntry, tuple[int, int]]]] = {}
         for entry in entries:
             local_point = _map_to_canvas_point(entry.xy, vx1, vy1, scale_x, scale_y)
@@ -3493,6 +3599,10 @@ class RouteManager:
                         label = str(entry.point.get("label") or "").strip()
                         if label:
                             label_draws.append((label, local_point, int(icon.shape[0])))
+                    if show_layers:
+                        layer = _point_layer(entry.point)
+                        if layer:
+                            layer_draws.append((layer, local_point, int(icon.shape[0]), (255, 255, 255)))
                 continue
 
             count = len(members)
@@ -3517,6 +3627,8 @@ class RouteManager:
             )
 
         self._draw_annotation_labels(canvas, label_draws)
+        if layer_draws:
+            self._draw_point_layers(canvas, layer_draws)
 
     def _assign_route_colors(self) -> None:
         all_route_ids = sorted(

@@ -42,6 +42,7 @@ class SettingsDialogMapTests(unittest.TestCase):
         self.assertNotIn("更新文档", dialog._TOOL_BUTTON_ICONS)
         for _, names in dialog._TOOL_BUTTON_GROUPS:
             self.assertNotIn("更新文档", names)
+        self.assertIsNotNone(dialog._point_layer_visible_checkbox)
         dialog.close()
 
     def test_open_settings_dialog_routes_restart_to_parent_without_execl(self) -> None:
@@ -148,6 +149,7 @@ class SettingsDialogMapTests(unittest.TestCase):
             patch.object(config, "REGION_LABEL_MINOR_FONT_SIZE", 54, create=True),
             patch.object(config, "REGION_LABEL_SCALE_SWITCH_RATIO", 3.5, create=True),
             patch.object(config, "ANNOTATION_LABEL_VISIBLE", False, create=True),
+            patch.object(config, "POINT_LAYER_VISIBLE", False, create=True),
         ):
             dialog = SettingsDialog(None)
             self._app.processEvents()
@@ -158,6 +160,7 @@ class SettingsDialogMapTests(unittest.TestCase):
             self.assertTrue(dialog._region_label_minor_visible_checkbox.isChecked())
             self.assertEqual(dialog._region_label_scale_switch_spin.value(), 3.5)
             self.assertFalse(dialog._annotation_label_visible_checkbox.isChecked())
+            self.assertFalse(dialog._point_layer_visible_checkbox.isChecked())
 
             dialog._region_label_major_font_size_spin.setValue(84)
             dialog._region_label_minor_font_size_spin.setValue(48)
@@ -165,6 +168,7 @@ class SettingsDialogMapTests(unittest.TestCase):
             dialog._region_label_minor_visible_checkbox.setChecked(True)
             dialog._region_label_scale_switch_spin.setValue(4.25)
             dialog._annotation_label_visible_checkbox.setChecked(True)
+            dialog._point_layer_visible_checkbox.setChecked(True)
             values = dialog._collect()
 
             self.assertIsNotNone(values)
@@ -176,6 +180,7 @@ class SettingsDialogMapTests(unittest.TestCase):
             self.assertNotIn("REGION_LABEL_FONT_SIZE", values)
             self.assertEqual(values["REGION_LABEL_SCALE_SWITCH_RATIO"], 4.25)
             self.assertTrue(values["ANNOTATION_LABEL_VISIBLE"])
+            self.assertTrue(values["POINT_LAYER_VISIBLE"])
 
             dialog._region_label_minor_visible_checkbox.setChecked(False)
             values = dialog._collect()
@@ -192,6 +197,7 @@ class SettingsDialogMapTests(unittest.TestCase):
         dialog._region_label_minor_visible_checkbox.setChecked(False)
         dialog._region_label_scale_switch_spin.setValue(8.0)
         dialog._annotation_label_visible_checkbox.setChecked(True)
+        dialog._point_layer_visible_checkbox.setChecked(False)
 
         dialog._on_reset_defaults()
 
@@ -218,6 +224,10 @@ class SettingsDialogMapTests(unittest.TestCase):
         self.assertEqual(
             dialog._annotation_label_visible_checkbox.isChecked(),
             config.DEFAULT_CONFIG["ANNOTATION_LABEL_VISIBLE"],
+        )
+        self.assertEqual(
+            dialog._point_layer_visible_checkbox.isChecked(),
+            config.DEFAULT_CONFIG["POINT_LAYER_VISIBLE"],
         )
         dialog.close()
 

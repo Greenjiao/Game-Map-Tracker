@@ -1172,6 +1172,7 @@ class SettingsDialog(QDialog):
         self._region_label_minor_visible_checkbox: QCheckBox | None = None
         self._region_label_scale_switch_spin: QDoubleSpinBox | None = None
         self._annotation_label_visible_checkbox: QCheckBox | None = None
+        self._point_layer_visible_checkbox: QCheckBox | None = None
         self._route_color_buttons: dict[str, QPushButton] = {}
         self._route_colors = {
             key: self._normalize_route_color(getattr(config, key, default), default)
@@ -2368,6 +2369,13 @@ class SettingsDialog(QDialog):
         self._annotation_label_visible_checkbox = annotation_label_visible
         layout.addWidget(annotation_label_visible)
 
+        point_layer_visible = QCheckBox("显示点位层级", row)
+        point_layer_visible.setObjectName("PointLayerVisibleCheckBox")
+        point_layer_visible.setChecked(bool(getattr(config, "POINT_LAYER_VISIBLE", True)))
+        point_layer_visible.setToolTip("显示标注点位和路线节点的层级文字。")
+        self._point_layer_visible_checkbox = point_layer_visible
+        layout.addWidget(point_layer_visible)
+
         layout.addStretch()
         return row
 
@@ -3276,6 +3284,8 @@ class SettingsDialog(QDialog):
             )
         if self._annotation_label_visible_checkbox is not None:
             result["ANNOTATION_LABEL_VISIBLE"] = self._annotation_label_visible_checkbox.isChecked()
+        if self._point_layer_visible_checkbox is not None:
+            result["POINT_LAYER_VISIBLE"] = self._point_layer_visible_checkbox.isChecked()
         result["ROUTE_POINTER_ARROW_VISIBLE"] = bool(self._route_pointer_arrow_visible)
         for key, _label, default in _ROUTE_COLOR_FIELDS:
             self._route_colors[key] = self._normalize_route_color(self._route_colors.get(key), default)
@@ -3508,6 +3518,10 @@ class SettingsDialog(QDialog):
         if self._annotation_label_visible_checkbox is not None:
             self._annotation_label_visible_checkbox.setChecked(
                 bool(config.DEFAULT_CONFIG.get("ANNOTATION_LABEL_VISIBLE", False))
+            )
+        if self._point_layer_visible_checkbox is not None:
+            self._point_layer_visible_checkbox.setChecked(
+                bool(config.DEFAULT_CONFIG.get("POINT_LAYER_VISIBLE", True))
             )
         self._route_pointer_arrow_visible = bool(config.DEFAULT_CONFIG.get("ROUTE_POINTER_ARROW_VISIBLE", True))
         for key, _label, default in _ROUTE_COLOR_FIELDS:

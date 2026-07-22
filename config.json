@@ -7,9 +7,9 @@
         "height": 212
     },
     "WINDOW_GEOMETRY": {
-        "x": 1366,
-        "y": 63,
-        "width": 612,
+        "x": 1151,
+        "y": 6,
+        "width": 726,
         "height": 454
     },
     "LOCKED_VIEW_SIZE": {
@@ -17,7 +17,7 @@
         "height": 318
     },
     "PAUSED_VIEW_SIZE": {
-        "width": 612,
+        "width": 726,
         "height": 454
     },
     "SIDEBAR_COLLAPSED": false,
@@ -124,13 +124,14 @@
     "REGION_LABEL_MINOR_FONT_SIZE": 40,
     "REGION_LABEL_SCALE_SWITCH_RATIO": 2.0,
     "ANNOTATION_LABEL_VISIBLE": true,
+    "POINT_LAYER_VISIBLE": true,
     "ROUTE_NODE_ICON_SIZE": 20,
     "ANNOTATION_ICON_SIZE": 20,
     "ROUTE_NODE_DOT_SIZE": 5,
     "WINDOW_LOCK_FOLLOWS_GUIDE": true,
     "PURE_NAVIGATION_MODE": false,
     "ROUTE_NOTES_DIALOG_WIDTH": 860,
-    "ROUTE_NOTES_NODE_PANEL_WIDTH": 282,
+    "ROUTE_NOTES_NODE_PANEL_WIDTH": 389,
     "WINDOW_LOCKED_OPACITY": 0.78,
     "WINDOW_NORMAL_OPACITY": 1.0,
     "ROUTE_SECTION_EXPANDED": {
@@ -144,11 +145,15 @@
     },
     "ROUTE_DRAWING_PANEL_COLLAPSED": {
         "stats": false,
-        "nodes": false
+        "nodes": true
     },
     "ROUTE_DRAWING_SHOW_DETAIL": true,
     "ANNOTATION_TYPE_IDS": [
-        "100673"
+        "100673",
+        "100677",
+        "100676",
+        "100675",
+        "100628"
     ],
     "ANNOTATION_PRESETS": [
         {

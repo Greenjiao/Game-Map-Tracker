@@ -394,6 +394,7 @@ class RouteNodeStatsPanel(QWidget):
 class RouteNodeEditorPanel(QWidget):
     nodes_changed = Signal()
     node_label_changed = Signal(int, object, object)
+    node_layer_changed = Signal(int, object, object)
     node_label_edit_committed = Signal(int, object, object)
     node_coord_changed = Signal(int, str, object, object)
     node_coord_edit_committed = Signal(int, str, object, object)
@@ -605,6 +606,12 @@ class RouteNodeEditorPanel(QWidget):
             name_input.setToolTip(display_name)
             name_input.setProperty("routeNotesLabelBefore", point.get("label", None))
 
+        layer_input = row.findChild(QLineEdit, "RouteNotesNodeLayer")
+        if layer_input is not None:
+            layer_input.blockSignals(True)
+            layer_input.setText(str(point.get("layer") or "").strip())
+            layer_input.blockSignals(False)
+
         for key, object_name in (("x", "RouteNotesNodeX"), ("y", "RouteNotesNodeY")):
             editor = row.findChild(QLineEdit, object_name)
             if editor is not None:
@@ -700,9 +707,14 @@ class RouteNodeEditorPanel(QWidget):
         icon_button.installEventFilter(self)
         row_layout.addWidget(icon_button)
 
+        text_column = QWidget(row)
+        text_layout = QVBoxLayout(text_column)
+        text_layout.setContentsMargins(0, 0, 0, 0)
+        text_layout.setSpacing(2)
+
         name_input = make_route_panel_line_edit(
             placeholder=display_name,
-            parent=row,
+            parent=text_column,
             size_policy=(QSizePolicy.Ignored, QSizePolicy.Fixed),
         )
         name_input.setObjectName("RouteNotesNodeName")
@@ -721,7 +733,22 @@ class RouteNodeEditorPanel(QWidget):
             lambda editor=name_input, known_index=index: self._commit_node_label(known_index, editor)
         )
         name_input.installEventFilter(self)
-        row_layout.addWidget(name_input, stretch=1)
+        text_layout.addWidget(name_input)
+
+        layer_input = make_route_panel_line_edit(
+            placeholder="层级",
+            parent=text_column,
+            size_policy=(QSizePolicy.Ignored, QSizePolicy.Fixed),
+        )
+        layer_input.setObjectName("RouteNotesNodeLayer")
+        layer_input.setText(str(point.get("layer") or "").strip())
+        layer_input.setToolTip("路线节点层级；留空表示未指定层级")
+        layer_input.setProperty("routeNotesDragIndex", index)
+        layer_input.textChanged.connect(lambda text, known_index=index: self._set_node_layer(known_index, text))
+        layer_input.installEventFilter(self)
+        text_layout.addWidget(layer_input)
+
+        row_layout.addWidget(text_column, stretch=1)
 
         if self._include_coord_editors:
             row_layout.addWidget(self._build_node_coord_control(row, point, index, "x"))
@@ -825,6 +852,17 @@ class RouteNodeEditorPanel(QWidget):
         if before == after:
             return
         self.node_label_changed.emit(index, before, after)
+        self._emit_nodes_changed()
+
+    def _set_node_layer(self, index: int, text: str) -> None:
+        if self._syncing or not (0 <= index < len(self._nodes)):
+            return
+        before = self._nodes[index].get("layer", None)
+        after = str(text or "").strip()
+        self._nodes[index]["layer"] = after
+        if before == after:
+            return
+        self.node_layer_changed.emit(index, before, after)
         self._emit_nodes_changed()
 
     def _commit_node_label(self, index: int, editor: QLineEdit) -> None:

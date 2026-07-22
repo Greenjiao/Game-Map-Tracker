@@ -32,10 +32,12 @@ class MapView(QWidget):
     mark_point_visited_requested = Signal(str, int, bool)
     change_point_annotation_requested = Signal(str, int)
     delete_point_annotation_requested = Signal(str, int)
+    change_point_layer_requested = Signal(str, int)
     change_point_node_type_requested = Signal(str, int, object)
     change_point_order_requested = Signal(str, int)
     change_annotation_requested = Signal(str, int)
     change_annotation_label_requested = Signal(str, int)
+    change_annotation_layer_requested = Signal(str, int)
     add_annotation_to_route_requested = Signal(str, int)
     delete_annotation_requested = Signal(str, int)
     guide_hint_changed = Signal(object)
@@ -1133,6 +1135,10 @@ class MapView(QWidget):
                         lambda rid=route_id, idx=draft_hit: self.change_point_annotation_requested.emit(rid, idx),
                     ),
                     ContextMenuItem(
+                        strings.CHANGE_POINT_LAYER_MENU_LABEL,
+                        lambda rid=route_id, idx=draft_hit: self.change_point_layer_requested.emit(rid, idx),
+                    ),
+                    ContextMenuItem(
                         strings.CHANGE_POINT_NODE_TYPE_MENU_LABEL,
                         lambda rid=route_id, idx=draft_hit, gpos=QPoint(event.globalPos()):
                         self.change_point_node_type_requested.emit(rid, idx, gpos),
@@ -1189,6 +1195,10 @@ class MapView(QWidget):
                     lambda rid=route_id, idx=point_index: self.change_point_annotation_requested.emit(rid, idx),
                 ),
                 ContextMenuItem(
+                    strings.CHANGE_POINT_LAYER_MENU_LABEL,
+                    lambda rid=route_id, idx=point_index: self.change_point_layer_requested.emit(rid, idx),
+                ),
+                ContextMenuItem(
                     strings.CHANGE_POINT_NODE_TYPE_MENU_LABEL,
                     lambda rid=route_id, idx=point_index, gpos=QPoint(event.globalPos()):
                     self.change_point_node_type_requested.emit(rid, idx, gpos),
@@ -1235,6 +1245,11 @@ class MapView(QWidget):
                         strings.MAP_CHANGE_ANNOTATION_LABEL_MENU_LABEL,
                         lambda tid=type_id, idx=point_index:
                         self.change_annotation_label_requested.emit(tid, idx),
+                    ),
+                    ContextMenuItem(
+                        strings.MAP_CHANGE_ANNOTATION_LAYER_MENU_LABEL,
+                        lambda tid=type_id, idx=point_index:
+                        self.change_annotation_layer_requested.emit(tid, idx),
                     ),
                     ContextMenuItem(
                         strings.MAP_ADD_ANNOTATION_TO_ROUTE_MENU_LABEL,

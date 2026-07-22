@@ -915,6 +915,26 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual((saved["x"], saved["y"]), (10, 21))
             self.assertNotIn("visited", saved)
 
+    def test_route_point_layer_treats_missing_as_empty_and_persists_string(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            category = base / "routes"
+            category.mkdir()
+            route_file = category / "route.json"
+            route_file.write_text(
+                json.dumps({"id": "2026010101", "name": "route", "points": [{"x": 1, "y": 2}]}),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(base))
+
+            self.assertEqual(manager.route_point_layer("2026010101", 0), "")
+            self.assertTrue(manager.set_point_layer("2026010101", 0, "  地下层  "))
+            self.assertEqual(manager.route_point_layer("2026010101", 0), "地下层")
+            self.assertEqual(json.loads(route_file.read_text(encoding="utf-8"))["points"][0]["layer"], "地下层")
+
+            self.assertTrue(manager.set_point_layer("2026010101", 0, ""))
+            self.assertEqual(json.loads(route_file.read_text(encoding="utf-8"))["points"][0]["layer"], "")
+
     def test_save_route_preserves_format_version_and_appends_current_enable_version(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
@@ -1817,6 +1837,7 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(points[-1]["label"], "Sunflower")
             self.assertEqual(points[-1]["type"], "Sunflower")
             self.assertEqual(points[-1]["typeId"], "flower")
+            self.assertEqual(points[-1]["layer"], "")
             self.assertTrue(points[-1]["manual"])
             self.assertIsNone(manager._annotation_points_cache)
 
@@ -2024,6 +2045,79 @@ class RouteGuideTests(unittest.TestCase):
 
         label_sprite.assert_not_called()
 
+    def test_draw_annotations_places_layer_immediately_below_icon(self) -> None:
+        manager = RouteManager.__new__(RouteManager)
+        manager._annotation_points_cache = {
+            "flower": [{"x": 50, "y": 50, "typeId": "flower", "layer": "地下层"}]
+        }
+        manager._annotation_spatial_index = None
+        manager._annotation_type_ids = {"flower"}
+        manager._annotation_icon_cache = {"flower": np.full((20, 20, 4), 255, dtype=np.uint8)}
+        canvas = np.zeros((100, 120, 3), dtype=np.uint8)
+        sprite = np.full((10, 30, 4), 255, dtype=np.uint8)
+
+        with (
+            patch("ui_island.services.route_manager.config.POINT_LAYER_VISIBLE", True),
+            patch("ui_island.services.route_manager.config.ANNOTATION_LABEL_VISIBLE", False),
+            patch("ui_island.services.route_manager._node_label_sprite", return_value=sprite) as layer_sprite,
+            patch("ui_island.services.route_manager._blit_bgra_topleft") as blit,
+        ):
+            manager._draw_annotations(canvas, 0, 0, 120, 100, map_pixels_per_screen_px=1.0)
+
+        layer_sprite.assert_called_once_with("地下层", (255, 255, 255))
+        blit.assert_called_once_with(canvas, sprite, 35, 60)
+
+    def test_route_layer_uses_same_zoom_hide_rule_as_node_labels(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = _manager_with_visible_route(Path(tmp))
+            manager.route_for_id("2026010101")["points"][0]["layer"] = "地下层"
+            canvas = np.zeros((120, 120, 3), dtype=np.uint8)
+
+            with (
+                patch("ui_island.services.route_manager.config.POINT_LAYER_VISIBLE", True),
+                patch("ui_island.services.route_manager.config.ROUTE_NODE_NAME_HIDE_RATIO", 2, create=True),
+                patch.object(manager, "_draw_point_layers") as draw_layers,
+            ):
+                manager.draw_on(
+                    canvas,
+                    0,
+                    0,
+                    120,
+                    auto_visit=False,
+                    skip_annotations=True,
+                    map_pixels_per_screen_px=1.0,
+                )
+                self.assertEqual(draw_layers.call_count, 1)
+                draw_layers.reset_mock()
+                manager.draw_on(
+                    canvas,
+                    0,
+                    0,
+                    120,
+                    auto_visit=False,
+                    skip_annotations=True,
+                    map_pixels_per_screen_px=2.0,
+                )
+                draw_layers.assert_not_called()
+
+    def test_point_layer_setting_hides_annotation_layers(self) -> None:
+        manager = RouteManager.__new__(RouteManager)
+        manager._annotation_points_cache = {
+            "flower": [{"x": 20, "y": 20, "typeId": "flower", "layer": "地下层"}]
+        }
+        manager._annotation_spatial_index = None
+        manager._annotation_type_ids = {"flower"}
+        manager._annotation_icon_cache = {"flower": np.full((20, 20, 4), 255, dtype=np.uint8)}
+        canvas = np.zeros((80, 80, 3), dtype=np.uint8)
+
+        with (
+            patch("ui_island.services.route_manager.config.POINT_LAYER_VISIBLE", False),
+            patch.object(manager, "_draw_point_layers") as draw_layers,
+        ):
+            manager._draw_annotations(canvas, 0, 0, 80, 80, map_pixels_per_screen_px=1.0)
+
+        draw_layers.assert_not_called()
+
     def test_hit_test_annotation_point_uses_spatial_index_and_returns_nearest(self) -> None:
         manager = RouteManager.__new__(RouteManager)
         manager._annotation_points_cache = {
@@ -2134,6 +2228,33 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(point["sourceId"], 7)
             self.assertEqual(payload["regionLabels"][0]["name"], "风息山口")
 
+    def test_annotation_layer_treats_missing_as_empty_and_persists_manual_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            points_file = Path(tmp) / "points.json"
+            points_file.write_text(
+                json.dumps(
+                    {
+                        "types": [{"typeId": "flower", "type": "Sunflower", "count": 1}],
+                        "pointsByType": {"flower": [{"x": 1, "y": 2, "sourceId": 7}]},
+                        "regionLabels": [{"name": "保留"}],
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            manager = RouteManager(str(Path(tmp) / "routes"))
+
+            with patch("ui_island.services.route_manager._default_annotation_points_file", return_value=str(points_file)):
+                self.assertEqual(manager.annotation_point("flower", 0)["layer"], "")
+                self.assertTrue(manager.change_annotation_point_layer("flower", 0, "  地下层  "))
+
+            payload = json.loads(points_file.read_text(encoding="utf-8"))
+            point = payload["pointsByType"]["flower"][0]
+            self.assertEqual(point["layer"], "地下层")
+            self.assertTrue(point["manual"])
+            self.assertEqual(point["sourceId"], 7)
+            self.assertEqual(payload["regionLabels"], [{"name": "保留"}])
+
     def test_delete_annotation_point_removes_point_and_updates_count(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             points_file = Path(tmp) / "points.json"
@@ -2178,7 +2299,13 @@ class RouteGuideTests(unittest.TestCase):
                 10,
                 20,
                 ["2026010101"],
-                point_fields={"typeId": "flower", "type": "Sunflower", "label": "Field Flower", "visited": True},
+                point_fields={
+                    "typeId": "flower",
+                    "type": "Sunflower",
+                    "label": "Field Flower",
+                    "layer": "  地下层  ",
+                    "visited": True,
+                },
             )
 
             self.assertEqual(outcomes["2026010101"], 0)
@@ -2189,6 +2316,7 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(point["typeId"], "flower")
             self.assertEqual(point["type"], "Sunflower")
             self.assertEqual(point["label"], "Field Flower")
+            self.assertEqual(point["layer"], "地下层")
             self.assertNotIn("visited", point)
 
     def test_insert_point_into_route_uses_user_position_override(self) -> None:
@@ -2320,7 +2448,7 @@ class RouteGuideTests(unittest.TestCase):
             manager = RouteManager(str(Path(tmp) / "routes"))
             manager._annotation_points_cache = {
                 "flower": [
-                    {"x": 100, "y": 100, "label": "花 A", "radius": 30, "typeId": "flower"},
+                    {"x": 100, "y": 100, "label": "花 A", "radius": 30, "typeId": "flower", "layer": "地下层"},
                     {"x": 150, "y": 100, "label": "花 B", "radius": 30, "typeId": "flower"},
                     {"x": 120, "y": 140, "label": "花 C", "radius": 30, "typeId": "flower"},
                 ]
@@ -2337,6 +2465,7 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(len(payload["points"]), 3)
             self.assertTrue(all(point["typeId"] == "flower" for point in payload["points"]))
             self.assertTrue(all(point["radius"] == 30 for point in payload["points"]))
+            self.assertEqual(sorted(point["layer"] for point in payload["points"]), ["", "", "地下层"])
             self.assertIn("来源标注：向阳花", payload["notes"])
             self.assertTrue(_is_13_digit_route_id(result["id"]))
             self.assertEqual(payload["id"], result["id"])

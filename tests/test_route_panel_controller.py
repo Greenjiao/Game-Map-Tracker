@@ -1413,6 +1413,7 @@ class RoutePanelFilterTests(unittest.TestCase):
             (10, 0),
         ])
         self.assertEqual(window.route_drawing_state.undo_stack[-1]["index"], 2)
+        self.assertEqual(window.route_drawing_state.draft_points[-1]["layer"], "")
 
     def test_append_drawing_point_with_point_fields_binds_annotation_to_draft(self) -> None:
         window = _FakeWindow("")
@@ -1433,6 +1434,7 @@ class RoutePanelFilterTests(unittest.TestCase):
                 "sourceId": "source-1",
                 "manual": True,
                 "node_type": "virtual",
+                "layer": "  地下层  ",
                 "visited": True,
             },
         )
@@ -1445,8 +1447,28 @@ class RoutePanelFilterTests(unittest.TestCase):
         self.assertEqual(point["sourceId"], "source-1")
         self.assertTrue(point["manual"])
         self.assertEqual(point["node_type"], "virtual")
+        self.assertEqual(point["layer"], "地下层")
         self.assertNotIn("visited", point)
         self.assertTrue(point["_drawing_new"])
+
+    def test_set_drawing_point_layer_can_clear_and_undo(self) -> None:
+        window = _FakeWindow("")
+        window.route_drawing_state = RouteDrawingState()
+        window.route_drawing_state.begin(
+            route_id="2026010101",
+            category="routes",
+            name="route",
+            points=[{"x": 1, "y": 2}],
+        )
+        controller = self._controller_for(window)
+        controller._sync_route_drawing_ui = lambda: None
+
+        self.assertTrue(controller.set_drawing_point_layer(0, "  地下层  "))
+        self.assertEqual(window.route_drawing_state.draft_points[0]["layer"], "地下层")
+
+        controller.undo_route_drawing()
+
+        self.assertNotIn("layer", window.route_drawing_state.draft_points[0])
 
     def test_change_drawing_point_annotation_syncs_node_type_with_resolver(self) -> None:
         window = _FakeWindow("")

@@ -663,6 +663,7 @@ QCheckBox::indicator:checked:hover {{
         node_panel.node_order_changed.connect(self.reorder_drawing_point)
         node_panel.node_annotation_changed.connect(self._on_drawing_node_panel_annotation_changed)
         node_panel.node_label_changed.connect(self._on_drawing_node_panel_label_changed)
+        node_panel.node_layer_changed.connect(self._on_drawing_node_panel_layer_changed)
         node_panel.node_label_edit_committed.connect(self._on_drawing_node_panel_label_committed)
         node_panel.node_coord_changed.connect(self._on_drawing_node_panel_coord_changed)
         node_panel.node_coord_edit_committed.connect(self._on_drawing_node_panel_coord_committed)
@@ -1464,7 +1465,7 @@ QCheckBox::indicator:checked:hover {{
         if not isinstance(point_fields, dict):
             return {}
         copied: dict = {}
-        for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type"):
+        for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type", "layer"):
             if key in point_fields:
                 copied[key] = point_fields[key]
         return copied
@@ -1494,6 +1495,7 @@ QCheckBox::indicator:checked:hover {{
             else state.node_type
             if state.node_type in {"collect", "teleport", "virtual"}
             else "collect",
+            "layer": "",
             "_drawing_new": True,
         }
         if isinstance(annotation, dict):
@@ -1502,9 +1504,10 @@ QCheckBox::indicator:checked:hover {{
                 point["type"] = annotation.get("type") or annotation["typeId"]
             if "node_type" in annotation:
                 point["node_type"] = normalize_node_type(annotation.get("node_type"))
-            for key in ("label", "radius", "sourceId", "manual"):
+            for key in ("label", "radius", "sourceId", "manual", "layer"):
                 if key in annotation:
                     point[key] = annotation[key]
+        point["layer"] = str(point.get("layer") or "").strip()
         if index_override is None:
             index = self._drawing_insert_index(x, y)
         else:
@@ -1688,6 +1691,11 @@ QCheckBox::indicator:checked:hover {{
                         point.pop("label", None)
                     else:
                         point["label"] = before
+        elif op == "layer":
+            index = int(action.get("index", -1))
+            before = deepcopy(action.get("before") or {})
+            if 0 <= index < len(state.draft_points) and isinstance(before, dict):
+                state.draft_points[index] = before
         elif op == "move":
             index = int(action.get("index", -1))
             before = action.get("before") or {}
@@ -1991,6 +1999,17 @@ QCheckBox::indicator:checked:hover {{
         except Exception:
             pass
 
+    def _on_drawing_node_panel_layer_changed(self, point_index: int, _before: object, after: object) -> None:
+        state = self.window.route_drawing_state
+        if not state.active or not isinstance(point_index, int) or not (0 <= point_index < len(state.draft_points)):
+            return
+        point = state.draft_points[point_index]
+        if not isinstance(point, dict):
+            return
+        point["layer"] = str(after or "").strip()
+        self._mark_drawing_dirty()
+        self._sync_route_drawing_ui()
+
     def _on_drawing_node_panel_label_committed(self, point_index: int, before: object, after: object) -> None:
         state = self.window.route_drawing_state
         if not state.active or not isinstance(point_index, int) or not (0 <= point_index < len(state.draft_points)):
@@ -2227,6 +2246,28 @@ QCheckBox::indicator:checked:hover {{
         })
         self._mark_drawing_dirty()
         self._sync_route_drawing_ui()
+
+    def set_drawing_point_layer(self, point_index: int, layer: object) -> bool:
+        state = self.window.route_drawing_state
+        if not state.active or not (0 <= point_index < len(state.draft_points)):
+            return False
+        point = state.draft_points[point_index]
+        if not isinstance(point, dict):
+            return False
+        normalized = str(layer or "").strip()
+        if str(point.get("layer") or "").strip() == normalized and "layer" in point:
+            return True
+        before = deepcopy(point)
+        point["layer"] = normalized
+        state.undo_stack.append({
+            "op": "layer",
+            "index": point_index,
+            "before": before,
+            "after": deepcopy(point),
+        })
+        self._mark_drawing_dirty()
+        self._sync_route_drawing_ui()
+        return True
 
     def show_route_drawing_help(self) -> None:
         styled_info(
@@ -2782,6 +2823,16 @@ QCheckBox::indicator:checked:hover {{
         if not isinstance(point, dict):
             return False
         point["node_type"] = normalize_node_type(node_type)
+        return self.update_route_notes_draft_nodes(route_id, nodes)
+
+    def set_route_notes_point_layer(self, route_id: str, point_index: int, layer: object) -> bool:
+        nodes = self.route_notes_draft_nodes(route_id)
+        if nodes is None or not isinstance(point_index, int) or not (0 <= point_index < len(nodes)):
+            return False
+        point = nodes[point_index]
+        if not isinstance(point, dict):
+            return False
+        point["layer"] = str(layer or "").strip()
         return self.update_route_notes_draft_nodes(route_id, nodes)
 
     def set_route_notes_point_annotation(

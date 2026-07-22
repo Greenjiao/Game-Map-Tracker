@@ -196,6 +196,25 @@ class RouteNotesDialogTests(unittest.TestCase):
         ]
         self.assertEqual(prefixes, ["x", "y"])
 
+    def test_route_details_node_rows_edit_layer_as_string(self) -> None:
+        dialog = RouteNotesDialog(
+            None,
+            "Route",
+            "",
+            (0x56, 0x34, 0x12),
+            None,
+            [{"x": 1, "y": 2, "layer": "地上层"}, {"x": 3, "y": 4}],
+        )
+
+        editors = dialog.findChildren(QLineEdit, "RouteNotesNodeLayer")
+        self.assertEqual([editor.text() for editor in editors], ["地上层", ""])
+
+        editors[0].setText("  地下层  ")
+        editors[1].setText("")
+
+        self.assertEqual(dialog.nodes()[0]["layer"], "地下层")
+        self.assertEqual(dialog.nodes()[1].get("layer", ""), "")
+
     def test_dialog_renders_old_auto_name_as_refreshed_display_name(self) -> None:
         dialog = RouteNotesDialog(
             None,

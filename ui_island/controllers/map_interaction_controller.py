@@ -397,6 +397,43 @@ class MapInteractionController:
             else strings.MAP_ANNOTATION_LABEL_CLEAR_SUCCESS,
         )
 
+    def change_map_annotation_layer(self, type_id: str, point_index: int) -> None:
+        point = self.window.route_mgr.annotation_point(type_id, point_index)
+        if point is None:
+            styled_info(
+                self.window,
+                strings.MAP_ANNOTATION_FAIL_TITLE,
+                strings.MAP_ANNOTATION_LAYER_CHANGE_FAIL_BODY,
+            )
+            return
+
+        accepted, new_layer = prompt_text_input(
+            self.window,
+            title=strings.MAP_ANNOTATION_LAYER_DIALOG_TITLE,
+            label=strings.MAP_ANNOTATION_LAYER_PROMPT,
+            value=str(point.get("layer") or "").strip(),
+            placeholder="例如：地上层、地下层",
+            confirm_text="确认修改",
+        )
+        if not accepted:
+            return
+        new_layer = str(new_layer or "").strip()
+        if not self.window.route_mgr.change_annotation_point_layer(type_id, point_index, new_layer):
+            styled_info(
+                self.window,
+                strings.MAP_ANNOTATION_FAIL_TITLE,
+                strings.MAP_ANNOTATION_LAYER_CHANGE_FAIL_BODY,
+            )
+            return
+
+        self._refresh_annotation_ui()
+        toast(
+            self.window,
+            strings.MAP_ANNOTATION_LAYER_CHANGE_SUCCESS
+            if new_layer
+            else strings.MAP_ANNOTATION_LAYER_CLEAR_SUCCESS,
+        )
+
     def add_annotation_to_route(self, type_id: str, point_index: int) -> None:
         try:
             point = self.window.route_mgr.annotation_point(
@@ -832,6 +869,54 @@ class MapInteractionController:
         except Exception:
             pass
 
+    def change_point_layer(self, route_id: str, point_index: int) -> None:
+        route_mgr = self.window.route_mgr
+        drawing = getattr(self.window, "route_drawing_state", None)
+        setter = None
+        current_layer = ""
+
+        if drawing is not None and drawing.active and route_id == drawing.route_id:
+            points = drawing.draft_points
+            if not isinstance(point_index, int) or not (0 <= point_index < len(points)) or not isinstance(points[point_index], dict):
+                styled_info(self.window, strings.POINT_LAYER_FAIL_TITLE, strings.POINT_LAYER_FAIL_BODY)
+                return
+            current_layer = str(points[point_index].get("layer") or "").strip()
+            setter = lambda value: self.window.route_panel_controller.set_drawing_point_layer(point_index, value)
+        elif self._has_route_notes_draft(route_id):
+            points = self._route_notes_draft_nodes(route_id) or []
+            if not isinstance(point_index, int) or not (0 <= point_index < len(points)) or not isinstance(points[point_index], dict):
+                styled_info(self.window, strings.POINT_LAYER_FAIL_TITLE, strings.POINT_LAYER_FAIL_BODY)
+                return
+            current_layer = str(points[point_index].get("layer") or "").strip()
+            controller = self._route_notes_controller()
+            draft_setter = getattr(controller, "set_route_notes_point_layer", None)
+            if callable(draft_setter):
+                setter = lambda value: draft_setter(route_id, point_index, value)
+        else:
+            current_layer = route_mgr.route_point_layer(route_id, point_index)
+            setter = lambda value: route_mgr.set_point_layer(route_id, point_index, value)
+
+        accepted, new_layer = prompt_text_input(
+            self.window,
+            title=strings.POINT_LAYER_DIALOG_TITLE,
+            label=strings.POINT_LAYER_PROMPT,
+            value=current_layer,
+            placeholder="例如：地上层、地下层",
+            confirm_text="确认修改",
+        )
+        if not accepted:
+            return
+        new_layer = str(new_layer or "").strip()
+        if not callable(setter) or not setter(new_layer):
+            styled_info(self.window, strings.POINT_LAYER_FAIL_TITLE, strings.POINT_LAYER_FAIL_BODY)
+            return
+
+        self._refresh_route_point_ui()
+        toast(
+            self.window,
+            strings.POINT_LAYER_CHANGE_SUCCESS if new_layer else strings.POINT_LAYER_CLEAR_SUCCESS,
+        )
+
     def delete_point_annotation(self, route_id: str, point_index: int) -> None:
         drawing = getattr(self.window, "route_drawing_state", None)
         if drawing is not None and drawing.active and route_id == drawing.route_id:
@@ -1054,12 +1139,14 @@ class MapInteractionController:
                 "x": int(round(float(resource_x))),
                 "y": int(round(float(resource_y))),
                 "node_type": "collect",
+                "layer": "",
                 "visited": False,
             }
             if isinstance(point_fields, dict):
-                for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type"):
+                for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type", "layer"):
                     if key in point_fields:
                         new_point[key] = point_fields[key]
+            new_point["layer"] = str(new_point.get("layer") or "").strip()
             target = overrides.get(rid)
             if target is None:
                 try:

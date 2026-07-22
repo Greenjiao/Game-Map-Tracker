@@ -334,6 +334,7 @@ class MapViewRouteDragTests(unittest.TestCase):
         labels = [item.text for item in items]
         change_index = labels.index(strings.MAP_CHANGE_ANNOTATION_MENU_LABEL)
         self.assertEqual(labels[change_index + 1], strings.MAP_CHANGE_ANNOTATION_LABEL_MENU_LABEL)
+        self.assertEqual(labels[change_index + 2], strings.MAP_CHANGE_ANNOTATION_LAYER_MENU_LABEL)
         self.assertEqual(captured["object_name"], "MapAnnotationContextMenu")
 
         emitted: list[tuple[str, int]] = []
@@ -342,6 +343,13 @@ class MapViewRouteDragTests(unittest.TestCase):
         )
         items[change_index + 1].callback()
         self.assertEqual(emitted, [("flower", 2)])
+
+        emitted_layers: list[tuple[str, int]] = []
+        view.change_annotation_layer_requested.connect(
+            lambda type_id, point_index: emitted_layers.append((type_id, point_index))
+        )
+        items[change_index + 2].callback()
+        self.assertEqual(emitted_layers, [("flower", 2)])
 
     def test_route_node_menu_includes_change_order_and_emits_signal(self) -> None:
         view = self._view()
@@ -356,11 +364,18 @@ class MapViewRouteDragTests(unittest.TestCase):
         items = captured["items"]
         labels = [item.text for item in items if not item.separator and item.visible]
         self.assertIn(strings.CHANGE_POINT_ORDER_MENU_LABEL, labels)
+        self.assertIn(strings.CHANGE_POINT_LAYER_MENU_LABEL, labels)
         emitted: list[tuple[str, int]] = []
         view.change_point_order_requested.connect(lambda route_id, index: emitted.append((route_id, index)))
         order_item = next(item for item in items if item.text == strings.CHANGE_POINT_ORDER_MENU_LABEL)
         order_item.callback()
         self.assertEqual(emitted, [("route-1", 0)])
+
+        emitted_layers: list[tuple[str, int]] = []
+        view.change_point_layer_requested.connect(lambda route_id, index: emitted_layers.append((route_id, index)))
+        layer_item = next(item for item in items if item.text == strings.CHANGE_POINT_LAYER_MENU_LABEL)
+        layer_item.callback()
+        self.assertEqual(emitted_layers, [("route-1", 0)])
 
     def test_drawing_node_menu_includes_change_order_and_emits_signal(self) -> None:
         view = self._view()
@@ -380,6 +395,7 @@ class MapViewRouteDragTests(unittest.TestCase):
         items = captured["items"]
         labels = [item.text for item in items if not item.separator and item.visible]
         self.assertIn(strings.CHANGE_POINT_ORDER_MENU_LABEL, labels)
+        self.assertIn(strings.CHANGE_POINT_LAYER_MENU_LABEL, labels)
         emitted: list[tuple[str, int]] = []
         view.change_point_order_requested.connect(lambda route_id, index: emitted.append((route_id, index)))
         order_item = next(item for item in items if item.text == strings.CHANGE_POINT_ORDER_MENU_LABEL)
