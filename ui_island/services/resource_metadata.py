@@ -7,6 +7,7 @@ import json
 import os
 import re
 import uuid
+from functools import lru_cache
 from pathlib import Path
 
 from ui_island.app.app_info import APP_ENABLE_VERSIONS, APP_FORMAT_VERSION
@@ -139,6 +140,42 @@ def read_json_payload(path: str | os.PathLike[str] | None) -> dict | None:
     except (OSError, json.JSONDecodeError):
         return None
     return payload if isinstance(payload, dict) else None
+
+
+@lru_cache(maxsize=16)
+def _default_point_layer_cached(path: str, modified_ns: int, file_size: int) -> str:
+    del modified_ns, file_size
+    payload = read_json_payload(path)
+    if not isinstance(payload, dict):
+        return ""
+    value = payload.get("default_layer")
+    return value.strip() if isinstance(value, str) else ""
+
+
+def default_point_layer(base_dir: str | os.PathLike[str] | None = None) -> str:
+    """Return the configured default point layer, reloading after file changes."""
+    if base_dir is None:
+        try:
+            import config
+
+            base_dir = config.BASE_DIR
+        except Exception:
+            return ""
+    path = Path(base_dir) / "maps" / "layer_maps.json"
+    try:
+        stat = path.stat()
+    except OSError:
+        return ""
+    return _default_point_layer_cached(str(path), stat.st_mtime_ns, stat.st_size)
+
+
+def point_layer_or_default(
+    value: object,
+    base_dir: str | os.PathLike[str] | None = None,
+) -> str:
+    """Normalize a point layer and fall back to the configured default layer."""
+    layer = value.strip() if isinstance(value, str) else ""
+    return layer or default_point_layer(base_dir)
 
 
 _COORD_TRANSFORM_KEY = "coord_transform"

@@ -288,6 +288,11 @@ def _point_layer(point: object) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
+def _visible_point_layer(point: object, default_layer: str) -> str:
+    layer = _point_layer(point)
+    return "" if layer and layer == default_layer else layer
+
+
 def _adapter_to_current(
     coord_adapter,
     xy: tuple[float, float],
@@ -1779,7 +1784,7 @@ class RouteManager:
                 "label": name,
                 "type": name,
                 "typeId": type_id,
-                "layer": "",
+                "layer": resource_metadata.point_layer_or_default(None),
                 "id": self._new_manual_annotation_id(),
                 "manual": True,
             }
@@ -2252,12 +2257,12 @@ class RouteManager:
                 index = _best_insertion_index(insertion_points, (x, y))
 
             old_labels = [item.get("label", None) if isinstance(item, dict) else None for item in points]
-            new_point = {"id": self.new_route_point_id(), "layer": ""}
+            new_point = {"id": self.new_route_point_id()}
             for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type", "layer"):
                 if isinstance(point_fields, dict) and key in point_fields:
                     new_point[key] = point_fields[key]
             new_point["node_type"] = _node_type(new_point)
-            new_point["layer"] = _point_layer(new_point)
+            new_point["layer"] = resource_metadata.point_layer_or_default(new_point.get("layer"))
             new_point["x"] = int(round(resource_x))
             new_point["y"] = int(round(resource_y))
             new_point["visited"] = False
@@ -3301,6 +3306,7 @@ class RouteManager:
         show_order_effective = show_order and not labels_hidden
         show_name_effective = show_name and not labels_hidden
         show_layers_effective = show_layers and not labels_hidden
+        default_layer = resource_metadata.default_point_layer() if show_layers_effective else ""
         for _route, color, local_points, _map_points, points, _is_drawing_route in draw_records:
             is_annotation_calibration = bool(_route.get("_annotation_calibration"))
             for index, (local_point, point_data) in enumerate(zip(local_points, points)):
@@ -3343,7 +3349,7 @@ class RouteManager:
                     symbol_height = dot_radius * 2
 
                 if show_layers_effective:
-                    layer = _point_layer(point_data)
+                    layer = _visible_point_layer(point_data, default_layer)
                     if layer:
                         layer_color = (255, 255, 255) if is_annotation_calibration else (
                             int(text_color[2]), int(text_color[1]), int(text_color[0])
@@ -3524,6 +3530,7 @@ class RouteManager:
 
         show_labels = _config_bool("ANNOTATION_LABEL_VISIBLE", False)
         show_layers = _config_bool("POINT_LAYER_VISIBLE", True)
+        default_layer = resource_metadata.default_point_layer() if show_layers else ""
         label_draws: list[tuple[str, tuple[int, int], int]] = []
         layer_draws: list[tuple[str, tuple[int, int], int, tuple[int, int, int]]] = []
         for entry in entries:
@@ -3542,7 +3549,7 @@ class RouteManager:
                 if label:
                     label_draws.append((label, local_point, int(icon.shape[0])))
             if show_layers:
-                layer = _point_layer(entry.point)
+                layer = _visible_point_layer(entry.point, default_layer)
                 if layer:
                     layer_draws.append((layer, local_point, int(icon.shape[0]), (255, 255, 255)))
 
@@ -3573,6 +3580,7 @@ class RouteManager:
         canvas_height, canvas_width = canvas.shape[:2]
         show_labels = _config_bool("ANNOTATION_LABEL_VISIBLE", False)
         show_layers = _config_bool("POINT_LAYER_VISIBLE", True)
+        default_layer = resource_metadata.default_point_layer() if show_layers else ""
         label_draws: list[tuple[str, tuple[int, int], int]] = []
         layer_draws: list[tuple[str, tuple[int, int], int, tuple[int, int, int]]] = []
         clusters: dict[tuple[int, int], list[tuple[_AnnotationSpatialEntry, tuple[int, int]]]] = {}
@@ -3600,7 +3608,7 @@ class RouteManager:
                         if label:
                             label_draws.append((label, local_point, int(icon.shape[0])))
                     if show_layers:
-                        layer = _point_layer(entry.point)
+                        layer = _visible_point_layer(entry.point, default_layer)
                         if layer:
                             layer_draws.append((layer, local_point, int(icon.shape[0]), (255, 255, 255)))
                 continue

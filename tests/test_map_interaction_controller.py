@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import config
 from ui_island.controllers.map_interaction_controller import MapInteractionController
+from ui_island.design import strings
 from ui_island.state import RouteDrawingState
 
 
@@ -25,6 +26,7 @@ class _FakeRoutePanelController:
         self.window = window
         self.refresh_count = 0
         self.append_calls: list[tuple[int, int, dict | None, str | None]] = []
+        self.direct_append_calls: list[tuple[int, int, dict | None, str | None]] = []
         self.change_order_calls: list[int] = []
         self.active_notes_route_id = ""
         self.notes_nodes: list[dict] | None = None
@@ -42,6 +44,17 @@ class _FakeRoutePanelController:
         drawing = getattr(self.window, "route_drawing_state", None)
         if drawing is not None and drawing.active and not drawing.paused:
             self.append_calls.append((x, y, dict(point_fields or {}), node_type_override))
+
+    def append_drawing_point(
+        self,
+        x: int,
+        y: int,
+        point_fields: dict | None = None,
+        node_type_override: str | None = None,
+    ) -> None:
+        drawing = getattr(self.window, "route_drawing_state", None)
+        if drawing is not None and drawing.active and not drawing.paused:
+            self.direct_append_calls.append((x, y, dict(point_fields or {}), node_type_override))
 
     def change_drawing_point_order(self, point_index: int) -> None:
         self.change_order_calls.append(int(point_index))
@@ -135,6 +148,9 @@ class _FakeRouteManager:
                 "label": "Field Flower",
                 "radius": 25,
                 "layer": "地上层",
+                "sourceId": "source-flower",
+                "manual": True,
+                "id": "annotation-flower",
             }
         }
         self.insert_calls: list[dict] = []
@@ -746,6 +762,47 @@ class MapInteractionControllerTests(unittest.TestCase):
         self.assertEqual(point_fields["node_type"], "collect")
         self.assertEqual(node_type_override, "collect")
 
+    def test_add_annotation_to_drawing_route_uses_exact_annotation_data_without_context_dialog(self) -> None:
+        controller, window = self._controller()
+        window.route_drawing_state.begin(route_id="route-1", category="routes", name="Route 1", points=[])
+        window.route_drawing_state.annotation_point_mode = True
+        window.route_drawing_state.add_node_annotation = True
+
+        with (
+            patch.object(controller, "add_point_to_routes") as add_point_to_routes,
+            patch("ui_island.controllers.map_interaction_controller.open_annotation_type_picker") as picker,
+        ):
+            controller.add_annotation_to_drawing_route("flower", 0)
+
+        add_point_to_routes.assert_not_called()
+        picker.assert_not_called()
+        self.assertEqual(window.route_panel_controller.append_calls, [])
+        self.assertEqual(len(window.route_panel_controller.direct_append_calls), 1)
+        x, y, point_fields, node_type_override = window.route_panel_controller.direct_append_calls[0]
+        self.assertEqual((x, y), (12, 34))
+        self.assertEqual(point_fields["typeId"], "flower")
+        self.assertEqual(point_fields["type"], "Sunflower")
+        self.assertEqual(point_fields["label"], "Field Flower")
+        self.assertEqual(point_fields["layer"], "地上层")
+        self.assertEqual(point_fields["radius"], 25)
+        self.assertEqual(point_fields["sourceId"], "source-flower")
+        self.assertTrue(point_fields["manual"])
+        self.assertEqual(node_type_override, "collect")
+
+    def test_add_annotation_to_drawing_route_failure_keeps_draft_unchanged(self) -> None:
+        controller, window = self._controller()
+        window.route_drawing_state.begin(route_id="route-1", category="routes", name="Route 1", points=[])
+
+        with patch("ui_island.controllers.map_interaction_controller.styled_info") as styled_info:
+            controller.add_annotation_to_drawing_route("missing", 0)
+
+        self.assertEqual(window.route_panel_controller.direct_append_calls, [])
+        styled_info.assert_called_once_with(
+            window,
+            strings.MAP_ANNOTATION_FAIL_TITLE,
+            strings.MAP_ANNOTATION_ROUTE_FAIL_BODY,
+        )
+
     def test_add_annotation_to_route_does_not_write_json_when_pure_drawing_paused(self) -> None:
         controller, window = self._controller()
         window.route_drawing_state.begin(route_id="route-1", category="routes", name="Route 1", points=[])
@@ -1086,6 +1143,24 @@ class MapInteractionControllerTests(unittest.TestCase):
 
         self.assertFalse(controller.has_route_point_move_undo())
         self.assertEqual(window.map_view.undo_available_values[-1], False)
+
+    def test_insert_into_route_notes_draft_uses_default_layer(self) -> None:
+        controller, window = self._controller()
+        window.route_panel_controller.active_notes_route_id = "route-1"
+        window.route_panel_controller.notes_nodes = []
+        window.route_mgr.new_route_point_id = lambda: "point-1"
+
+        with (
+            patch(
+                "ui_island.controllers.map_interaction_controller.resource_metadata.default_point_layer",
+                return_value="卡洛西亚大陆",
+            ),
+            patch("ui_island.controllers.map_interaction_controller.toast"),
+        ):
+            controller.add_point_to_routes(3, 4, route_ids=["route-1"], show_dialog=False)
+
+        self.assertEqual(window.route_panel_controller.notes_nodes[0]["layer"], "卡洛西亚大陆")
+        self.assertEqual(window.route_mgr.insert_calls, [])
 
 
 if __name__ == "__main__":

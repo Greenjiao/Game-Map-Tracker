@@ -123,15 +123,15 @@
     "REGION_LABEL_MAJOR_FONT_SIZE": 70,
     "REGION_LABEL_MINOR_FONT_SIZE": 40,
     "REGION_LABEL_SCALE_SWITCH_RATIO": 2.0,
-    "ANNOTATION_LABEL_VISIBLE": true,
-    "POINT_LAYER_VISIBLE": true,
+    "ANNOTATION_LABEL_VISIBLE": false,
+    "POINT_LAYER_VISIBLE": false,
     "ROUTE_NODE_ICON_SIZE": 20,
     "ANNOTATION_ICON_SIZE": 20,
     "ROUTE_NODE_DOT_SIZE": 5,
     "WINDOW_LOCK_FOLLOWS_GUIDE": true,
     "PURE_NAVIGATION_MODE": false,
     "ROUTE_NOTES_DIALOG_WIDTH": 860,
-    "ROUTE_NOTES_NODE_PANEL_WIDTH": 389,
+    "ROUTE_NOTES_NODE_PANEL_WIDTH": 282,
     "WINDOW_LOCKED_OPACITY": 0.78,
     "WINDOW_NORMAL_OPACITY": 1.0,
     "ROUTE_SECTION_EXPANDED": {
@@ -151,9 +151,9 @@
     "ANNOTATION_TYPE_IDS": [
         "100673",
         "100677",
-        "100676",
         "100675",
-        "100628"
+        "100628",
+        "100676"
     ],
     "ANNOTATION_PRESETS": [
         {
@@ -194,7 +194,7 @@
         "探索道具": false,
         "奖励": false,
         "植物": false,
-        "传送": false,
+        "传送": true,
         "眠枭之星": false,
         "矿物": true,
         "探索": false

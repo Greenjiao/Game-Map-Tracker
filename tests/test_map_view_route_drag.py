@@ -227,6 +227,69 @@ class MapViewRouteDragTests(unittest.TestCase):
         self.assertEqual(view._drawing_drag_index, 0)
         self.assertIsNone(view._route_point_drag_index)
 
+    def test_annotation_point_drawing_mode_emits_annotation_hit_instead_of_plain_point(self) -> None:
+        route_mgr = _FakeRouteManager()
+        route_mgr.annotation_hit = {"typeId": "flower", "pointIndex": 2}
+        view = self._view(route_mgr)
+        view.set_route_drawing_context({
+            "active": True,
+            "paused": False,
+            "points": [],
+            "annotation_point_mode": True,
+        })
+        annotation_points: list[tuple[str, int]] = []
+        plain_points: list[tuple[int, int]] = []
+        view.drawing_annotation_point_requested.connect(
+            lambda type_id, point_index: annotation_points.append((type_id, point_index))
+        )
+        view.drawing_point_requested.connect(lambda x, y: plain_points.append((x, y)))
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(12, 34)))
+        view.mouseReleaseEvent(self._mouse_event(QEvent.Type.MouseButtonRelease, QPointF(12, 34)))
+
+        self.assertEqual(annotation_points, [("flower", 2)])
+        self.assertEqual(plain_points, [])
+
+    def test_annotation_point_drawing_mode_falls_back_to_plain_point_without_hit(self) -> None:
+        route_mgr = _FakeRouteManager()
+        view = self._view(route_mgr)
+        view.set_route_drawing_context({
+            "active": True,
+            "paused": False,
+            "points": [],
+            "annotation_point_mode": True,
+        })
+        annotation_points: list[tuple[str, int]] = []
+        plain_points: list[tuple[int, int]] = []
+        view.drawing_annotation_point_requested.connect(
+            lambda type_id, point_index: annotation_points.append((type_id, point_index))
+        )
+        view.drawing_point_requested.connect(lambda x, y: plain_points.append((x, y)))
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(12, 34)))
+        view.mouseReleaseEvent(self._mouse_event(QEvent.Type.MouseButtonRelease, QPointF(12, 34)))
+
+        self.assertEqual(annotation_points, [])
+        self.assertEqual(plain_points, [(12, 34)])
+
+    def test_annotation_hit_is_ignored_when_annotation_point_drawing_mode_is_off(self) -> None:
+        route_mgr = _FakeRouteManager()
+        route_mgr.annotation_hit = {"typeId": "flower", "pointIndex": 2}
+        view = self._view(route_mgr)
+        view.set_route_drawing_context({"active": True, "paused": False, "points": []})
+        annotation_points: list[tuple[str, int]] = []
+        plain_points: list[tuple[int, int]] = []
+        view.drawing_annotation_point_requested.connect(
+            lambda type_id, point_index: annotation_points.append((type_id, point_index))
+        )
+        view.drawing_point_requested.connect(lambda x, y: plain_points.append((x, y)))
+
+        view.mousePressEvent(self._mouse_event(QEvent.Type.MouseButtonPress, QPointF(12, 34)))
+        view.mouseReleaseEvent(self._mouse_event(QEvent.Type.MouseButtonRelease, QPointF(12, 34)))
+
+        self.assertEqual(annotation_points, [])
+        self.assertEqual(plain_points, [(12, 34)])
+
     def test_ctrl_z_uses_route_undo_only_outside_drawing_mode(self) -> None:
         view = self._view()
         route_undo_count: list[bool] = []

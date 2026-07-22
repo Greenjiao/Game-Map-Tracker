@@ -9,7 +9,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QColor, QPixmap
-from PySide6.QtWidgets import QApplication, QLabel, QLineEdit, QPushButton, QWidget
+from PySide6.QtWidgets import QApplication, QCheckBox, QLabel, QLineEdit, QPushButton, QWidget
 
 from ui_island.controllers.route_panel_controller import RoutePanelController
 from ui_island.design import strings
@@ -1405,7 +1405,11 @@ class RoutePanelFilterTests(unittest.TestCase):
         controller = self._controller_for(window)
         controller._sync_route_drawing_ui = lambda: None
 
-        controller.append_drawing_point(10, 0)
+        with patch(
+            "ui_island.controllers.route_panel_controller.resource_metadata.default_point_layer",
+            return_value="卡洛西亚大陆",
+        ):
+            controller.append_drawing_point(10, 0)
 
         self.assertEqual([(point["x"], point["y"]) for point in window.route_drawing_state.draft_points], [
             (0, 0),
@@ -1413,15 +1417,39 @@ class RoutePanelFilterTests(unittest.TestCase):
             (10, 0),
         ])
         self.assertEqual(window.route_drawing_state.undo_stack[-1]["index"], 2)
-        self.assertEqual(window.route_drawing_state.draft_points[-1]["layer"], "")
+        self.assertEqual(window.route_drawing_state.draft_points[-1]["layer"], "卡洛西亚大陆")
+
+    def test_annotation_point_mode_defaults_off_and_resets_for_new_drawing(self) -> None:
+        state = RouteDrawingState()
+        self.assertFalse(state.annotation_point_mode)
+
+        state.annotation_point_mode = True
+        state.begin(route_id="2026010101", category="routes", name="route", points=[])
+
+        self.assertFalse(state.annotation_point_mode)
+
+    def test_annotation_point_mode_setter_updates_drawing_context(self) -> None:
+        window = _FakeWindow("")
+        window.route_drawing_state = RouteDrawingState()
+        window.route_drawing_state.begin(route_id="2026010101", category="routes", name="route", points=[])
+        controller = self._controller_for(window)
+        controller._sync_route_drawing_ui = Mock()
+
+        controller.set_route_drawing_annotation_point_mode(True)
+
+        self.assertTrue(window.route_drawing_state.annotation_point_mode)
+        self.assertTrue(controller._build_drawing_context()["annotation_point_mode"])
+        controller._sync_route_drawing_ui.assert_called_once_with()
 
     def test_append_drawing_point_with_point_fields_binds_annotation_to_draft(self) -> None:
         window = _FakeWindow("")
         window.route_drawing_state = RouteDrawingState()
         window.route_drawing_state.begin(route_id="2026010101", category="routes", name="route", points=[])
         window.route_drawing_state.node_type = "teleport"
+        window.route_drawing_state.add_node_annotation = True
         controller = self._controller_for(window)
         controller._sync_route_drawing_ui = lambda: None
+        controller._pick_route_node_annotation = Mock()
 
         controller.append_drawing_point(
             10,
@@ -1435,6 +1463,7 @@ class RoutePanelFilterTests(unittest.TestCase):
                 "manual": True,
                 "node_type": "virtual",
                 "layer": "  地下层  ",
+                "id": "annotation-1",
                 "visited": True,
             },
         )
@@ -1448,8 +1477,10 @@ class RoutePanelFilterTests(unittest.TestCase):
         self.assertTrue(point["manual"])
         self.assertEqual(point["node_type"], "virtual")
         self.assertEqual(point["layer"], "地下层")
+        self.assertEqual(point["id"], "point-1")
         self.assertNotIn("visited", point)
         self.assertTrue(point["_drawing_new"])
+        controller._pick_route_node_annotation.assert_not_called()
 
     def test_set_drawing_point_layer_can_clear_and_undo(self) -> None:
         window = _FakeWindow("")
@@ -1845,11 +1876,13 @@ class RoutePanelFilterTests(unittest.TestCase):
         window.route_drawing_state = RouteDrawingState()
         window.route_drawing_state.begin(route_id="2026010101", category="routes", name="route", points=[])
         window.route_drawing_state.insert_at_end = False
+        window.route_drawing_state.annotation_point_mode = True
         window.route_drawing_toolbar = _FakeToolbar()
         window.route_drawing_toolbar_buttons = {
             "pause": _FakeButton(),
             "collect": _FakeButton(),
             "insert_at_end": _FakeButton(),
+            "annotation_point_mode": _FakeButton(),
             "add_annotation": _FakeButton(),
             "same_annotation": _FakeButton(),
             "hide_other_routes": _FakeButton(),
@@ -1863,6 +1896,11 @@ class RoutePanelFilterTests(unittest.TestCase):
 
         self.assertFalse(window.route_drawing_toolbar_buttons["insert_at_end"].checked)
         self.assertEqual(window.route_drawing_toolbar_buttons["insert_at_end"].blocked_states, [True, False])
+        self.assertTrue(window.route_drawing_toolbar_buttons["annotation_point_mode"].checked)
+        self.assertEqual(
+            window.route_drawing_toolbar_buttons["annotation_point_mode"].blocked_states,
+            [True, False],
+        )
         self.assertTrue(window.route_drawing_toolbar.shown)
 
     def test_route_drawing_toolbar_node_panel_uses_right_picker_and_small_icons(self) -> None:
@@ -1893,6 +1931,7 @@ class RoutePanelFilterTests(unittest.TestCase):
             label.text()
             for label in node_panel.findChildren(QLabel, "RouteNotesNodeCoordPrefix")
         ]
+        checkbox_texts = [checkbox.text() for checkbox in toolbar.findChildren(QCheckBox)]
         self.assertIs(node_panel._annotation_picker_anchor, toolbar)
         self.assertEqual(node_panel._annotation_picker_placement, "right_of")
         self.assertIsNotNone(stats)
@@ -1901,6 +1940,7 @@ class RoutePanelFilterTests(unittest.TestCase):
         self.assertIsNotNone(x_editor)
         self.assertIsNotNone(y_editor)
         self.assertEqual(coord_prefixes, ["x", "y"])
+        self.assertIn(strings.ROUTE_DRAWING_ANNOTATION_POINT_MODE, checkbox_texts)
         self.assertLess(stats_scroll.geometry().y(), node_scroll.geometry().y())
         self.assertTrue(icons)
         self.assertTrue(all(icon.iconSize() == QSize(_NODE_ICON_SIZE, _NODE_ICON_SIZE) for icon in icons))

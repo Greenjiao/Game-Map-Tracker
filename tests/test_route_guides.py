@@ -1825,7 +1825,13 @@ class RouteGuideTests(unittest.TestCase):
             manager = RouteManager(str(Path(tmp) / "routes"))
             manager._annotation_points_cache = {"flower": []}
 
-            with patch("ui_island.services.route_manager._default_annotation_points_file", return_value=str(points_file)):
+            with (
+                patch("ui_island.services.route_manager._default_annotation_points_file", return_value=str(points_file)),
+                patch(
+                    "ui_island.services.route_manager.resource_metadata.default_point_layer",
+                    return_value="卡洛西亚大陆",
+                ),
+            ):
                 self.assertTrue(manager.add_annotation_point(10, 20, "flower", "Sunflower"))
 
             payload = json.loads(points_file.read_text(encoding="utf-8"))
@@ -1837,7 +1843,7 @@ class RouteGuideTests(unittest.TestCase):
             self.assertEqual(points[-1]["label"], "Sunflower")
             self.assertEqual(points[-1]["type"], "Sunflower")
             self.assertEqual(points[-1]["typeId"], "flower")
-            self.assertEqual(points[-1]["layer"], "")
+            self.assertEqual(points[-1]["layer"], "卡洛西亚大陆")
             self.assertTrue(points[-1]["manual"])
             self.assertIsNone(manager._annotation_points_cache)
 
@@ -2066,6 +2072,58 @@ class RouteGuideTests(unittest.TestCase):
 
         layer_sprite.assert_called_once_with("地下层", (255, 255, 255))
         blit.assert_called_once_with(canvas, sprite, 35, 60)
+
+    def test_draw_annotations_hides_default_layer_name(self) -> None:
+        manager = RouteManager.__new__(RouteManager)
+        manager._annotation_points_cache = {
+            "flower": [{"x": 50, "y": 50, "typeId": "flower", "layer": "卡洛西亚大陆"}]
+        }
+        manager._annotation_spatial_index = None
+        manager._annotation_type_ids = {"flower"}
+        manager._annotation_icon_cache = {"flower": np.full((20, 20, 4), 255, dtype=np.uint8)}
+        canvas = np.zeros((100, 120, 3), dtype=np.uint8)
+
+        with (
+            patch("ui_island.services.route_manager.config.POINT_LAYER_VISIBLE", True),
+            patch("ui_island.services.route_manager.config.ANNOTATION_LABEL_VISIBLE", False),
+            patch(
+                "ui_island.services.route_manager.resource_metadata.default_point_layer",
+                return_value="卡洛西亚大陆",
+            ),
+            patch.object(manager, "_draw_point_layers") as draw_layers,
+        ):
+            manager._draw_annotations(canvas, 0, 0, 120, 100, map_pixels_per_screen_px=1.0)
+
+        draw_layers.assert_not_called()
+
+    def test_route_hides_default_layer_name_but_draws_other_layers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            manager = _manager_with_visible_route(Path(tmp))
+            route = manager.route_for_id("2026010101")
+            route["points"][0]["layer"] = "卡洛西亚大陆"
+            route["points"].append({"x": 30, "y": 30, "layer": "月兔暗港"})
+            canvas = np.zeros((120, 120, 3), dtype=np.uint8)
+
+            with (
+                patch("ui_island.services.route_manager.config.POINT_LAYER_VISIBLE", True),
+                patch(
+                    "ui_island.services.route_manager.resource_metadata.default_point_layer",
+                    return_value="卡洛西亚大陆",
+                ),
+                patch.object(manager, "_draw_point_layers") as draw_layers,
+            ):
+                manager.draw_on(
+                    canvas,
+                    0,
+                    0,
+                    120,
+                    auto_visit=False,
+                    skip_annotations=True,
+                    map_pixels_per_screen_px=1.0,
+                )
+
+        draws = draw_layers.call_args.args[1]
+        self.assertEqual([item[0] for item in draws], ["月兔暗港"])
 
     def test_route_layer_uses_same_zoom_hide_rule_as_node_labels(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -2341,12 +2399,16 @@ class RouteGuideTests(unittest.TestCase):
             )
             manager = RouteManager(str(base))
 
-            outcomes = manager.insert_point_into_routes(
-                90,
-                0,
-                ["2026010101"],
-                overrides={"2026010101": 0},
-            )
+            with patch(
+                "ui_island.services.route_manager.resource_metadata.default_point_layer",
+                return_value="卡洛西亚大陆",
+            ):
+                outcomes = manager.insert_point_into_routes(
+                    90,
+                    0,
+                    ["2026010101"],
+                    overrides={"2026010101": 0},
+                )
 
             self.assertEqual(outcomes["2026010101"], 0)
             payload = json.loads(route_file.read_text(encoding="utf-8"))
@@ -2355,6 +2417,7 @@ class RouteGuideTests(unittest.TestCase):
                 (0, 0),
                 (100, 0),
             ])
+            self.assertEqual(payload["points"][0]["layer"], "卡洛西亚大陆")
 
     def test_create_route_uses_13_digit_string_id(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "default_layer": "卡洛西亚大陆",
+  "layers": {
+    "卡洛西亚大陆": {
+      "background_id": 10003,
+      "map_file": "maps/卡洛西亚大陆/S3_8192.png"
+    },
+    "下水管道口": {
+      "background_id": 2
+    },
+    "信仰者村落一层": {
+      "background_id": 4
+    },
+    "拾荒者港口一层": {
+      "background_id": 7
+    },
+    "二叠山丘一层": {
+      "background_id": 10
+    },
+    "月兔暗港": {
+      "background_id": 12
+    },
+    "火巨人洞窟第一层": {
+      "background_id": 17
+    },
+    "火巨人洞窟第二层": {
+      "background_id": 18
+    },
+    "火巨人洞窟第三层": {
+      "background_id": 19
+    },
+    "森巨人洞窟第二层": {
+      "background_id": 22
+    },
+    "雪巨人洞窟": {
+      "background_id": 24
+    },
+    "光王祭坛": {
+      "background_id": 26
+    }
+  }
+}

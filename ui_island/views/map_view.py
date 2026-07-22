@@ -42,6 +42,7 @@ class MapView(QWidget):
     delete_annotation_requested = Signal(str, int)
     guide_hint_changed = Signal(object)
     drawing_point_requested = Signal(int, int)
+    drawing_annotation_point_requested = Signal(str, int)
     drawing_point_move_requested = Signal(int, int, int)
     drawing_point_move_finished = Signal(int, int, int, int, int)
     drawing_undo_requested = Signal()
@@ -533,6 +534,13 @@ class MapView(QWidget):
     def _is_drawing_paused(self) -> bool:
         return bool(self._is_drawing_active() and self._drawing_context and self._drawing_context.get("paused"))
 
+    def _is_annotation_point_drawing_mode(self) -> bool:
+        return bool(
+            self._is_drawing_active()
+            and self._drawing_context
+            and self._drawing_context.get("annotation_point_mode")
+        )
+
     def _is_route_calibration_active(self) -> bool:
         return bool(
             isinstance(self._route_calibration_context, dict)
@@ -971,6 +979,18 @@ class MapView(QWidget):
             self._left_press_map = None
             self._left_dragging = False
             if should_add:
+                if self._is_annotation_point_drawing_mode():
+                    annotation_hit = self._hit_test_annotation(event.position())
+                    if annotation_hit is not None:
+                        type_id = str(annotation_hit.get("typeId") or "").strip()
+                        try:
+                            point_index = int(annotation_hit.get("pointIndex"))
+                        except (TypeError, ValueError):
+                            point_index = -1
+                        if type_id and point_index >= 0:
+                            self.drawing_annotation_point_requested.emit(type_id, point_index)
+                            event.accept()
+                            return
                 self.drawing_point_requested.emit(int(mapped[0]), int(mapped[1]))
                 event.accept()
                 return

@@ -12,6 +12,7 @@ from ..dialogs.insert_point_dialog import open_insert_point_dialog
 from ..dialogs.point_order_dialog import open_point_order_dialog
 from ..dialogs.settings_dialog import styled_confirm, styled_info
 from ..dialogs.text_input_dialog import prompt_text_input
+from ..services import resource_metadata
 from ..services.annotation_preferences import normalize_type_ids
 from ..services.annotation_matcher import (
     AMBIGUOUS_DISTANCE_DELTA,
@@ -434,7 +435,7 @@ class MapInteractionController:
             else strings.MAP_ANNOTATION_LAYER_CLEAR_SUCCESS,
         )
 
-    def add_annotation_to_route(self, type_id: str, point_index: int) -> None:
+    def _route_point_from_annotation(self, type_id: str, point_index: int) -> tuple[int, int, dict] | None:
         try:
             point = self.window.route_mgr.annotation_point(
                 type_id,
@@ -444,24 +445,47 @@ class MapInteractionController:
         except TypeError:
             point = self.window.route_mgr.annotation_point(type_id, point_index)
         if point is None:
-            styled_info(
-                self.window,
-                strings.MAP_ANNOTATION_FAIL_TITLE,
-                strings.MAP_ANNOTATION_ROUTE_FAIL_BODY,
-            )
-            return
+            return None
         try:
             x = int(round(float(point["x"])))
             y = int(round(float(point["y"])))
         except (KeyError, TypeError, ValueError):
-            styled_info(
-                self.window,
-                strings.MAP_ANNOTATION_FAIL_TITLE,
-                strings.MAP_ANNOTATION_ROUTE_FAIL_BODY,
-            )
-            return
+            return None
         type_id = str(point.get("typeId") or type_id).strip()
+        if not type_id:
+            return None
         point_fields = self._point_fields_for_annotation_type(type_id, point.get("type"), point)
+        return x, y, point_fields
+
+    def _show_annotation_route_failure(self) -> None:
+        styled_info(
+            self.window,
+            strings.MAP_ANNOTATION_FAIL_TITLE,
+            strings.MAP_ANNOTATION_ROUTE_FAIL_BODY,
+        )
+
+    def add_annotation_to_drawing_route(self, type_id: str, point_index: int) -> None:
+        drawing = getattr(self.window, "route_drawing_state", None)
+        if drawing is None or not drawing.active or drawing.paused:
+            return
+        resolved = self._route_point_from_annotation(type_id, point_index)
+        if resolved is None:
+            self._show_annotation_route_failure()
+            return
+        x, y, point_fields = resolved
+        self.window.route_panel_controller.append_drawing_point(
+            x,
+            y,
+            point_fields=point_fields,
+            node_type_override=point_fields.get("node_type"),
+        )
+
+    def add_annotation_to_route(self, type_id: str, point_index: int) -> None:
+        resolved = self._route_point_from_annotation(type_id, point_index)
+        if resolved is None:
+            self._show_annotation_route_failure()
+            return
+        x, y, point_fields = resolved
         drawing = getattr(self.window, "route_drawing_state", None)
         if drawing is not None and drawing.active:
             self.window.route_panel_controller.append_drawing_point_from_context_menu(
@@ -1139,14 +1163,13 @@ class MapInteractionController:
                 "x": int(round(float(resource_x))),
                 "y": int(round(float(resource_y))),
                 "node_type": "collect",
-                "layer": "",
                 "visited": False,
             }
             if isinstance(point_fields, dict):
                 for key in ("label", "type", "typeId", "radius", "sourceId", "manual", "node_type", "layer"):
                     if key in point_fields:
                         new_point[key] = point_fields[key]
-            new_point["layer"] = str(new_point.get("layer") or "").strip()
+            new_point["layer"] = resource_metadata.point_layer_or_default(new_point.get("layer"))
             target = overrides.get(rid)
             if target is None:
                 try:

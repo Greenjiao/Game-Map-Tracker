@@ -592,6 +592,7 @@ QCheckBox::indicator:checked:hover {{
             "points": list(state.draft_points),
             "node_type": state.node_type,
             "insert_at_end": state.insert_at_end,
+            "annotation_point_mode": state.annotation_point_mode,
             "add_node_annotation": state.add_node_annotation,
             "same_annotation_type": state.same_annotation_type,
             "annotation_type": state.annotation_type,
@@ -723,6 +724,10 @@ QCheckBox::indicator:checked:hover {{
         loop_check.toggled.connect(self.set_route_drawing_loop)
         controls_layout.addWidget(loop_check)
 
+        annotation_point_mode_check = QCheckBox(strings.ROUTE_DRAWING_ANNOTATION_POINT_MODE)
+        annotation_point_mode_check.toggled.connect(self.set_route_drawing_annotation_point_mode)
+        controls_layout.addWidget(annotation_point_mode_check)
+
         add_annotation_check = QCheckBox(strings.ROUTE_DRAWING_ADD_ANNOTATION)
         add_annotation_check.toggled.connect(self.set_route_drawing_add_annotation)
         controls_layout.addWidget(add_annotation_check)
@@ -750,6 +755,7 @@ QCheckBox::indicator:checked:hover {{
             "virtual": virtual_btn,
             "insert_at_end": insert_at_end_check,
             "loop": loop_check,
+            "annotation_point_mode": annotation_point_mode_check,
             "add_annotation": add_annotation_check,
             "same_annotation": same_annotation_check,
             "select_annotation": select_annotation_btn,
@@ -837,6 +843,11 @@ QCheckBox::indicator:checked:hover {{
             loop_check.blockSignals(True)
             loop_check.setChecked(bool(state.loop))
             loop_check.blockSignals(False)
+        annotation_point_mode_check = buttons.get("annotation_point_mode")
+        if annotation_point_mode_check is not None:
+            annotation_point_mode_check.blockSignals(True)
+            annotation_point_mode_check.setChecked(bool(state.annotation_point_mode))
+            annotation_point_mode_check.blockSignals(False)
         buttons["same_annotation"].setVisible(add_annotation)
         buttons["select_annotation"].setVisible(add_annotation and same_annotation)
         buttons["select_annotation"].setText(state.annotation_type or strings.ROUTE_DRAWING_SELECT_ANNOTATION_TYPE)
@@ -1495,7 +1506,6 @@ QCheckBox::indicator:checked:hover {{
             else state.node_type
             if state.node_type in {"collect", "teleport", "virtual"}
             else "collect",
-            "layer": "",
             "_drawing_new": True,
         }
         if isinstance(annotation, dict):
@@ -1507,7 +1517,7 @@ QCheckBox::indicator:checked:hover {{
             for key in ("label", "radius", "sourceId", "manual", "layer"):
                 if key in annotation:
                     point[key] = annotation[key]
-        point["layer"] = str(point.get("layer") or "").strip()
+        point["layer"] = resource_metadata.point_layer_or_default(point.get("layer"))
         if index_override is None:
             index = self._drawing_insert_index(x, y)
         else:
@@ -2174,6 +2184,13 @@ QCheckBox::indicator:checked:hover {{
             state.same_annotation_type = False
             state.annotation_type = ""
             state.annotation_type_id = ""
+        self._sync_route_drawing_ui()
+
+    def set_route_drawing_annotation_point_mode(self, enabled: bool) -> None:
+        state = self.window.route_drawing_state
+        if not state.active:
+            return
+        state.annotation_point_mode = bool(enabled)
         self._sync_route_drawing_ui()
 
     def set_route_drawing_same_annotation(self, enabled: bool) -> None:
