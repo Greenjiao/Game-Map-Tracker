@@ -19,6 +19,7 @@
       "typeId": "5",
       "type": "魔力之源",
       "label": "风眠圣所的魔力之源",
+      "layer": "卡洛西亚大陆",
       "sourceId": 346072334336
     },
     {
@@ -28,6 +29,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801105,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -37,6 +39,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801119,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -46,6 +49,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801120,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -56,6 +60,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 613320286208
     },
     {
@@ -65,6 +70,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801118,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -74,6 +80,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801117,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -84,6 +91,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 656158617600
     },
     {
@@ -93,6 +101,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801100,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -102,6 +111,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801098,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -111,6 +121,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801110,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -121,6 +132,7 @@
       "typeId": "6",
       "type": "炼金釜",
       "label": "炼金台",
+      "layer": "卡洛西亚大陆",
       "sourceId": 355557134336
     },
     {
@@ -131,6 +143,7 @@
       "sourceId": 2301131,
       "node_type": "collect",
       "x": 1710,
+      "layer": "卡洛西亚大陆",
       "y": 4486
     },
     {
@@ -138,6 +151,7 @@
       "x": 1710,
       "y": 4538,
       "node_type": "virtual",
+      "layer": "卡洛西亚大陆",
       "label": "引路点 1"
     },
     {
@@ -147,6 +161,7 @@
       "node_type": "collect",
       "x": 1773,
       "y": 4543,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 1"
     },
     {
@@ -156,6 +171,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801109,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -163,6 +179,7 @@
       "node_type": "virtual",
       "x": 1661,
       "y": 4511,
+      "layer": "卡洛西亚大陆",
       "label": "引路点 2"
     },
     {
@@ -172,6 +189,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801081,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -181,6 +199,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801079,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -191,6 +210,7 @@
       "sourceId": 2201114,
       "node_type": "collect",
       "x": 1728,
+      "layer": "卡洛西亚大陆",
       "y": 4396
     },
     {
@@ -201,6 +221,7 @@
       "sourceId": 2201115,
       "node_type": "collect",
       "x": 1779,
+      "layer": "卡洛西亚大陆",
       "y": 4388
     },
     {
@@ -210,6 +231,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801080,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -220,6 +242,7 @@
       "sourceId": 130309,
       "node_type": "teleport",
       "x": 2428,
+      "layer": "卡洛西亚大陆",
       "y": 5078
     },
     {
@@ -229,6 +252,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801088,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -238,6 +262,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801089,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -245,6 +270,7 @@
       "x": 2129,
       "y": 5084,
       "node_type": "virtual",
+      "layer": "卡洛西亚大陆",
       "label": "引路点 3"
     },
     {
@@ -254,6 +280,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801112,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -263,6 +290,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 801087,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -273,6 +301,7 @@
       "sourceId": 801086,
       "node_type": "collect",
       "x": 2152,
+      "layer": "卡洛西亚大陆",
       "y": 5253
     },
     {
@@ -283,6 +312,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 940570103808
     },
     {
@@ -292,6 +322,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703362,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -299,6 +330,7 @@
       "x": 3512,
       "y": 4785,
       "node_type": "virtual",
+      "layer": "卡洛西亚大陆",
       "label": "引路点 4"
     },
     {
@@ -308,6 +340,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703361,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -317,6 +350,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703360,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -326,6 +360,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703295,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -335,6 +370,7 @@
       "node_type": "collect",
       "x": 3619,
       "y": 4566,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 3"
     },
     {
@@ -344,6 +380,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703296,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -354,6 +391,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 106355511296
     },
     {
@@ -363,6 +401,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703304,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -372,6 +411,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703302,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -381,6 +421,7 @@
       "node_type": "collect",
       "x": 4179,
       "y": 4204,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 4"
     },
     {
@@ -390,6 +431,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703303,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -399,6 +441,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703370,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -408,6 +451,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703305,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -417,6 +461,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703306,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -426,6 +471,7 @@
       "node_type": "collect",
       "x": 3869,
       "y": 4415,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 5"
     },
     {
@@ -435,6 +481,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703308,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -444,6 +491,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703373,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -454,6 +502,7 @@
       "typeId": "5",
       "type": "魔力之源",
       "label": "回填山涧的魔力之源",
+      "layer": "卡洛西亚大陆",
       "sourceId": 966919262208
     },
     {
@@ -463,6 +512,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703380,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -472,6 +522,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703316,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -481,6 +532,7 @@
       "node_type": "collect",
       "x": 3880,
       "y": 3869,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 6"
     },
     {
@@ -490,6 +542,7 @@
       "node_type": "collect",
       "x": 3915,
       "y": 3884,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 7"
     },
     {
@@ -499,6 +552,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703315,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -508,6 +562,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703371,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -517,6 +572,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703384,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -527,6 +583,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 216584224768
     },
     {
@@ -536,6 +593,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703369,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -545,6 +603,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703366,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -554,6 +613,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703368,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -563,6 +623,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703367,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -573,6 +634,7 @@
       "typeId": "6",
       "type": "炼金釜",
       "label": "炼金台",
+      "layer": "卡洛西亚大陆",
       "sourceId": 50670624768
     },
     {
@@ -582,6 +644,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703359,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -589,6 +652,7 @@
       "x": 4626,
       "y": 4260,
       "node_type": "virtual",
+      "layer": "卡洛西亚大陆",
       "label": "引路点 5"
     },
     {
@@ -598,6 +662,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703358,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -605,6 +670,7 @@
       "node_type": "virtual",
       "x": 4715,
       "y": 4153,
+      "layer": "卡洛西亚大陆",
       "label": "引路点 6"
     },
     {
@@ -614,6 +680,7 @@
       "node_type": "collect",
       "label": "无花果树 8",
       "typeId": "100212",
+      "layer": "卡洛西亚大陆",
       "type": "无花果树"
     },
     {
@@ -623,6 +690,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703355,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -632,6 +700,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703354,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -642,6 +711,7 @@
       "typeId": "6",
       "type": "炼金釜",
       "label": "炼金台",
+      "layer": "卡洛西亚大陆",
       "sourceId": 766696529920
     },
     {
@@ -651,6 +721,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703350,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -660,6 +731,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703353,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -669,6 +741,7 @@
       "node_type": "collect",
       "x": 4618,
       "y": 3442,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 9"
     },
     {
@@ -678,6 +751,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703351,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -688,6 +762,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 517060579328
     },
     {
@@ -698,6 +773,7 @@
       "sourceId": 2703333,
       "node_type": "collect",
       "x": 5267,
+      "layer": "卡洛西亚大陆",
       "y": 4502
     },
     {
@@ -707,6 +783,7 @@
       "node_type": "collect",
       "x": 5236,
       "y": 4355,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 11"
     },
     {
@@ -716,6 +793,7 @@
       "node_type": "collect",
       "x": 5339,
       "y": 4356,
+      "layer": "卡洛西亚大陆",
       "label": "无花果树 12"
     },
     {
@@ -725,6 +803,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703398,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -734,6 +813,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703346,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -743,6 +823,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703349,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -752,6 +833,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703347,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -761,6 +843,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703348,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -771,6 +854,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 364741033984
     },
     {
@@ -780,6 +864,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703391,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -789,6 +874,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703392,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -796,6 +882,7 @@
       "node_type": "virtual",
       "x": 5595,
       "y": 5038,
+      "layer": "卡洛西亚大陆",
       "label": "引路点 7"
     },
     {
@@ -805,6 +892,7 @@
       "node_type": "collect",
       "x": 5659,
       "y": 5081,
+      "layer": "卡洛西亚大陆",
       "label": "魔力果树 1"
     },
     {
@@ -815,6 +903,7 @@
       "typeId": "5",
       "type": "魔力之源",
       "label": "望风半岛的魔力之源",
+      "layer": "卡洛西亚大陆",
       "sourceId": 122760921088
     },
     {
@@ -824,6 +913,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703388,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -833,6 +923,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703387,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -840,6 +931,7 @@
       "x": 5895,
       "y": 4783,
       "node_type": "virtual",
+      "layer": "卡洛西亚大陆",
       "label": "引路点 8"
     },
     {
@@ -849,6 +941,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703386,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -859,6 +952,7 @@
       "typeId": "9",
       "type": "大型眠枭庇护所",
       "label": "大型眠枭庇护所",
+      "layer": "卡洛西亚大陆",
       "sourceId": 884771729408
     },
     {
@@ -869,6 +963,7 @@
       "sourceId": 2703321,
       "node_type": "collect",
       "x": 6437,
+      "layer": "卡洛西亚大陆",
       "y": 4316
     },
     {
@@ -878,6 +973,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703401,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -887,6 +983,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703399,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -896,6 +993,7 @@
       "type": "可可果树",
       "typeId": "100211",
       "sourceId": 2703400,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     }
   ]

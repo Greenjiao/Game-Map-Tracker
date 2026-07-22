@@ -14,6 +14,7 @@
       "y": 5749,
       "label": "节点 1",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -21,6 +22,7 @@
       "y": 5722,
       "label": "节点 2",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -28,6 +30,7 @@
       "y": 5654,
       "label": "节点 3",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -35,6 +38,7 @@
       "y": 5561,
       "label": "节点 4",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -42,6 +46,7 @@
       "y": 5546,
       "label": "节点 5",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -49,6 +54,7 @@
       "y": 5539,
       "label": "节点 6",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -56,6 +62,7 @@
       "y": 5588,
       "label": "节点 7",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -63,6 +70,7 @@
       "y": 5627,
       "label": "节点 8",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -70,11 +78,13 @@
       "y": 5715,
       "label": "节点 9",
       "radius": 30,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
       "x": 2896,
       "y": 4517,
+      "layer": "卡洛西亚大陆",
       "node_type": "collect"
     },
     {
@@ -83,6 +93,7 @@
       "x": 4019,
       "y": 4596,
       "typeId": "17310030001",
+      "layer": "卡洛西亚大陆",
       "type": "宝箱"
     },
     {
@@ -91,6 +102,7 @@
       "y": 4717,
       "node_type": "collect",
       "typeId": "17310030001",
+      "layer": "卡洛西亚大陆",
       "type": "宝箱"
     },
     {
@@ -99,6 +111,7 @@
       "y": 4774,
       "node_type": "collect",
       "typeId": "17310030029",
+      "layer": "卡洛西亚大陆",
       "type": "挑战小游戏"
     }
   ]

@@ -1,6 +1,6 @@
 {
   "version": "0.1.6",
-  "notes": "增加内置紫星星路线，程序本体增加标注别名识别做兼容",
+  "notes": "添加火焰石、收录乐谱点位;程序增加大小区域名称显示,补充缺少icon，增加标注标签显示与自定义(可用于区分地上地下点位);为标注点位添加地图层级相关操作，为未来适配多层级地图切换预留操作空间;为纯净绘制工具栏添加标注加点模式",
   "app_status": "notice",
   "app_status_message": "本工具不涉及游戏内存读写与控制鼠标键盘的输入输出，仅通过观看玩家肉眼能看到的小地图内容进行优化体验；本工具免费分享仅供学习交流，禁止二次倒卖，禁止将本工具用于非法用途，使用本工具进行的行为与作者无关",
   "app_notice_force_prompt": true,
@@ -355,7 +355,7 @@
     {
       "path": "_internal/base_library.zip",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/_internal/base_library.zip",
-      "sha256": "030a49352c77b5a1a2d7b8aed28fa49aebfea447278d58d045f8fba3afadb70e",
+      "sha256": "cc0daa3a9325fd8667ff8b8cfbea87432d7a4c268208d3c31300c548bcec7505",
       "size": 1388164
     },
     {
@@ -1897,27 +1897,27 @@
     {
       "path": "annotations/[补充不咕钟]S3_8192.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/annotations/%5B%E8%A1%A5%E5%85%85%E4%B8%8D%E5%92%95%E9%92%9F%5DS3_8192.json",
-      "sha256": "ae334f33da22e2fa4581dcb0c5f0e9d9e0bfa3f1c80e332136eb9d7f3a94b04e",
-      "size": 1196610
+      "sha256": "2aa9add6420056d40a43bb1d4357acff9986a759bb00aa4bdd59a8982b51e488",
+      "size": 1488661
     },
     {
       "path": "config.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/config.json",
-      "sha256": "f4088391cc1405cb4200ec15ce55e2645931b7ef70f658fe18e94bda6bda0fe0",
-      "size": 3711,
+      "sha256": "c1a27d8b38bb490f107fa0bb8393e578fcb829eca05b409c05ec4d323de6a3f9",
+      "size": 3940,
       "install": "merge_config"
     },
     {
       "path": "GMT-N.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/GMT-N.exe",
-      "sha256": "bde94554bf27103b6571bc14b592b03c4c399a681442fdb8bbe5790edf517791",
-      "size": 9081735
+      "sha256": "298c04893fee4c4eac2e894de019c8db06f5d244d117079043d61c1d70d7d0cb",
+      "size": 9098262
     },
     {
-      "path": "README.md",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/README.md",
-      "sha256": "c9cf2bb3b60e7076b42415ca2071f2f4f7905ec980e683d16beaf93213bd027a",
-      "size": 3968
+      "path": "maps/README.md",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/maps/README.md",
+      "sha256": "e36127f642f842edb654a72185eab4a982c2946915b2e75e212e42eebfd7b7fa",
+      "size": 458
     },
     {
       "path": "maps/卡洛西亚大陆/S3_8192.png",
@@ -1926,94 +1926,514 @@
       "size": 71205454
     },
     {
+      "path": "README.md",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/README.md",
+      "sha256": "c9cf2bb3b60e7076b42415ca2071f2f4f7905ec980e683d16beaf93213bd027a",
+      "size": 3968
+    },
+    {
+      "path": "routes/其他/1.示例跑图路线.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/1.%E7%A4%BA%E4%BE%8B%E8%B7%91%E5%9B%BE%E8%B7%AF%E7%BA%BF.json",
+      "sha256": "6476f0a7d5a13326a3583e85579154e4cb8a87f8f87d2144734f02cea1f0ff75",
+      "size": 2643
+    },
+    {
+      "path": "routes/其他/乌拉塔1012点位采集路线（非全收集）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/%E4%B9%8C%E6%8B%89%E5%A1%941012%E7%82%B9%E4%BD%8D%E9%87%87%E9%9B%86%E8%B7%AF%E7%BA%BF%EF%BC%88%E9%9D%9E%E5%85%A8%E6%94%B6%E9%9B%86%EF%BC%89.json",
+      "sha256": "1e4899d6adbb45dc641a3f3fbc1870ea9b612138f00520d1955b7c213396e187",
+      "size": 140864
+    },
+    {
+      "path": "routes/其他/天天做梦抖音：78983697482 全图收集路线.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%E5%85%A8%E5%9B%BE%E6%94%B6%E9%9B%86%E8%B7%AF%E7%BA%BF.json",
+      "sha256": "bc0cd331de6b486e6c0d901e6ce0886232d1a6a2e853f9282dd45548bed1ac4c",
+      "size": 143810
+    },
+    {
+      "path": "routes/其他/奥贝斯坦湖（39-44）6个眠枭之星.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/%E5%A5%A5%E8%B4%9D%E6%96%AF%E5%9D%A6%E6%B9%96%EF%BC%8839-44%EF%BC%896%E4%B8%AA%E7%9C%A0%E6%9E%AD%E4%B9%8B%E6%98%9F.json",
+      "sha256": "d37432ed95a2120a61d1c773aeb2716bc9277cc4718fc39b3525915964f6d7f2",
+      "size": 1149
+    },
+    {
+      "path": "routes/其他/聆风塔地（32-38）7个眠枭之星.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/%E8%81%86%E9%A3%8E%E5%A1%94%E5%9C%B0%EF%BC%8832-38%EF%BC%897%E4%B8%AA%E7%9C%A0%E6%9E%AD%E4%B9%8B%E6%98%9F.json",
+      "sha256": "61f725dfce20ee3b6661eef352ffeda4828be99e4917b1023307f27b14950c37",
+      "size": 1276
+    },
+    {
+      "path": "routes/其他/轻风山（45-52）8个眠枭之星.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/%E8%BD%BB%E9%A3%8E%E5%B1%B1%EF%BC%8845-52%EF%BC%898%E4%B8%AA%E7%9C%A0%E6%9E%AD%E4%B9%8B%E6%98%9F.json",
+      "sha256": "e49c9d9b41e1a648e049b69e63fda20160f7103381f62e091b5cd5628578206d",
+      "size": 1417
+    },
+    {
       "path": "routes/其他/青椒自用-跳跃75个果树.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%85%B6%E4%BB%96/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E8%B7%B3%E8%B7%8375%E4%B8%AA%E6%9E%9C%E6%A0%91.json",
-      "sha256": "52ba978d808fabb3539450e91423d49b6ca3f9b0dd6a4c12a4a12dafd0f4df30",
-      "size": 21325
+      "sha256": "9a7fb49a4cd3e48d060d5be026f59a4841126ce247bc496917fc530d1c6c5176",
+      "size": 25049
+    },
+    {
+      "path": "routes/地区路线/半岛__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E5%8D%8A%E5%B2%9B__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "161fbeefc603af954b2395aa2d95bcb6d184001c01d4778323dfdf3fd40db03a",
+      "size": 8299
+    },
+    {
+      "path": "routes/地区路线/向阳花__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E5%90%91%E9%98%B3%E8%8A%B1__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "6e0e858fb67736ffa3c9aebdfe5ef9a2aee301b60fbbc7ec9ddb09cb12408200",
+      "size": 12715
+    },
+    {
+      "path": "routes/地区路线/山地__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E5%B1%B1%E5%9C%B0__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "309676af63219f02d3312fd122fcfa371f73549ec1bd9287527e9c6f856851a2",
+      "size": 37865
+    },
+    {
+      "path": "routes/地区路线/比德大道__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E6%AF%94%E5%BE%B7%E5%A4%A7%E9%81%93__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "495478ffa71caef6b298c2c4534fae6028d9bdb75392a6d98787322d57aea0ea",
+      "size": 3055
+    },
+    {
+      "path": "routes/地区路线/沼泽__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E6%B2%BC%E6%B3%BD__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "6583bc8aeec1dd3b3245f5d9be3658423cb55447bd9b36380091d7bbdbb298d6",
+      "size": 35641
+    },
+    {
+      "path": "routes/地区路线/海滩__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E6%B5%B7%E6%BB%A9__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "a862c4b49e1a56b7998afcd965149823bceabbf2b7dc55c0783a0986140e05ad",
+      "size": 25216
+    },
+    {
+      "path": "routes/地区路线/港口__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E6%B8%AF%E5%8F%A3__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "1cb4bbb0ebb868bd9f945483f530b36d22e9c861854b6b085984cea5667fea90",
+      "size": 11335
+    },
+    {
+      "path": "routes/地区路线/王国城堡__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E7%8E%8B%E5%9B%BD%E5%9F%8E%E5%A0%A1__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "447d5f9dab06259c37cad459d00a18c4aa72997601461dbcbf8bb5dac25f5574",
+      "size": 12439
+    },
+    {
+      "path": "routes/地区路线/监狱__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E7%9B%91%E7%8B%B1__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "8ec1400f77d1b78e964d318fcc27662476409d8aa4dc2a09b48edb5057719f6f",
+      "size": 9817
+    },
+    {
+      "path": "routes/地区路线/矿石__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E7%9F%BF%E7%9F%B3__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "5744535a4a635fba99358d3b1d1d440d396d31bc0c4506d55b5349a284ff332a",
+      "size": 26315
+    },
+    {
+      "path": "routes/地区路线/草皮__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E8%8D%89%E7%9A%AE__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "1410dc7873f3b7f8f9ca3d2ccd7ef0d13aadc9d6ed482a7cf6627a7ccce93929",
+      "size": 17432
+    },
+    {
+      "path": "routes/地区路线/雪山__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E9%9B%AA%E5%B1%B1__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "86f10236c0331e026fafef6c3edfa5f55620648ceed5565bcdab7849a980bbf7",
+      "size": 14513
+    },
+    {
+      "path": "routes/地区路线/魔法之家__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%9C%B0%E5%8C%BA%E8%B7%AF%E7%BA%BF/%E9%AD%94%E6%B3%95%E4%B9%8B%E5%AE%B6__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "08af1a45938812bb238eff0707bcc0859bd06ebe0a0771d139249100502bc687",
+      "size": 8299
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线10_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF10_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "23283b51368698c038988b2b57eeb57ccce952ea2a138362330e76d90832bc9b",
+      "size": 7822
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线11_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF11_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "cb70e843e397f3d901ad6449e86c93621ce5970716afecea3d8c0c5881e57833",
+      "size": 5548
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线1_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF1_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "2a2489228700638beaa9f7c7e466cd29053d42a64486e027ee8c104d417e467d",
+      "size": 14972
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线2_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF2_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "38c5650fb9bd2848a34ac2b71066971a382f727d2a100eba734b80b29ef9b079",
+      "size": 12934
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线3_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF3_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "73da551aeaaf8b4f6e65cb34513b27cecf03fdaba8441c3a08d448f441f456be",
+      "size": 17533
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线4_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF4_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "bdea865a04ce32736f94c34b7d65bceb3997ac78948606e793fe2ffc4b6b981c",
+      "size": 8326
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线5_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF5_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "8356652b0f69ddc0f6be8a246aeb92b0d87cb6ca05569dc3f9a382e91e780edb",
+      "size": 18035
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线6_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF6_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "11de7ef6363965b7eebeeb71e3b912d4586bc679bda1d80ac063dd422943b5e0",
+      "size": 21101
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线7_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF7_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "0094c7398d6192dc74100d5cb1cc78398753a9fc7c966037e855c4d4dca53d09",
+      "size": 9859
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线8_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF8_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "22420e801da8e20f955b1873ecd6723fe504137a3d00a797d680dd14d1ac5f37",
+      "size": 9862
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿速跑路线9_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%80%9F%E8%B7%91%E8%B7%AF%E7%BA%BF9_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "a5f1da25675886c66238d64773845109f926a47c534fff283923d16519375548",
+      "size": 9859
+    },
+    {
+      "path": "routes/奔波鼠路线-一枕月眠/奔波鼠挖矿风眠省路线3-01_新格式.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E5%A5%94%E6%B3%A2%E9%BC%A0%E8%B7%AF%E7%BA%BF-%E4%B8%80%E6%9E%95%E6%9C%88%E7%9C%A0/%E5%A5%94%E6%B3%A2%E9%BC%A0%E6%8C%96%E7%9F%BF%E9%A3%8E%E7%9C%A0%E7%9C%81%E8%B7%AF%E7%BA%BF3-01_%E6%96%B0%E6%A0%BC%E5%BC%8F.json",
+      "sha256": "0876c1e8f2e7ab5226733bdc69ea0d2f699a8d2a273c5ea7446df70ec5aefd6c",
+      "size": 116937
+    },
+    {
+      "path": "routes/植物/伞伞菌.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E4%BC%9E%E4%BC%9E%E8%8F%8C.json",
+      "sha256": "fa48eb9097644ad5dad8ab170c132ae2a934aa52fbeba5e97d050b9efd7030c7",
+      "size": 19934
+    },
+    {
+      "path": "routes/植物/向阳花__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E5%90%91%E9%98%B3%E8%8A%B1__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "f19f2fee1e87af27f0414c902fc34fcf77b2bbfeedaa03ae76340ac0cf11130e",
+      "size": 12715
+    },
+    {
+      "path": "routes/植物/喵喵草.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E5%96%B5%E5%96%B5%E8%8D%89.json",
+      "sha256": "d648ffbe1108d55094089b3b3d8f5e9dabf0423fe6afca89fb31b49176a1c201",
+      "size": 8437
+    },
+    {
+      "path": "routes/植物/喷气菇.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E5%96%B7%E6%B0%94%E8%8F%87.json",
+      "sha256": "ceadbaa360a8a482627a0b99ae0a91a4e4c2abe60415b97319cd8fa36bf28fb5",
+      "size": 7195
+    },
+    {
+      "path": "routes/植物/大嘴花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E5%A4%A7%E5%98%B4%E8%8A%B1.json",
+      "sha256": "6b0873d8ad19de217a2a2d901593ef2b8c91ccc4c42ee99279c0f7fcc21c597a",
+      "size": 2642
+    },
+    {
+      "path": "routes/植物/幽幽草.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E5%B9%BD%E5%B9%BD%E8%8D%89.json",
+      "sha256": "ee925dd06b8370f022c5e50569b72d765c37369eb70c251fe997647c5781eacf",
+      "size": 1527
+    },
+    {
+      "path": "routes/植物/彩玉花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E5%BD%A9%E7%8E%89%E8%8A%B1.json",
+      "sha256": "ecc7e5d881216846efa407a06bc52824325b0664aec44bddd559cedf218321ae",
+      "size": 2358
+    },
+    {
+      "path": "routes/植物/恶魔雪茄.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%81%B6%E9%AD%94%E9%9B%AA%E8%8C%84.json",
+      "sha256": "9181dcf3e92d9fba6dd1d1ab5380d0d492dad5603bb7a3bb01888f8f71e56b60",
+      "size": 1390
+    },
+    {
+      "path": "routes/植物/星霜花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%98%9F%E9%9C%9C%E8%8A%B1.json",
+      "sha256": "234de0976bf01b72248b9258718dd7651ae0d14cfed45d7a17b9baa6b71abbd0",
+      "size": 6644
+    },
+    {
+      "path": "routes/植物/杏黄贝.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%9D%8F%E9%BB%84%E8%B4%9D.json",
+      "sha256": "2335d6519112d456f69d684cf7baba290adb9364b7c60a4dea538989e3828aae",
+      "size": 4149
+    },
+    {
+      "path": "routes/植物/洋红珊瑚.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%B4%8B%E7%BA%A2%E7%8F%8A%E7%91%9A.json",
+      "sha256": "14f257dc952a3d0e68ae17ee98204e425e478df354b5005f06f6ee338ad252b9",
+      "size": 1530
+    },
+    {
+      "path": "routes/植物/流星兰.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%B5%81%E6%98%9F%E5%85%B0.json",
+      "sha256": "af6bd186fbfa33c45874b309977e954cbdef13f23356c4da280812a841eda0ec",
+      "size": 9669
+    },
+    {
+      "path": "routes/植物/海桑花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%B5%B7%E6%A1%91%E8%8A%B1.json",
+      "sha256": "a74732309a2c95730ba6a47850d7a2a33ba33e5918a09c0d6745867417f17e7e",
+      "size": 2493
+    },
+    {
+      "path": "routes/植物/海珊瑚.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%B5%B7%E7%8F%8A%E7%91%9A.json",
+      "sha256": "69fc806e3cb342b503cada71b2d72d46a8b99575d4be5bfd4fafc83c4f7ee8ff",
+      "size": 3054
+    },
+    {
+      "path": "routes/植物/海神花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E6%B5%B7%E7%A5%9E%E8%8A%B1.json",
+      "sha256": "98d145eddc59f744ac7115c95d51635470a90e46c1dfa20b45be2a14a072d4ce",
+      "size": 8299
+    },
+    {
+      "path": "routes/植物/火焰花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E7%81%AB%E7%84%B0%E8%8A%B1.json",
+      "sha256": "779a038be66ea93d130339541bb640d7cbae862c140613fadd116c667c4daa18",
+      "size": 716
+    },
+    {
+      "path": "routes/植物/睡铃.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E7%9D%A1%E9%93%83.json",
+      "sha256": "31e9925c0b5eaa10e067da7e0b593af8e2cefe713992039ac1919fe9733fceb2",
+      "size": 6367
+    },
+    {
+      "path": "routes/植物/石耳.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E7%9F%B3%E8%80%B3.json",
+      "sha256": "60c96e9c04e373a0fefae9214ebd9adf147d74c8dd8471f63508d836d3a24bc1",
+      "size": 19100
+    },
+    {
+      "path": "routes/植物/紫雀花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E7%B4%AB%E9%9B%80%E8%8A%B1.json",
+      "sha256": "b5c157fd92d7e58426d297d3cf38a27bdfccaecb69c52a7be0ed7af9b7be0494",
+      "size": 5677
+    },
+    {
+      "path": "routes/植物/荧光兰.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E8%8D%A7%E5%85%89%E5%85%B0.json",
+      "sha256": "e424b85cb68efb01262bcecbecb1b3919e0b00eb6418b031e5159a71ee87c567",
+      "size": 5943
+    },
+    {
+      "path": "routes/植物/蓝掌.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E8%93%9D%E6%8E%8C.json",
+      "sha256": "da686ac2ad904622ddb646e424ca11e538f759ac05d83868eb5c314d6165fa2e",
+      "size": 5953
+    },
+    {
+      "path": "routes/植物/藻羽花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E8%97%BB%E7%BE%BD%E8%8A%B1.json",
+      "sha256": "b0f9abe551218e56137478b80664a8294ab9ee7396f49289c3496aaa93e1159f",
+      "size": 3459
+    },
+    {
+      "path": "routes/植物/蜜黄菌.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E8%9C%9C%E9%BB%84%E8%8F%8C.json",
+      "sha256": "946cb199c1cfc9877429b36c91ed9d078e87dec5885888814a5b8194abcd57eb",
+      "size": 6495
+    },
+    {
+      "path": "routes/植物/象牙花.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E8%B1%A1%E7%89%99%E8%8A%B1.json",
+      "sha256": "eb6ef5cf4a3d67d8149874bf345ba57cc052e06e1e189152373afce370160d63",
+      "size": 5954
+    },
+    {
+      "path": "routes/植物/雪菇.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E9%9B%AA%E8%8F%87.json",
+      "sha256": "e2e069773940dffb3152b1b684b23d2ae8e2208175eb7a721c9517e0dd58a4f1",
+      "size": 6368
+    },
+    {
+      "path": "routes/植物/风卷草.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E9%A3%8E%E5%8D%B7%E8%8D%89.json",
+      "sha256": "f0e99bea809e1c4d8e7f4d974cde83b592ff633d1a5d78cdd5e517e494a5a80a",
+      "size": 3193
+    },
+    {
+      "path": "routes/植物/骨片.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E6%A4%8D%E7%89%A9/%E9%AA%A8%E7%89%87.json",
+      "sha256": "e8fcf466ee2ec93b2aea2e4431751788921bbfbbeb61f5b60867e4342e4969d8",
+      "size": 2076
+    },
+    {
+      "path": "routes/特定精灵球/光合球 天天做梦 抖音：78983697482 （10可tp 有8朵分散未标记）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E5%85%89%E5%90%88%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%EF%BC%8810%E5%8F%AFtp%20%E6%9C%898%E6%9C%B5%E5%88%86%E6%95%A3%E6%9C%AA%E6%A0%87%E8%AE%B0%EF%BC%89.json",
+      "sha256": "0a099697841e5be6f3903639984348620664c6a149e2703dba9978cc0682347e",
+      "size": 24545
+    },
+    {
+      "path": "routes/特定精灵球/变环球 天天做梦 抖音：78983697482 月兔暗港地下未标记 16号为信仰者村落地下入口 前八个标记为散落的紫雀花 长直线可tp.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E5%8F%98%E7%8E%AF%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%E6%9C%88%E5%85%94%E6%9A%97%E6%B8%AF%E5%9C%B0%E4%B8%8B%E6%9C%AA%E6%A0%87%E8%AE%B0%2016%E5%8F%B7%E4%B8%BA%E4%BF%A1%E4%BB%B0%E8%80%85%E6%9D%91%E8%90%BD%E5%9C%B0%E4%B8%8B%E5%85%A5%E5%8F%A3%20%E5%89%8D%E5%85%AB%E4%B8%AA%E6%A0%87%E8%AE%B0%E4%B8%BA%E6%95%A3%E8%90%BD%E7%9A%84%E7%B4%AB%E9%9B%80%E8%8A%B1%20%E9%95%BF%E7%9B%B4%E7%BA%BF%E5%8F%AFtp.json",
+      "sha256": "c8a0a6d99b5748bcb48685ca185f2df2286c32d03bc6336057021154409b3d30",
+      "size": 13981
+    },
+    {
+      "path": "routes/特定精灵球/天天做梦 抖音：78983697482 全图矿石收集（月兔暗巷地下未标记 78 173 203 281 329 335为传送点）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%E5%85%A8%E5%9B%BE%E7%9F%BF%E7%9F%B3%E6%94%B6%E9%9B%86%EF%BC%88%E6%9C%88%E5%85%94%E6%9A%97%E5%B7%B7%E5%9C%B0%E4%B8%8B%E6%9C%AA%E6%A0%87%E8%AE%B0%2078%20173%20203%20281%20329%20335%E4%B8%BA%E4%BC%A0%E9%80%81%E7%82%B9%EF%BC%89.json",
+      "sha256": "fcd4f0badc2ab6b1729707eddff9c9449a70426ff2e0d707a6d7c967efa4b3a6",
+      "size": 48856
+    },
+    {
+      "path": "routes/特定精灵球/好战球 天天做梦 抖音：78983697482 （53为传送点）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E5%A5%BD%E6%88%98%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%EF%BC%8853%E4%B8%BA%E4%BC%A0%E9%80%81%E7%82%B9%EF%BC%89.json",
+      "sha256": "9cc0280976c5bd0610a76d40abe11ee9eeb53390116070f7fe075cd3c878d002",
+      "size": 31495
+    },
+    {
+      "path": "routes/特定精灵球/暗星球 天天做梦 抖音：78983697482.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E6%9A%97%E6%98%9F%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482.json",
+      "sha256": "1d2e3327278076783ac8f28d75efd4de8fbef8350c38d385e9bdc160a8ce248c",
+      "size": 8599
+    },
+    {
+      "path": "routes/特定精灵球/绝缘球 天天做梦 抖音：78983697482 （1 7 13）为传送点.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E7%BB%9D%E7%BC%98%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%EF%BC%881%207%2013%EF%BC%89%E4%B8%BA%E4%BC%A0%E9%80%81%E7%82%B9.json",
+      "sha256": "cc0eb6990d992f0244f96f1cc846f79f1c8017fc5a4bd2748abf18ae0fb07d1e",
+      "size": 10945
+    },
+    {
+      "path": "routes/特定精灵球/网兜球 天天做梦 抖音：78983697482.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E7%BD%91%E5%85%9C%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482.json",
+      "sha256": "8d6aca493868383e9a691722ef02850bc8f017a7d52d5402259cc007567774f2",
+      "size": 25935
+    },
+    {
+      "path": "routes/特定精灵球/美妙球 天天做梦 抖音：78983697482 （64号tp）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E7%BE%8E%E5%A6%99%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%20%EF%BC%8864%E5%8F%B7tp%EF%BC%89.json",
+      "sha256": "b594ad547f9770de477a6e2335e4c2fefce9686932c5890e3cab583434b251dc",
+      "size": 25657
+    },
+    {
+      "path": "routes/特定精灵球/调温球 天天做梦 抖音：78983697482（未规划艾普鲁庄园）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%89%B9%E5%AE%9A%E7%B2%BE%E7%81%B5%E7%90%83/%E8%B0%83%E6%B8%A9%E7%90%83%20%E5%A4%A9%E5%A4%A9%E5%81%9A%E6%A2%A6%20%E6%8A%96%E9%9F%B3%EF%BC%9A78983697482%EF%BC%88%E6%9C%AA%E8%A7%84%E5%88%92%E8%89%BE%E6%99%AE%E9%B2%81%E5%BA%84%E5%9B%AD%EF%BC%89.json",
+      "sha256": "3b80e8e4598216ed47a6c7d5604660d39be155e298dd0bd88ed156419e07f31f",
+      "size": 39279
+    },
+    {
+      "path": "routes/矿物/210矿.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/210%E7%9F%BF.json",
+      "sha256": "615803fe8aeeb1ad230c6b0b9b9588a7518dc433a7c4053a8b7bdcb50b0e073b",
+      "size": 29373
+    },
+    {
+      "path": "routes/矿物/346矿.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/346%E7%9F%BF.json",
+      "sha256": "faac5a76d6048502217208c744d1e3406fc8f99bf30abbed158cfc7886924374",
+      "size": 48277
+    },
+    {
+      "path": "routes/矿物/梦兽之森-11个黑矿.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/%E6%A2%A6%E5%85%BD%E4%B9%8B%E6%A3%AE-11%E4%B8%AA%E9%BB%91%E7%9F%BF.json",
+      "sha256": "d3b687b083ca574a2b444d5c7b3a518410e9fa55de55828e9dca36318d1e4335",
+      "size": 1818
+    },
+    {
+      "path": "routes/矿物/沉船矿石.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/%E6%B2%89%E8%88%B9%E7%9F%BF%E7%9F%B3.json",
+      "sha256": "22ad09bd7f1e61454e2f17ec402fe0039c6ad5f2c44d4f0c35a40b654ac045d1",
+      "size": 4980
+    },
+    {
+      "path": "routes/矿物/矿石__来自用户道临沂.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/%E7%9F%BF%E7%9F%B3__%E6%9D%A5%E8%87%AA%E7%94%A8%E6%88%B7%E9%81%93%E4%B8%B4%E6%B2%82.json",
+      "sha256": "9fd350ff7ca480b4cb9a0f705c46143711b93bea1affa5074eded60c2052a65c",
+      "size": 26315
+    },
+    {
+      "path": "routes/矿物/纯净矿石大小一图速偷吃路线.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/%E7%BA%AF%E5%87%80%E7%9F%BF%E7%9F%B3%E5%A4%A7%E5%B0%8F%E4%B8%80%E5%9B%BE%E9%80%9F%E5%81%B7%E5%90%83%E8%B7%AF%E7%BA%BF.json",
+      "sha256": "b4d6f64e61dc00f1865d8e0ffebc15b460f5e111cfa3f00d69848fdec9105fea",
+      "size": 23846
+    },
+    {
+      "path": "routes/矿物/黄矿1线（17矿堆）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/%E9%BB%84%E7%9F%BF1%E7%BA%BF%EF%BC%8817%E7%9F%BF%E5%A0%86%EF%BC%89.json",
+      "sha256": "7c009c94eca98c89722cd64bb6de33398b510db962e67617e9c6ab318066955e",
+      "size": 2629
+    },
+    {
+      "path": "routes/矿物/黄矿2线（24矿堆）.json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%9F%BF%E7%89%A9/%E9%BB%84%E7%9F%BF2%E7%BA%BF%EF%BC%8824%E7%9F%BF%E5%A0%86%EF%BC%89.json",
+      "sha256": "23a6f454b1ae1fa812b4e499fbd76418aed1d9a0a506d66db4e4e84fddd30646",
+      "size": 4009
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/1.金水河谷6个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/1.%E9%87%91%E6%B0%B4%E6%B2%B3%E8%B0%B76%E4%B8%AA.json",
-      "sha256": "700d82c31b1fc859d97624e0bc0628517ec4841332c06968fb16365f66e841d0",
-      "size": 2077
+      "sha256": "6d5af4e46ae686be7e631bff4003036c8aa5dd29fdf88bd4fb972aed107e484a",
+      "size": 2343
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/2.结晶森林10个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/2.%E7%BB%93%E6%99%B6%E6%A3%AE%E6%9E%9710%E4%B8%AA.json",
-      "sha256": "c2468b7920b9a073d2aa5b5fc63f951adc440e10e6cfcbd522ec5c30cf8e5858",
-      "size": 3133
+      "sha256": "ea01177a86ae3d5f347a68b41bddc7fe9aefb89dc7f584bda3c852d89f281a6c",
+      "size": 3551
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/3.仪式镇8个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/3.%E4%BB%AA%E5%BC%8F%E9%95%878%E4%B8%AA.json",
-      "sha256": "1fd1a99480f4c31d0ebec39a221ac67e9dcae81f878a2898d174e7268beafc22",
-      "size": 3001
+      "sha256": "b45f3cf890397060d50a36ad11a345e113f5bf2f58fca60683a0c3a505f3957a",
+      "size": 3419
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/4.巨人裂谷北14个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/4.%E5%B7%A8%E4%BA%BA%E8%A3%82%E8%B0%B7%E5%8C%9714%E4%B8%AA.json",
-      "sha256": "7da9985659f7fbe21e78ff979f6e2677356f8c156f7c2dd46fcc2de22b093cc4",
-      "size": 4280
+      "sha256": "ea8c4034c333f9a130d14e083eda76218a28b6cbe6c34330df2531acf7756795",
+      "size": 4843
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/5.巨人裂谷南12个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/5.%E5%B7%A8%E4%BA%BA%E8%A3%82%E8%B0%B7%E5%8D%9712%E4%B8%AA.json",
-      "sha256": "b7baeaf690da162183619ae9764d43215bcf5a572e9b4518621bc7abfb480f77",
-      "size": 3857
+      "sha256": "b8523c55111c755e02da6010992c1f8603c3c50049c989d8f89dc0a10166b99a",
+      "size": 4401
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/6.威廉古堡15个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/6.%E5%A8%81%E5%BB%89%E5%8F%A4%E5%A0%A115%E4%B8%AA.json",
-      "sha256": "5ba7d19744612946aefe283c45901c2b7ee69216ad4c50d9e812ff1d201c2b5e",
-      "size": 4441
+      "sha256": "2f5abaabd2dc6f36b684783d843de565be5f6a57c2d921fc9093c949f3931260",
+      "size": 5049
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/7.淘晶镇26个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/7.%E6%B7%98%E6%99%B6%E9%95%8726%E4%B8%AA.json",
-      "sha256": "4aa6935acb25f6fe8ebf06e3682c3530cf4fbfe2f9241d99cc82d1e2392a3325",
-      "size": 7832
+      "sha256": "b906b684ab0284c9764b1945b0c8b04bee073af02097733b2e6a6eeb5e5c2f64",
+      "size": 8934
     },
     {
       "path": "routes/紫星星104个分区域(参考B站不知明名)/8.迷雾之森13个.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E7%B4%AB%E6%98%9F%E6%98%9F104%E4%B8%AA%E5%88%86%E5%8C%BA%E5%9F%9F%28%E5%8F%82%E8%80%83B%E7%AB%99%E4%B8%8D%E7%9F%A5%E6%98%8E%E5%90%8D%29/8.%E8%BF%B7%E9%9B%BE%E4%B9%8B%E6%A3%AE13%E4%B8%AA.json",
-      "sha256": "473951f35355ba6f62c6328cd2cf009d8cfc69bccde24858b6c51f6077f0d85f",
-      "size": 4294
-    },
-    {
-      "path": "tools/points_get/teleport/BOSS（精灵首领）.json",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_get/teleport/BOSS%EF%BC%88%E7%B2%BE%E7%81%B5%E9%A6%96%E9%A2%86%EF%BC%89.json",
-      "sha256": "83a435c84a974eaef85d078c4eeb885d0cf5d5da7604b5f17118ef9b21035a9b",
-      "size": 2041
-    },
-    {
-      "path": "tools/points_get/teleport/副本.json",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_get/teleport/%E5%89%AF%E6%9C%AC.json",
-      "sha256": "143ebf80b5a0da14294fb7423c9537cb85f9602b9cc8b9522e329edb28454711",
-      "size": 3302
-    },
-    {
-      "path": "tools/points_get/teleport/炼金台.json",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_get/teleport/%E7%82%BC%E9%87%91%E5%8F%B0.json",
-      "sha256": "8775c432ea832ae18662bc79d500b336a2d883b55ad85be3afa07f447ad58c58",
-      "size": 2784
-    },
-    {
-      "path": "tools/points_get/teleport/眠枭庇护所.json",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_get/teleport/%E7%9C%A0%E6%9E%AD%E5%BA%87%E6%8A%A4%E6%89%80.json",
-      "sha256": "b6757a19f873e405dd280f4a3d2f4677404c7444f1d0514d8c88bb75dd8bf1e4",
-      "size": 5867
-    },
-    {
-      "path": "tools/points_get/teleport/稀兽花种.json",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_get/teleport/%E7%A8%80%E5%85%BD%E8%8A%B1%E7%A7%8D.json",
-      "sha256": "b71ce24ec956f8b91e98a2838d7daec6242a0ec65a5254422dc3c3caa716a247",
-      "size": 4529
-    },
-    {
-      "path": "tools/points_get/teleport/魔力之源（传送点）.json",
-      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_get/teleport/%E9%AD%94%E5%8A%9B%E4%B9%8B%E6%BA%90%EF%BC%88%E4%BC%A0%E9%80%81%E7%82%B9%EF%BC%89.json",
-      "sha256": "9da48199e8ceceb21cded63ce659e0959ecf9f4a70ddc7dc6874fa6fd1e28bff",
-      "size": 4535
+      "sha256": "9a15d5f8e2626198dd2c7ecabaf011efb5c09f347305f61773c1a0ff90e8adc2",
+      "size": 4902
     },
     {
       "path": "tools/points_icon/17173icons.json",
@@ -2528,8 +2948,8 @@
     {
       "path": "tools/points_icon/icons.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/icons.json",
-      "sha256": "88142bf8bd42ca8955cd07dddd33b0fc1ea62e85c930aeaa21f21a8a177199da",
-      "size": 8246
+      "sha256": "97792589de3478694808448480da36692ddc494c682254386d2957fcd03ba925",
+      "size": 8543
     },
     {
       "path": "tools/points_icon/不咕钟零件_104501.png",
@@ -2566,6 +2986,12 @@
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E5%89%AF%E6%9C%AC_7.png",
       "sha256": "51eda404d21e339688e06559980f2bd216a1758b0f5ed6f01c5dc85139af4ccb",
       "size": 5007
+    },
+    {
+      "path": "tools/points_icon/可可果_100211.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E5%8F%AF%E5%8F%AF%E6%9E%9C_100211.png",
+      "sha256": "0b1290b90c6a536afc23734f1812ebf809219657b52e70b974d97b3ec55b5df6",
+      "size": 14390
     },
     {
       "path": "tools/points_icon/向阳花_100604.png",
@@ -2634,6 +3060,18 @@
       "size": 21149
     },
     {
+      "path": "tools/points_icon/收录乐谱_10040.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E6%94%B6%E5%BD%95%E4%B9%90%E8%B0%B1_10040.png",
+      "sha256": "fe1956ab2a235b72e8b5d581fd89d9397f04620e521b96bf6f4cbef32c01393f",
+      "size": 1442
+    },
+    {
+      "path": "tools/points_icon/无花果_100212.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E6%97%A0%E8%8A%B1%E6%9E%9C_100212.png",
+      "sha256": "6521c3a6edb543f4c3bf8722958877453488e43bb6e7348aa3becbe8196391c7",
+      "size": 17643
+    },
+    {
       "path": "tools/points_icon/星霜花_100661.png",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E6%98%9F%E9%9C%9C%E8%8A%B1_100661.png",
       "sha256": "20c4fc04f541b8561e840736c4cc038ff37a55e8f2133939f6fdc834595c0df7",
@@ -2674,6 +3112,12 @@
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E6%B5%B7%E7%A5%9E%E8%8A%B1_100844.png",
       "sha256": "027b01d1d6b4a55ccded073675d2ad299d9ed59c01cf7a318e6dad4a74ba562c",
       "size": 17986
+    },
+    {
+      "path": "tools/points_icon/火焰石_100673.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E7%81%AB%E7%84%B0%E7%9F%B3_100673.png",
+      "sha256": "f51b1a4d118fc7544665ed85d32c4790bda7f14aef9f41d19b069ef6faa430e3",
+      "size": 13785
     },
     {
       "path": "tools/points_icon/火焰花_100674.png",
@@ -2832,6 +3276,12 @@
       "size": 6337
     },
     {
+      "path": "tools/points_icon/魔力果_100213.png",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E9%AD%94%E5%8A%9B%E6%9E%9C_100213.png",
+      "sha256": "b9cf3c4484f32e919ced9e50eaca1990afae0b65ba2921c714024d40a6e1288e",
+      "size": 19237
+    },
+    {
       "path": "tools/points_icon/黄石榴石_100675.png",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/%E9%BB%84%E7%9F%B3%E6%A6%B4%E7%9F%B3_100675.png",
       "sha256": "64689d9eb11b075782cf549ec856e3f86fa0e66af11b36c0f0148b5632aefd47",
@@ -2846,8 +3296,8 @@
     {
       "path": "updater.exe",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/updater.exe",
-      "sha256": "6a1ccb7b7775ab3cd66e288350b0655f5dcb9030e7cbe8752433139ce8299a63",
-      "size": 9390335
+      "sha256": "c79c6b225838088fc16e86b492a2ccaf220adc20732899fa1ffcf60834b163b4",
+      "size": 9389836
     }
   ],
   "delete": [
