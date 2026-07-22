@@ -2436,6 +2436,36 @@
       "size": 4902
     },
     {
+      "path": "routes/青椒自用-矿石一条龙/青椒自用-矿石一条龙1(131个).json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%99/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%991%28131%E4%B8%AA%29.json",
+      "sha256": "eeea908baa8237d537b20e05d250b5bcc65a5dfe3162d46b1fb496df9cd8fd9b",
+      "size": 31765
+    },
+    {
+      "path": "routes/青椒自用-矿石一条龙/青椒自用-矿石一条龙2(171个).json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%99/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%992%28171%E4%B8%AA%29.json",
+      "sha256": "e25d5070db8623ce03e22ba9f434765746f869f9d132a429fad5c610d8ff03e3",
+      "size": 53673
+    },
+    {
+      "path": "routes/青椒自用-矿石一条龙/青椒自用-矿石一条龙3(178个).json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%99/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%993%28178%E4%B8%AA%29.json",
+      "sha256": "076f391bffd23dfeb24c2dbb23a5dfab71cf3c89f4a4203503da8461f483e05d",
+      "size": 44522
+    },
+    {
+      "path": "routes/青椒自用-矿石一条龙/青椒自用-矿石一条龙4(111个).json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%99/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%994%28111%E4%B8%AA%29.json",
+      "sha256": "d1f4b872f879354db04d3afcba624de5fea07d885c388e9220c63c2e797dc361",
+      "size": 33405
+    },
+    {
+      "path": "routes/青椒自用-矿石一条龙/青椒自用-矿石一条龙5(32个).json",
+      "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/routes/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%99/%E9%9D%92%E6%A4%92%E8%87%AA%E7%94%A8-%E7%9F%BF%E7%9F%B3%E4%B8%80%E6%9D%A1%E9%BE%995%2832%E4%B8%AA%29.json",
+      "sha256": "b3c6fc0383a9bcdd3062504ff4e704eec20fb8bcba6e98ad6982492b100a9c5f",
+      "size": 9501
+    },
+    {
       "path": "tools/points_icon/17173icons.json",
       "url": "https://gitee.com/qingjiao123/Game-Map-Tracker/raw/main/docs/update/tools/points_icon/17173icons.json",
       "sha256": "37588d17c5845681e80027d31639d724bdfede23206a92c03315b067853ef8fa",

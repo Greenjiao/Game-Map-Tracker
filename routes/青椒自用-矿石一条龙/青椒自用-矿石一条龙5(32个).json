@@ -1,0 +1,390 @@
+{
+  "id": "7781261531720",
+  "format_version": "GMT-N-0.1.6",
+  "enable_versions": [
+    "GMT-N-0.1.5",
+    "GMT-N-0.1.3",
+    "sift2",
+    "GMT-N-0.1.6"
+  ],
+  "name": "青椒自用-矿石一条龙5(32个)",
+  "notes": "",
+  "loop": false,
+  "points": [
+    {
+      "id": "055b51536f7d4973aceaccf3a51c63bb",
+      "label": "魔力之源",
+      "type": "魔力之源",
+      "typeId": "5",
+      "sourceId": 1200492,
+      "node_type": "teleport",
+      "x": 2102,
+      "y": 2496
+    },
+    {
+      "id": "fe30e80c7be24077ab98c31a7fcb73db",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702499,
+      "node_type": "collect",
+      "x": 2198,
+      "y": 2521
+    },
+    {
+      "id": "1c9c5bceea8c41c1bd0ee17db088f455",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702495,
+      "node_type": "collect",
+      "x": 2148,
+      "y": 2546
+    },
+    {
+      "id": "46dc7f983d36406f81f480a0fd6a0e34",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702497,
+      "node_type": "collect",
+      "x": 2148,
+      "y": 2573
+    },
+    {
+      "id": "92570734f65d4ca4953a4630794af223",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702496,
+      "node_type": "collect",
+      "x": 2130,
+      "y": 2572
+    },
+    {
+      "id": "753055c07f434e1692a8bbe39837ec34",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702498,
+      "node_type": "collect",
+      "x": 2130,
+      "y": 2551
+    },
+    {
+      "id": "b503b5d4571f4f50bd197c7ecfc5161e",
+      "node_type": "virtual",
+      "x": 2084,
+      "y": 2587,
+      "label": "引路点 1"
+    },
+    {
+      "id": "8cba38bd540143d092ad49ef1bcfc5fa",
+      "node_type": "virtual",
+      "x": 2048,
+      "y": 2665,
+      "label": "引路点 2"
+    },
+    {
+      "id": "8279fbf8c665471ebb96af919d005ffa",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702509,
+      "node_type": "collect",
+      "x": 2028,
+      "y": 2657
+    },
+    {
+      "id": "f5dd07a8d7a94b42bed37cfc1b93284a",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702507,
+      "node_type": "collect",
+      "x": 2029,
+      "y": 2636
+    },
+    {
+      "id": "87c3c4c043474077860f66924c5cce64",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702508,
+      "node_type": "collect",
+      "x": 2012,
+      "y": 2633
+    },
+    {
+      "id": "bc900283ff524152ae8cfacbc3bbc3da",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702506,
+      "node_type": "collect",
+      "x": 2005,
+      "y": 2607
+    },
+    {
+      "id": "7f13f6a7954c4cdea62ffb399e784a95",
+      "node_type": "virtual",
+      "x": 1956,
+      "y": 2611,
+      "label": "引路点 3"
+    },
+    {
+      "id": "c9e497fd6cb348fb89a23528950dce70",
+      "node_type": "virtual",
+      "x": 1935,
+      "y": 2628,
+      "label": "引路点 4"
+    },
+    {
+      "id": "f34b122903414f51847dc4596ef8a4c2",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702518,
+      "node_type": "collect",
+      "x": 1942,
+      "y": 2656
+    },
+    {
+      "id": "c2c003dff0ff4c4395092b6d8b6c89f2",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702514,
+      "node_type": "collect",
+      "x": 1903,
+      "y": 2645
+    },
+    {
+      "id": "03cf589f7623436595b61490f5132cb1",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702515,
+      "node_type": "collect",
+      "x": 1874,
+      "y": 2657
+    },
+    {
+      "id": "5a6afe6fe15144228cd1fdb2ad2b1a66",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702519,
+      "node_type": "collect",
+      "x": 1855,
+      "y": 2656
+    },
+    {
+      "id": "9fb9e7b95a1a411e8f45da08aee918df",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702517,
+      "node_type": "collect",
+      "x": 1855,
+      "y": 2596
+    },
+    {
+      "id": "a4f249b474e0495b8f67c64a97543706",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702516,
+      "node_type": "collect",
+      "x": 1884,
+      "y": 2603
+    },
+    {
+      "id": "ef3025f0620e4005bc052ccf23aca91a",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702510,
+      "node_type": "collect",
+      "x": 1875,
+      "y": 2515
+    },
+    {
+      "id": "5092ad7e5454416a84f89e02f9aa9e66",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702511,
+      "node_type": "collect",
+      "x": 1881,
+      "y": 2482
+    },
+    {
+      "id": "381745fd8527474ca529735aa8ffcd7c",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702513,
+      "node_type": "collect",
+      "x": 1791,
+      "y": 2466
+    },
+    {
+      "id": "0024e5900cd14abeb9cc327ac10486ea",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702512,
+      "node_type": "collect",
+      "x": 1849,
+      "y": 2439
+    },
+    {
+      "id": "f65c52ed783c45518886f8e43fa23fb1",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702500,
+      "node_type": "collect",
+      "x": 1903,
+      "y": 2415
+    },
+    {
+      "id": "5d3a279a3e20446cbe74c9b36f0fa3a9",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702502,
+      "node_type": "collect",
+      "x": 1934,
+      "y": 2393
+    },
+    {
+      "id": "7eb7c8e782684dc5bf3d654870278598",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702501,
+      "node_type": "collect",
+      "x": 1894,
+      "y": 2400
+    },
+    {
+      "id": "4251ac344c924a24844bd6b0b4ca0cf4",
+      "label": "魔力之源",
+      "type": "魔力之源",
+      "typeId": "5",
+      "sourceId": 140143,
+      "node_type": "teleport",
+      "x": 1242,
+      "y": 2788
+    },
+    {
+      "id": "2d0694e0a7bb457f8bc18050abaa68ec",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702494,
+      "node_type": "collect",
+      "x": 1293,
+      "y": 2729
+    },
+    {
+      "id": "3c7fe9477abb432391c674bc30fcf5a1",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702492,
+      "node_type": "collect",
+      "x": 1307,
+      "y": 2700
+    },
+    {
+      "id": "695b705874b14ece80bfb4c0acbb49ea",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702493,
+      "node_type": "collect",
+      "x": 1320,
+      "y": 2661
+    },
+    {
+      "id": "55fe9a2e0c5b46cb81e54729f0202c5c",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702491,
+      "node_type": "collect",
+      "x": 1298,
+      "y": 2652
+    },
+    {
+      "id": "80afb39a77d54fb8ace2e6eb765abba9",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702490,
+      "node_type": "collect",
+      "x": 1284,
+      "y": 2687
+    },
+    {
+      "id": "1d69e8830e094109a66e5160c1d82167",
+      "node_type": "virtual",
+      "x": 1241,
+      "y": 2765,
+      "label": "引路点 5"
+    },
+    {
+      "id": "799457edad02477dbeb4207e38d60e17",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702489,
+      "node_type": "collect",
+      "x": 1141,
+      "y": 2830
+    },
+    {
+      "id": "781ce91670d945b9b92f8957a83bacfc",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702485,
+      "node_type": "collect",
+      "x": 1133,
+      "y": 2781
+    },
+    {
+      "id": "9ba2cc7dd7f740d4b2ba4375560a189a",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702486,
+      "node_type": "collect",
+      "x": 1129,
+      "y": 2773
+    },
+    {
+      "id": "2fdbe11745f5495ba104f78c86cefd13",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702487,
+      "node_type": "collect",
+      "x": 1112,
+      "y": 2766
+    },
+    {
+      "id": "ac59ec0f7f24492eacf91e1aed3422b2",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 2702488,
+      "node_type": "collect",
+      "x": 1101,
+      "y": 2797
+    }
+  ]
+}

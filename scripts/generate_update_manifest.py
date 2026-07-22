@@ -20,9 +20,6 @@ PROTECTED_USER_FILES = {
     "tools/points_get/.cache_17173_locations.json",
 }
 PROTECTED_USER_PREFIXES = (
-    "annotations/",
-    "maps/",
-    "routes/",
     "tools/",
 )
 DEFAULT_EXCLUDES = {

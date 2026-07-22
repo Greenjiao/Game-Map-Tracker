@@ -1,0 +1,1808 @@
+{
+  "id": "9660282252273",
+  "format_version": "GMT-N-0.1.6",
+  "enable_versions": [
+    "GMT-N-0.1.5",
+    "GMT-N-0.1.3",
+    "sift2",
+    "GMT-N-0.1.6"
+  ],
+  "name": "青椒自用-矿石一条龙3(178个)",
+  "notes": "",
+  "loop": false,
+  "points": [
+    {
+      "id": "c0145d69ca3a4d76bd331bcee3f4f783",
+      "label": "大型眠枭庇护所（金水河谷）",
+      "type": "大型眠枭庇护所",
+      "typeId": "9",
+      "sourceId": 6001145,
+      "node_type": "teleport",
+      "x": 5538,
+      "y": 3519
+    },
+    {
+      "id": "202d686641b1461fb6837584cac1bf54",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6704098,
+      "node_type": "collect",
+      "x": 5633,
+      "y": 3581
+    },
+    {
+      "id": "2d0bfc8f09bb43debd7ad61ee86aece0",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6704094,
+      "node_type": "collect",
+      "x": 5636,
+      "y": 3576
+    },
+    {
+      "id": "118b2c3d92d64ec1bc5ee8a063825b2a",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6704095,
+      "node_type": "collect",
+      "x": 5655,
+      "y": 3567
+    },
+    {
+      "id": "3d92fc4a8a91404288f22f553d97f3f0",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704089,
+      "node_type": "collect",
+      "x": 5685,
+      "y": 3465
+    },
+    {
+      "id": "7f5b26d7baef41ec988ee219b6abb316",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461169,
+      "node_type": "collect",
+      "x": 5685,
+      "y": 3460
+    },
+    {
+      "id": "32d71fd3e4cd48f5be40a330fb765b53",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704090,
+      "node_type": "collect",
+      "x": 5681,
+      "y": 3443
+    },
+    {
+      "id": "b204716cf69d4396a7aea84e7075b26f",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704088,
+      "node_type": "collect",
+      "x": 5684,
+      "y": 3436
+    },
+    {
+      "id": "adb88259a3cb427eae4687624edaf144",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461168,
+      "node_type": "collect",
+      "x": 5684,
+      "y": 3429
+    },
+    {
+      "id": "fd84db4e7e40483a92fbbeeade64945a",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704091,
+      "node_type": "collect",
+      "x": 5678,
+      "y": 3424
+    },
+    {
+      "id": "72e07e6787304504865c1818e7870823",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461170,
+      "node_type": "collect",
+      "x": 5679,
+      "y": 3417
+    },
+    {
+      "id": "f7ee60fc4142426283e4a8d5f6ae8037",
+      "node_type": "virtual",
+      "x": 5684,
+      "y": 3318,
+      "label": "引路点 1"
+    },
+    {
+      "id": "93dc73eb21df4ace946e337f2f74b372",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461151,
+      "node_type": "collect",
+      "x": 5718,
+      "y": 3335
+    },
+    {
+      "id": "6868cf7a44ff44499c849fe48bb3c1fa",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461147,
+      "node_type": "collect",
+      "x": 5758,
+      "y": 3365
+    },
+    {
+      "id": "157d52fa7bed44908e47c6895122385d",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461143,
+      "node_type": "collect",
+      "x": 5761,
+      "y": 3374
+    },
+    {
+      "id": "9ff6607812c241dbabec4cd7d590d1cc",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461146,
+      "node_type": "collect",
+      "x": 5763,
+      "y": 3390
+    },
+    {
+      "id": "6664ac48027c4f0ba920d592bf9cfcbe",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461144,
+      "node_type": "collect",
+      "x": 5755,
+      "y": 3400
+    },
+    {
+      "id": "b49773572fe54163888ffdbc8d1f369c",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461149,
+      "node_type": "collect",
+      "x": 5891,
+      "y": 3361
+    },
+    {
+      "id": "1eb2b1bcca364060ad43cf54c42e6708",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461150,
+      "node_type": "collect",
+      "x": 5875,
+      "y": 3358
+    },
+    {
+      "id": "321c691aaa1544089dd6a0eff0406567",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461137,
+      "node_type": "collect",
+      "x": 5862,
+      "y": 3351
+    },
+    {
+      "id": "926dc5f2533b4ae8ad87a2d9e13a5d26",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461148,
+      "node_type": "collect",
+      "x": 5861,
+      "y": 3348
+    },
+    {
+      "id": "e257cfc168934ddf9498ba086ff8ab2f",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461139,
+      "node_type": "collect",
+      "x": 5828,
+      "y": 3300
+    },
+    {
+      "id": "910c477b14c24ae9bb60d6ba8bd24dd6",
+      "node_type": "virtual",
+      "x": 5768,
+      "y": 3264,
+      "label": "引路点 2"
+    },
+    {
+      "id": "dc7adc5c8f2848d8bb79302602f13968",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461155,
+      "node_type": "collect",
+      "x": 5721,
+      "y": 3271
+    },
+    {
+      "id": "c8bdbf111e854b67b628e951226f7ec1",
+      "node_type": "virtual",
+      "x": 5580,
+      "y": 3304,
+      "label": "引路点 3"
+    },
+    {
+      "id": "98f0cb43177c42288b2138ade8ad4918",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461157,
+      "node_type": "collect",
+      "x": 5551,
+      "y": 3293
+    },
+    {
+      "id": "405bd6df4ed14933971b234bca1adc2e",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461175,
+      "node_type": "collect",
+      "x": 5546,
+      "y": 3297
+    },
+    {
+      "id": "868e5131d16c4a3cb561be394ed67888",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461158,
+      "node_type": "collect",
+      "x": 5544,
+      "y": 3301
+    },
+    {
+      "id": "7b6606a3a8014da09182f19c18c7c45f",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461172,
+      "node_type": "collect",
+      "x": 5544,
+      "y": 3281
+    },
+    {
+      "id": "180f4e18e92c4651be52ce4ad207ada7",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461173,
+      "node_type": "collect",
+      "x": 5529,
+      "y": 3263
+    },
+    {
+      "id": "b23382dceae84b6fad54b9aeb387de87",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461171,
+      "node_type": "collect",
+      "x": 5521,
+      "y": 3293
+    },
+    {
+      "id": "aaeb1d454297470a8c0734b282ea5856",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461174,
+      "node_type": "collect",
+      "x": 5516,
+      "y": 3311
+    },
+    {
+      "id": "c6e2662cfa1442ed8bb3c396e84ff29f",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461156,
+      "node_type": "collect",
+      "x": 5519,
+      "y": 3319
+    },
+    {
+      "id": "44c4bb662d8644b091fb97a5ea412b34",
+      "node_type": "virtual",
+      "x": 5484,
+      "y": 3444,
+      "label": "引路点 4"
+    },
+    {
+      "id": "200ddd5ecdfe4a27a69556806f9417d9",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461178,
+      "node_type": "collect",
+      "x": 5478,
+      "y": 3501
+    },
+    {
+      "id": "d52cb14d44954ebfa9f78b733122e78e",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703971,
+      "node_type": "collect",
+      "x": 5476,
+      "y": 3498
+    },
+    {
+      "id": "afe72a80d5914303885aa1a09222db92",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703970,
+      "node_type": "collect",
+      "x": 5469,
+      "y": 3498
+    },
+    {
+      "id": "5943f526f5e140dcb6a02a3cbf22b540",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461165,
+      "node_type": "collect",
+      "x": 5409,
+      "y": 3517
+    },
+    {
+      "id": "6db58de8661741269af689291301a6bb",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461177,
+      "node_type": "collect",
+      "x": 5408,
+      "y": 3512
+    },
+    {
+      "id": "f4724115d45f4e5bb7373ac65bcdc1f6",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461176,
+      "node_type": "collect",
+      "x": 5417,
+      "y": 3495
+    },
+    {
+      "id": "b26c1c44a3604ce5b4a1aff659aa2a21",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461163,
+      "node_type": "collect",
+      "x": 5414,
+      "y": 3488
+    },
+    {
+      "id": "b27a1f193c8a439dab2e9657f7a4767c",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703973,
+      "node_type": "collect",
+      "x": 5416,
+      "y": 3478
+    },
+    {
+      "id": "a2155ecc647c4addbddd458892e6f923",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461164,
+      "node_type": "collect",
+      "x": 5413,
+      "y": 3473
+    },
+    {
+      "id": "7ff83aabed014c0eb156ba26c6924985",
+      "node_type": "virtual",
+      "x": 5354,
+      "y": 3478,
+      "label": "引路点 5"
+    },
+    {
+      "id": "b5158b26ce20491cb29719ee7e6d45b1",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000855,
+      "node_type": "collect",
+      "x": 5301,
+      "y": 3417
+    },
+    {
+      "id": "6367645ba5864670b9c672ca285e3e6a",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000854,
+      "node_type": "collect",
+      "x": 5324,
+      "y": 3404
+    },
+    {
+      "id": "fc14c9bc247641fd92f55c60543ab2fc",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000857,
+      "node_type": "collect",
+      "x": 5332,
+      "y": 3413
+    },
+    {
+      "id": "02fa5f465a324499b45e3074446acc2c",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000856,
+      "node_type": "collect",
+      "x": 5339,
+      "y": 3403
+    },
+    {
+      "id": "813177ef7b824a9e84b3aec03c5c9e90",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000853,
+      "node_type": "collect",
+      "x": 5348,
+      "y": 3410
+    },
+    {
+      "id": "fe2aee0c9ede4db6ae3ee94013ad2d8c",
+      "label": "魔力之源",
+      "type": "魔力之源",
+      "typeId": "5",
+      "sourceId": 5400468,
+      "node_type": "teleport",
+      "x": 4926,
+      "y": 3133
+    },
+    {
+      "id": "b3a45b4e5c7b41178ec67623dfa22e86",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000778,
+      "node_type": "collect",
+      "x": 4878,
+      "y": 3179
+    },
+    {
+      "id": "6266e853f54c401ebb54379d9ba99605",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000779,
+      "node_type": "collect",
+      "x": 4877,
+      "y": 3197
+    },
+    {
+      "id": "96eeaad77a774fd1841af79b03d4e356",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000777,
+      "node_type": "collect",
+      "x": 4889,
+      "y": 3198
+    },
+    {
+      "id": "40ca61db3af1451eba393ead9bd3eea0",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000775,
+      "node_type": "collect",
+      "x": 4897,
+      "y": 3226
+    },
+    {
+      "id": "9b1047f4f5394df9a53cbc89b24c0f33",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000781,
+      "node_type": "collect",
+      "x": 4911,
+      "y": 3235
+    },
+    {
+      "id": "29dcbfb0ff314e578bd811a0c93807da",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000776,
+      "node_type": "collect",
+      "x": 4888,
+      "y": 3260
+    },
+    {
+      "id": "85d8d439370a4e4ca72c4992372c25b2",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000780,
+      "node_type": "collect",
+      "x": 4853,
+      "y": 3260
+    },
+    {
+      "id": "7cfb2e2b80064094a1546f58ee48d659",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000782,
+      "node_type": "collect",
+      "x": 4843,
+      "y": 3230
+    },
+    {
+      "id": "5f07e177624b4b4e89a1973526178e0b",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000791,
+      "node_type": "collect",
+      "x": 4767,
+      "y": 3225
+    },
+    {
+      "id": "a5895d1d2fb54561b514066433e16120",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000790,
+      "node_type": "collect",
+      "x": 4757,
+      "y": 3228
+    },
+    {
+      "id": "055b42c9dea24df49ec7029e56e7b411",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000789,
+      "node_type": "collect",
+      "x": 4771,
+      "y": 3217
+    },
+    {
+      "id": "568c69a2e27f48babac0e0fa22323385",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000788,
+      "node_type": "collect",
+      "x": 4771,
+      "y": 3145
+    },
+    {
+      "id": "8338377ee108437fa437b04499f920bb",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000787,
+      "node_type": "collect",
+      "x": 4777,
+      "y": 3139
+    },
+    {
+      "id": "26a62fed69e64e9ca60e901f6697b570",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000785,
+      "node_type": "collect",
+      "x": 4784,
+      "y": 3138
+    },
+    {
+      "id": "d5ac3cda05204adcb7d965c404dc34e1",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000786,
+      "node_type": "collect",
+      "x": 4786,
+      "y": 3144
+    },
+    {
+      "id": "7aba46268917421c842a07cc52175d84",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000784,
+      "node_type": "collect",
+      "x": 4823,
+      "y": 3118
+    },
+    {
+      "id": "614c1c72157c4461b72a66a361e81ecb",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000783,
+      "node_type": "collect",
+      "x": 4809,
+      "y": 3122
+    },
+    {
+      "id": "d44fb46cf5e141dbb290ef90fa539cc8",
+      "node_type": "virtual",
+      "x": 4644,
+      "y": 3141,
+      "label": "引路点 6"
+    },
+    {
+      "id": "acaa5769f4344fb7a6edd05fda407320",
+      "node_type": "virtual",
+      "x": 4562,
+      "y": 3118,
+      "label": "引路点 7"
+    },
+    {
+      "id": "db1ad38d5010476dac36e4db7554bc86",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000797,
+      "node_type": "collect",
+      "x": 4550,
+      "y": 3116
+    },
+    {
+      "id": "09a958c7f18a482ba8ce6f3905719547",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000793,
+      "node_type": "collect",
+      "x": 4550,
+      "y": 3108
+    },
+    {
+      "id": "c42c6f152b3046cb8d91dc55c2ff5c85",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000792,
+      "node_type": "collect",
+      "x": 4564,
+      "y": 3084
+    },
+    {
+      "id": "f167d1baeb5e40efb94e658973f4d87f",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000794,
+      "node_type": "collect",
+      "x": 4569,
+      "y": 3068
+    },
+    {
+      "id": "e5e5fc6e118343eb9279c0c0adbfb210",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000795,
+      "node_type": "collect",
+      "x": 4596,
+      "y": 3069
+    },
+    {
+      "id": "fc6985953b9c4bb3b43048638482d12c",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000796,
+      "node_type": "collect",
+      "x": 4618,
+      "y": 3068
+    },
+    {
+      "id": "b15974878c0547ba9610637888217889",
+      "node_type": "virtual",
+      "x": 4736,
+      "y": 3090,
+      "label": "引路点 8"
+    },
+    {
+      "id": "95d37f229d924b1fb4169a7e89f814bb",
+      "node_type": "virtual",
+      "x": 4741,
+      "y": 3026,
+      "label": "引路点 9"
+    },
+    {
+      "id": "86416c1e094d4f04b3c7aea9163029ab",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000810,
+      "node_type": "collect",
+      "x": 4744,
+      "y": 2938
+    },
+    {
+      "id": "322b3081bf8b4e02a7dbd8cbc039e950",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000803,
+      "node_type": "collect",
+      "x": 4787,
+      "y": 2954
+    },
+    {
+      "id": "a0bd2a8622844b84aec9faf543ff9903",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000802,
+      "node_type": "collect",
+      "x": 4812,
+      "y": 2909
+    },
+    {
+      "id": "ffa97aff2f7e4f6b91d04e947e11e5b0",
+      "node_type": "virtual",
+      "x": 4843,
+      "y": 2873,
+      "label": "引路点 10"
+    },
+    {
+      "id": "7241a0a84b144db2aec6cc42b0d3187f",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000801,
+      "node_type": "collect",
+      "x": 4858,
+      "y": 2874
+    },
+    {
+      "id": "05ce00aa6f40433488c8bc8297ba9168",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000809,
+      "node_type": "collect",
+      "x": 4865,
+      "y": 2870
+    },
+    {
+      "id": "4152739532a44ef185974b9de916e529",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000800,
+      "node_type": "collect",
+      "x": 4834,
+      "y": 2816
+    },
+    {
+      "id": "1f1c88e73cb94d748d4065264cb064ce",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000804,
+      "node_type": "collect",
+      "x": 4840,
+      "y": 2801
+    },
+    {
+      "id": "d81d3c993fbe455aaff02925553a7173",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000805,
+      "node_type": "collect",
+      "x": 4851,
+      "y": 2771
+    },
+    {
+      "id": "3c32dfe4ec7849f380a68e3816b3f7da",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000799,
+      "node_type": "collect",
+      "x": 4848,
+      "y": 2759
+    },
+    {
+      "id": "e6f8a095f6234bb4a7d685a0fe932a37",
+      "node_type": "virtual",
+      "x": 4879,
+      "y": 2774,
+      "label": "引路点 11"
+    },
+    {
+      "id": "134fad1848894b99ab708d88492a42af",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000806,
+      "node_type": "collect",
+      "x": 4912,
+      "y": 2772
+    },
+    {
+      "id": "4d178ffd6d9046b2a3351a2d28135e04",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000798,
+      "node_type": "collect",
+      "x": 4932,
+      "y": 2731
+    },
+    {
+      "id": "3ec7dbd736344440a4fcf6acda29242d",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000807,
+      "node_type": "collect",
+      "x": 4880,
+      "y": 2704
+    },
+    {
+      "id": "8e3207eba3b54ef6af8cf626678a1d9d",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000808,
+      "node_type": "collect",
+      "x": 4946,
+      "y": 2661
+    },
+    {
+      "id": "c51194db47f546afb4dec9709918a496",
+      "type": "副本",
+      "typeId": "7",
+      "node_type": "teleport",
+      "x": 5285,
+      "y": 2535,
+      "label": "副本 1"
+    },
+    {
+      "id": "b7f17cdd8a1e4c35b619f1486c8a5cd4",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704105,
+      "node_type": "collect",
+      "x": 5220,
+      "y": 2324
+    },
+    {
+      "id": "fad2065de6ca4f25b62914539051b601",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461227,
+      "node_type": "collect",
+      "x": 5239,
+      "y": 2335
+    },
+    {
+      "id": "1d528bdf293e49479066f2b6e8f24e03",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704104,
+      "node_type": "collect",
+      "x": 5242,
+      "y": 2334
+    },
+    {
+      "id": "8b9075e8fd59446ebcb53d0d18ca4243",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461224,
+      "node_type": "collect",
+      "x": 5345,
+      "y": 2373
+    },
+    {
+      "id": "d6487d3da0da4222bd1dc802ff256267",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704099,
+      "node_type": "collect",
+      "x": 5349,
+      "y": 2373
+    },
+    {
+      "id": "1e00aa56f5e74acfbbb0f176fd27ed21",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704102,
+      "node_type": "collect",
+      "x": 5355,
+      "y": 2379
+    },
+    {
+      "id": "d5c9ac6f12e84859b7277fc5ddad1aac",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704100,
+      "node_type": "collect",
+      "x": 5380,
+      "y": 2375
+    },
+    {
+      "id": "af3d465926264a7fb4de1d708a68d158",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461223,
+      "node_type": "collect",
+      "x": 5384,
+      "y": 2370
+    },
+    {
+      "id": "5bf284cba20345b89d2e0cc965f7bc76",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6704101,
+      "node_type": "collect",
+      "x": 5390,
+      "y": 2380
+    },
+    {
+      "id": "627bff6073b241da9e7e7431f4d716ca",
+      "node_type": "virtual",
+      "x": 5482,
+      "y": 2364,
+      "label": "引路点 12"
+    },
+    {
+      "id": "6895c5d21bf444f28a7027da3f26426c",
+      "node_type": "virtual",
+      "x": 5525,
+      "y": 2438,
+      "label": "引路点 13"
+    },
+    {
+      "id": "279834b8089e4ce197afc41be0755e2c",
+      "node_type": "virtual",
+      "x": 5638,
+      "y": 2608,
+      "label": "引路点 14"
+    },
+    {
+      "id": "470e581c19b0440694411a84eea45c58",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703950,
+      "node_type": "collect",
+      "x": 5608,
+      "y": 2615
+    },
+    {
+      "id": "fb40a7de82d44c688c2164bab4063b9e",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703949,
+      "node_type": "collect",
+      "x": 5616,
+      "y": 2623
+    },
+    {
+      "id": "e21fecb43cfc4a43bc25c861ee6e836d",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703951,
+      "node_type": "collect",
+      "x": 5622,
+      "y": 2629
+    },
+    {
+      "id": "38b66315ab2941dbbcd68a1de7ec947a",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703893,
+      "node_type": "collect",
+      "x": 5718,
+      "y": 2610
+    },
+    {
+      "id": "b917152dac5f4eb79d2b9bbfe7e22e00",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703931,
+      "node_type": "collect",
+      "x": 5716,
+      "y": 2619
+    },
+    {
+      "id": "04ca2d4047924c6b8f1295b252ce30c7",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703932,
+      "node_type": "collect",
+      "x": 5724,
+      "y": 2628
+    },
+    {
+      "id": "362113c211344dee9a8d40fc6e7a3953",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703894,
+      "node_type": "collect",
+      "x": 5726,
+      "y": 2639
+    },
+    {
+      "id": "269b66bc10214515884e803ff394f742",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703895,
+      "node_type": "collect",
+      "x": 5734,
+      "y": 2654
+    },
+    {
+      "id": "13178d0443834ecba6e28083247c985e",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 5461222,
+      "node_type": "collect",
+      "x": 5740,
+      "y": 2683
+    },
+    {
+      "id": "330037b6595a47738dc51482d25799c8",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703942,
+      "node_type": "collect",
+      "x": 5735,
+      "y": 2696
+    },
+    {
+      "id": "688b453ff21f418a9aaedde5a3258608",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703936,
+      "node_type": "collect",
+      "x": 5726,
+      "y": 2700
+    },
+    {
+      "id": "66211d4940b64caa9b30056040de47c1",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703937,
+      "node_type": "collect",
+      "x": 5725,
+      "y": 2703
+    },
+    {
+      "id": "f3a02007219f41e0805e908e7413624c",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703890,
+      "node_type": "collect",
+      "x": 5722,
+      "y": 2716
+    },
+    {
+      "id": "cd3705a99d5c4464856bfa428065a775",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703938,
+      "node_type": "collect",
+      "x": 5705,
+      "y": 2730
+    },
+    {
+      "id": "09b9cdb89dc640839e6a253f3708df08",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703948,
+      "node_type": "collect",
+      "x": 5682,
+      "y": 2722
+    },
+    {
+      "id": "59a1ba114b354d5485f5952db764628a",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703918,
+      "node_type": "collect",
+      "x": 5684,
+      "y": 2733
+    },
+    {
+      "id": "eac0968fa4f94f63b98115dbdf003c5d",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703891,
+      "node_type": "collect",
+      "x": 5718,
+      "y": 2778
+    },
+    {
+      "id": "3cea14b33ed14bf68c6f350cd53ddd0e",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703925,
+      "node_type": "collect",
+      "x": 5717,
+      "y": 2786
+    },
+    {
+      "id": "c3bf44c673d04adabd1dec02403e648e",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703892,
+      "node_type": "collect",
+      "x": 5718,
+      "y": 2791
+    },
+    {
+      "id": "ce56f07d8a9540b9bacbb4585e9da03c",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703916,
+      "node_type": "collect",
+      "x": 5702,
+      "y": 2805
+    },
+    {
+      "id": "10a4bf8bdd874acc88b91d220a781358",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703898,
+      "node_type": "collect",
+      "x": 5709,
+      "y": 2820
+    },
+    {
+      "id": "5782fc54251a43b19b0e624d4e6f3fd6",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703919,
+      "node_type": "collect",
+      "x": 5718,
+      "y": 2833
+    },
+    {
+      "id": "e91ffe35c5e843f785a456b0ba6e9d9a",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703899,
+      "node_type": "collect",
+      "x": 5728,
+      "y": 2823
+    },
+    {
+      "id": "610cef5cf1a34fb7a1f5b933a3cb8355",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703923,
+      "node_type": "collect",
+      "x": 5742,
+      "y": 2818
+    },
+    {
+      "id": "319858752726484f8d0133ce1210b86e",
+      "node_type": "virtual",
+      "x": 5762,
+      "y": 2799,
+      "label": "引路点 15"
+    },
+    {
+      "id": "17a10b62250545f3b6df65ae5ae56a12",
+      "node_type": "virtual",
+      "x": 5800,
+      "y": 2796,
+      "label": "引路点 16"
+    },
+    {
+      "id": "cac7c8bff5ac43b0b892e59bc462119d",
+      "node_type": "virtual",
+      "x": 5817,
+      "y": 2831,
+      "label": "引路点 17"
+    },
+    {
+      "id": "e54a4b4d3a1f4efc8f88650ac28bb226",
+      "node_type": "virtual",
+      "x": 5840,
+      "y": 2821,
+      "label": "引路点 18"
+    },
+    {
+      "id": "641ed16b7e7a4a9ca3dbf333a83ac9a6",
+      "node_type": "virtual",
+      "x": 5847,
+      "y": 2808,
+      "label": "引路点 19"
+    },
+    {
+      "id": "5c90aa49b1734f2a9a1e46140b01f9ce",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703917,
+      "node_type": "collect",
+      "x": 5862,
+      "y": 2780
+    },
+    {
+      "id": "a0f82542b2474922bfeb1262b3960ccb",
+      "node_type": "virtual",
+      "x": 5847,
+      "y": 2763,
+      "label": "引路点 20"
+    },
+    {
+      "id": "d3e4dc82e58940e9ba0721b8baeb43a0",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703941,
+      "node_type": "collect",
+      "x": 5858,
+      "y": 2753
+    },
+    {
+      "id": "48e9306aa6b34ec0a3052407c930163f",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703901,
+      "node_type": "collect",
+      "x": 5866,
+      "y": 2745
+    },
+    {
+      "id": "d8ab101907c5494bac78b9d5ad903c07",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703900,
+      "node_type": "collect",
+      "x": 5880,
+      "y": 2735
+    },
+    {
+      "id": "139d261645d34771a609c9fe23c1a86c",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703915,
+      "node_type": "collect",
+      "x": 5898,
+      "y": 2732
+    },
+    {
+      "id": "e35d0cf372a24d519c79a50918b2d941",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703903,
+      "node_type": "collect",
+      "x": 5867,
+      "y": 2703
+    },
+    {
+      "id": "e6129008533d43eda8d730843a1e5ba0",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703943,
+      "node_type": "collect",
+      "x": 5846,
+      "y": 2680
+    },
+    {
+      "id": "741c4628f8624f53806f3907c8aed59c",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703902,
+      "node_type": "collect",
+      "x": 5845,
+      "y": 2677
+    },
+    {
+      "id": "80451d54ab054b239e5364ae986d19b0",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703944,
+      "node_type": "collect",
+      "x": 5833,
+      "y": 2671
+    },
+    {
+      "id": "a548550079894023a80fc0195270b8b1",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703930,
+      "node_type": "collect",
+      "x": 5813,
+      "y": 2664
+    },
+    {
+      "id": "9adcdb9b9c724e748b1a0bbf4f4181ca",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703926,
+      "node_type": "collect",
+      "x": 5804,
+      "y": 2663
+    },
+    {
+      "id": "a677d31754c246c6890ddec53c804005",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703897,
+      "node_type": "collect",
+      "x": 5766,
+      "y": 2627
+    },
+    {
+      "id": "8a2137060c2740c38a9414490103a3ca",
+      "label": "黄石榴石",
+      "type": "黄石榴石",
+      "typeId": "100675",
+      "sourceId": 6703927,
+      "node_type": "collect",
+      "x": 5759,
+      "y": 2620
+    },
+    {
+      "id": "4746115784c4432b83c34a29470a44cd",
+      "label": "大型眠枭庇护所（巨人裂谷北）",
+      "type": "大型眠枭庇护所",
+      "typeId": "9",
+      "sourceId": 6001150,
+      "node_type": "teleport",
+      "x": 5164,
+      "y": 2903
+    },
+    {
+      "id": "433240846baa4cd7b95e6a5fb2a0a5ef",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000761,
+      "node_type": "collect",
+      "x": 5182,
+      "y": 2983
+    },
+    {
+      "id": "887ad169372d49deb57756e78b793877",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000766,
+      "node_type": "collect",
+      "x": 5174,
+      "y": 2988
+    },
+    {
+      "id": "1314c805947e48fc8ef7a6fe2a9cc900",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000767,
+      "node_type": "collect",
+      "x": 5194,
+      "y": 3033
+    },
+    {
+      "id": "adcebeca01784ee1b7721866ffe373ee",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000762,
+      "node_type": "collect",
+      "x": 5196,
+      "y": 3009
+    },
+    {
+      "id": "ca542f7735984b789a028435a01b0788",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000769,
+      "node_type": "collect",
+      "x": 5240,
+      "y": 3025
+    },
+    {
+      "id": "bba096cd96c24a0b8922801e6aec524d",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000763,
+      "node_type": "collect",
+      "x": 5217,
+      "y": 3032
+    },
+    {
+      "id": "5c1ef5586d844e539ba4aa8964c9edb2",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000768,
+      "node_type": "collect",
+      "x": 5221,
+      "y": 3049
+    },
+    {
+      "id": "8004a41f96234913a1115ddb731003da",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000764,
+      "node_type": "collect",
+      "x": 5230,
+      "y": 3064
+    },
+    {
+      "id": "8ff10114bc9a4a00b477e83ca5afbf65",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000765,
+      "node_type": "collect",
+      "x": 5245,
+      "y": 3061
+    },
+    {
+      "id": "10661ede1e814776a52c507d083a7ba5",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000774,
+      "node_type": "collect",
+      "x": 5371,
+      "y": 3039
+    },
+    {
+      "id": "ea17b39dda044f2fb1280aac4ab2a99c",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000773,
+      "node_type": "collect",
+      "x": 5392,
+      "y": 3039
+    },
+    {
+      "id": "637c074ca1244a6b815076b03c9011b4",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000770,
+      "node_type": "collect",
+      "x": 5384,
+      "y": 3031
+    },
+    {
+      "id": "159f5a2376b74232bd168615c58b0f96",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000771,
+      "node_type": "collect",
+      "x": 5355,
+      "y": 3007
+    },
+    {
+      "id": "65074c77427246828e54070806a90eeb",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000772,
+      "node_type": "collect",
+      "x": 5335,
+      "y": 3008
+    },
+    {
+      "id": "5b94f6bab8c34f1db695a033ed93f408",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000753,
+      "node_type": "collect",
+      "x": 5065,
+      "y": 2891
+    },
+    {
+      "id": "ea30b22075aa48bbb71d93ad5869914a",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000755,
+      "node_type": "collect",
+      "x": 5078,
+      "y": 2897
+    },
+    {
+      "id": "07779237fb744ca8a279059673bc25d7",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000752,
+      "node_type": "collect",
+      "x": 5093,
+      "y": 2902
+    },
+    {
+      "id": "813c6f2c09424f2e85c26230e41f727c",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6703911,
+      "node_type": "collect",
+      "x": 5098,
+      "y": 2903
+    },
+    {
+      "id": "f46940cffce04ac59d01973edb3391e1",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6703909,
+      "node_type": "collect",
+      "x": 5111,
+      "y": 2909
+    },
+    {
+      "id": "79228915564d483e9c7aa960c6922d4c",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6703910,
+      "node_type": "collect",
+      "x": 5110,
+      "y": 2892
+    },
+    {
+      "id": "1d3ca6c0387040d7a17becc7c1078545",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6703912,
+      "node_type": "collect",
+      "x": 5115,
+      "y": 2888
+    },
+    {
+      "id": "6fe01a6f8d974c77880f7e05d6afb539",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6703908,
+      "node_type": "collect",
+      "x": 5115,
+      "y": 2884
+    },
+    {
+      "id": "11f54c0ee3464d958fa80395bacbef21",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000754,
+      "node_type": "collect",
+      "x": 5115,
+      "y": 2880
+    },
+    {
+      "id": "366dad6be55343f3ac05bd5e7ee93bd5",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000759,
+      "node_type": "collect",
+      "x": 5123,
+      "y": 2874
+    },
+    {
+      "id": "365c3d6f8e5c45fc9aac64a8a3f7a676",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6703907,
+      "node_type": "collect",
+      "x": 5114,
+      "y": 2869
+    },
+    {
+      "id": "6c9c92038a7848a4bc038a4b3d8ac270",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000757,
+      "node_type": "collect",
+      "x": 5129,
+      "y": 2850
+    },
+    {
+      "id": "264322d512de42ccb0a992b736039faa",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000756,
+      "node_type": "collect",
+      "x": 5061,
+      "y": 2804
+    },
+    {
+      "id": "09c1e41be0cd4aaa9d8974d22dcd9d91",
+      "label": "蓝晶碧玺",
+      "type": "蓝晶碧玺",
+      "typeId": "100676",
+      "sourceId": 6000760,
+      "node_type": "collect",
+      "x": 5085,
+      "y": 2786
+    },
+    {
+      "id": "f3f24812c21846a4bc27769d5e120a37",
+      "node_type": "virtual",
+      "x": 5331,
+      "y": 2677,
+      "label": "引路点 21"
+    },
+    {
+      "id": "d62d936489fb475a8f5a4cc977844ee1",
+      "node_type": "virtual",
+      "x": 5443,
+      "y": 2685,
+      "label": "引路点 22"
+    },
+    {
+      "id": "06fba23f34be416aa346252e86dd0102",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000832,
+      "node_type": "collect",
+      "x": 5481,
+      "y": 2679
+    },
+    {
+      "id": "03df7986c215423891d2c66ab969a0b3",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000830,
+      "node_type": "collect",
+      "x": 5459,
+      "y": 2660
+    },
+    {
+      "id": "c456cbc99b1b40bab70bd557626c5702",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000835,
+      "node_type": "collect",
+      "x": 5448,
+      "y": 2645
+    },
+    {
+      "id": "f2146394e2f84f3dbd2b98654e2eefb8",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000829,
+      "node_type": "collect",
+      "x": 5438,
+      "y": 2631
+    },
+    {
+      "id": "3ca49152ed71493daba6b9887caa250a",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000828,
+      "node_type": "collect",
+      "x": 5459,
+      "y": 2624
+    },
+    {
+      "id": "2a38901dccbc4e6b9bb79653f287be77",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000831,
+      "node_type": "collect",
+      "x": 5467,
+      "y": 2605
+    },
+    {
+      "id": "46008d2a4f79491dba5bd6e2a3f5271f",
+      "label": "黑晶琉璃",
+      "type": "黑晶琉璃",
+      "typeId": "100628",
+      "sourceId": 6000834,
+      "node_type": "collect",
+      "x": 5516,
+      "y": 2657
+    }
+  ]
+}
